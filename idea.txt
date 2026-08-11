@@ -1,0 +1,36 @@
+Build a complete location-based single-admin ad server, public discovery web application, and Progressive Web App (PWA) using Next.js (App Router, TypeScript), PostgreSQL with PostGIS, and full Cloudflare integration (R2 Storage + Edge CDN Cache Purge API).
+
+Core Architectural Requirements:
+
+1. Cloudflare Edge, Media & Instant Invalidation System:
+   - Media Storage (Cloudflare R2): Use AWS S3 SDK wrapper pointing to Cloudflare R2 bucket (`@aws-sdk/client-s3`) to offload all images/videos and preserve server disk/bandwidth.
+   - CDN Cache Control: Output `Cache-Control: public, max-age=30, stale-while-revalidate=60` headers on public ad endpoints.
+   - Instant Removal / Cache Purge API: Create a dedicated Cloudflare Purge Service using the Cloudflare API (`POST https://api.cloudflare.com/client/v4/zones/{CLOUDFLARE_ZONE_ID}/purge_cache`). When an ad is soft-deleted or deactivated (`is_active = false`), automatically issue a purge request to wipe the edge cache for `/api/ads/serve` and the ad's media URL instantly.
+   - Active Redirect Guard: The click tracking endpoint (`GET /api/track/click?ad_id=X`) must query PostgreSQL in real time to verify `is_active == true` before performing a 302 redirect. If inactive/deleted, redirect to a fallback landing page.
+
+2. PWA Architecture:
+   - App Manifest (`app/manifest.ts`) with standalone display, theme colors, scope, and adaptive icons.
+   - Service Worker (`sw.js` via `@ducanh2912/next-pwa` or custom SW) for offline shell caching, media caching, and offline fallback route (`/~offline`).
+   - Add-to-Home-Screen prompt UI triggered by `beforeinstallprompt`.
+   - Web Push notifications setup via `web-push` and VAPID keys.
+
+3. Database Schema & Spatial Indexing (PostgreSQL + PostGIS):
+   - Categories table: id, name, slug.
+   - Ads table: id, title, category_id, media_url, media_type (image/gif/video), ad_format (300x250, 728x90, 1080x1920, responsive), target_url, latitude (decimal), longitude (decimal), radius_km (int), location (geography Point), weight_priority, is_active (boolean, default true).
+   - Analytics Logs table: id, ad_id, event_type (impression/click), referrer_domain, user_ip, timestamp.
+   - Spatial Indexing: GIST spatial index on `location` column for sub-5ms `ST_DWithin` queries.
+
+4. On-Server Media Upload & Compression Pipeline:
+   - API Route Handler (`POST /api/upload`) that receives files, uses `sharp` to convert images to WebP (82% quality) and `fluent-ffmpeg` to convert GIFs/videos into optimized H.264 MP4 loops under 5MB, then uploads the result directly to Cloudflare R2.
+
+5. Public Discovery Front-End & 3rd-Party Embed:
+   - Public page (`/app/page.tsx`) featuring browser geolocation auto-detection (`navigator.geolocation`), fallback city detection, manual location picker, category filter pills, and ad cards with distance tags ("1.2 km away").
+   - Offer detail modal popup with full media display and map pin.
+   - Real-time impression tracking via IntersectionObserver (`POST /api/track/impression`).
+   - Public embeddable vanilla JS script (`/public/ad.js`) allowing 3rd-party websites to render iframe ads via `<script src=".../ad.js" data-placement="XYZ"></script>`.
+
+6. Admin Dashboard & Metrics:
+   - Protected admin routes (`/admin`) with session authentication.
+   - Interactive map pin selector for setting ad coordinates and radius.
+   - Soft-delete handler (`is_active = false`) that preserves historical analytics and triggers the Cloudflare Purge Cache API.
+   - Analytics dashboard with charts showing Views, Clicks, CTR %, and location/category performance.

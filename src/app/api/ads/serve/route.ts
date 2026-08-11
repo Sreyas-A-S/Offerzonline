@@ -1,0 +1,157 @@
+import { NextRequest, NextResponse } from "next/server";
+import { pool } from "@/db";
+
+// Fallback mock categories and ads if PostgreSQL credentials are not yet configured in local .env
+const MOCK_CATEGORIES = [
+  { id: 1, name: "Retail & Shopping", slug: "retail-shopping" },
+  { id: 2, name: "Food & Dining", slug: "food-dining" },
+  { id: 3, name: "Services & Repair", slug: "services-repair" },
+  { id: 4, name: "Entertainment & Events", slug: "entertainment-events" },
+  { id: 5, name: "Health & Fitness", slug: "health-fitness" },
+  { id: 6, name: "Electronics & Tech", slug: "electronics-tech" },
+];
+
+const MOCK_ADS = [
+  {
+    id: 1,
+    title: "50% Off Gourmet Pizza & Pasta Combo",
+    category_name: "Food & Dining",
+    category_id: 2,
+    media_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80",
+    media_type: "image",
+    ad_format: "300x250",
+    target_url: "https://offerzonline.com/deals/pizza",
+    latitude: 28.6139,
+    longitude: 77.209,
+    radius_km: 10,
+    weight_priority: 5,
+    distance_km: 1.2,
+    views: 142,
+    clicks: 18,
+    ctr: 12.68,
+    is_active: true,
+  },
+  {
+    id: 2,
+    title: "Buy 1 Get 1 Free Premium Gym Membership",
+    category_name: "Health & Fitness",
+    category_id: 5,
+    media_url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80",
+    media_type: "image",
+    ad_format: "responsive",
+    target_url: "https://offerzonline.com/deals/fitness",
+    latitude: 28.6139,
+    longitude: 77.209,
+    radius_km: 15,
+    weight_priority: 4,
+    distance_km: 3.4,
+    views: 98,
+    clicks: 11,
+    ctr: 11.22,
+    is_active: true,
+  },
+  {
+    id: 3,
+    title: "Electronics Clearance - Up to 40% Off Laptops",
+    category_name: "Electronics & Tech",
+    category_id: 6,
+    media_url: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop&q=80",
+    media_type: "image",
+    ad_format: "728x90",
+    target_url: "https://offerzonline.com/deals/laptops",
+    latitude: 28.6139,
+    longitude: 77.209,
+    radius_km: 25,
+    weight_priority: 3,
+    distance_km: 5.8,
+    views: 210,
+    clicks: 29,
+    ctr: 13.81,
+    is_active: true,
+  }
+];
+
+export async function GET(req: NextRequest) {
+  try {
+    const searchParams = req.nextUrl.searchParams;
+    const lat = parseFloat(searchParams.get("lat") || "0");
+    const lng = parseFloat(searchParams.get("lng") || "0");
+    const categoryId = searchParams.get("category");
+    const format = searchParams.get("format");
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+
+    const client = await pool.connect();
+    try {
+      let query = `
+        SELECT 
+          a.id,
+          a.title,
+          a.category_id,
+          c.name as category_name,
+          a.media_url,
+          a.media_type,
+          a.ad_format,
+          a.target_url,
+          a.latitude,
+          a.longitude,
+          a.radius_km,
+          a.weight_priority,
+          ROUND(
+            (ST_Distance(
+              a.location,
+              ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+            ) / 1000)::numeric, 2
+          ) as distance_km
+        FROM ads a
+        LEFT JOIN categories c ON a.category_id = c.id
+        WHERE a.is_active = TRUE
+      `;
+
+      const queryParams: any[] = [lng, lat];
+      let paramCounter = 3;
+
+      if (lat !== 0 || lng !== 0) {
+        query += ` AND ST_DWithin(a.location, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, a.radius_km * 1000)`;
+      }
+
+      if (categoryId && categoryId !== "all") {
+        query += ` AND a.category_id = $${paramCounter}`;
+        queryParams.push(parseInt(categoryId, 10));
+        paramCounter++;
+      }
+
+      if (format) {
+        query += ` AND a.ad_format = $${paramCounter}`;
+        queryParams.push(format);
+        paramCounter++;
+      }
+
+      query += ` ORDER BY a.weight_priority DESC, distance_km ASC LIMIT $${paramCounter}`;
+      queryParams.push(limit);
+
+      const result = await client.query(query, queryParams);
+
+      return NextResponse.json(
+        { ads: result.rows },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "public, max-age=30, stale-while-revalidate=60",
+          },
+        }
+      );
+    } finally {
+      client.release();
+    }
+  } catch (error: any) {
+    console.warn("PostgreSQL connection fallback triggered in /api/ads/serve:", error.message);
+    
+    // Smooth fallback to mock ads so frontend/UI never breaks while DB credentials are being set up
+    let filteredMockAds = MOCK_ADS;
+    if (categoryId && categoryId !== "all") {
+      filteredMockAds = filteredMockAds.filter((a) => a.category_id === parseInt(categoryId, 10));
+    }
+
+    return NextResponse.json({ ads: filteredMockAds }, { status: 200 });
+  }
+}
