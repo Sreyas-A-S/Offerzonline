@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { AdCard } from "@/components/AdCard";
 import { OfferModal } from "@/components/OfferModal";
+import { LocationModal } from "@/components/LocationModal";
 import { LottieAnimation } from "@/components/LottieAnimation";
 import { 
   MapPin, Navigation, Sparkles, Store, Search, Mic, Bell, 
   Heart, ArrowUpRight, Tag, Bookmark, Layers, Percent, Clock, Compass, User, Star, ShoppingBag,
-  Utensils, Car, Plane, Smartphone, Dumbbell, ShieldCheck
+  Utensils, Car, Plane, Smartphone, Dumbbell, ShieldCheck, ChevronDown, ArrowUp
 } from "lucide-react";
 import Link from "next/link";
 import gsap from "gsap";
@@ -123,18 +124,42 @@ const DEFAULT_CUTOUT_CARD = {
   ]
 };
 
+const INITIAL_CATEGORIES = [
+  { id: 1, name: "Food & Dining" },
+  { id: 2, name: "Retail & Shopping" },
+  { id: 3, name: "Electronics & Tech" },
+  { id: 4, name: "Health & Fitness" },
+  { id: 5, name: "Services & Repair" },
+  { id: 6, name: "Entertainment & Events" },
+];
+
 export default function PublicDiscoveryPage() {
   const [ads, setAds] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedAd, setSelectedAd] = useState<any>(null);
   const [savedAdIds, setSavedAdIds] = useState<number[]>([]);
-  const [activeTab, setActiveTab] = useState<"home" | "categories" | "sparkle" | "deals" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "categories" | "sparkle" | "deals" | "saved">("home");
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const headerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top button visibility listener
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 350);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // User location state
   const [location, setLocation] = useState<{ lat: number; lng: number }>({ lat: 28.6139, lng: 77.209 });
@@ -254,11 +279,11 @@ export default function PublicDiscoveryPage() {
         {/* Top Header Bar */}
         <header ref={headerRef} className="flex items-center justify-between pt-1 animate-header">
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-0.5 shadow-md shrink-0">
-              <div className="w-full h-full bg-white rounded-full flex items-center justify-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 text-base sm:text-lg">
-                O
-              </div>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Offerzonline Logo"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-full shadow-md shrink-0 bg-white p-0.5 border border-slate-100"
+            />
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 Offerzonline
@@ -268,11 +293,14 @@ export default function PublicDiscoveryPage() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={detectLocation}
-              className="bg-slate-50 hover:bg-slate-100 border border-slate-200/80 shadow-sm text-slate-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition-all"
+              onClick={() => setIsLocationModalOpen(true)}
+              className="bg-white/90 hover:bg-slate-50 border border-slate-200/90 shadow-xs hover:border-indigo-300 text-slate-800 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer group"
             >
               <LottieAnimation type="pulse" className="w-4 h-4 shrink-0" />
-              <span className="max-w-[85px] sm:max-w-[120px] truncate">{locationName}</span>
+              <div className="flex items-center gap-1">
+                <span className="max-w-[95px] sm:max-w-[140px] truncate text-slate-900">{locationName}</span>
+                <ChevronDown size={13} className="text-slate-400 group-hover:text-indigo-600 transition" />
+              </div>
             </button>
 
             <button className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 border border-slate-200/80 shadow-sm flex items-center justify-center text-slate-700 hover:text-indigo-600 hover:bg-slate-100 transition shrink-0">
@@ -312,8 +340,8 @@ export default function PublicDiscoveryPage() {
             )}
           </div>
 
-          {/* Mobile Horizontal Scrollable Category Bar (at least 4 displayed at once) */}
-          <div className="md:hidden flex items-start gap-3 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x">
+          {/* Mobile Horizontal Scrollable Category Bar - 3D Pop Out Design (at least 4 displayed at once) */}
+          <div className="md:hidden flex items-start gap-3.5 overflow-x-auto pb-4 pt-3 scrollbar-none snap-x overflow-y-visible">
             {categories.map((cat) => {
               const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
               const isSelected = selectedCategory === cat.id.toString();
@@ -322,27 +350,32 @@ export default function PublicDiscoveryPage() {
                 <div
                   key={cat.id}
                   onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                  className="flex-shrink-0 w-[21vw] min-w-[82px] max-w-[100px] snap-start cursor-pointer group"
+                  className="flex-shrink-0 w-[22vw] min-w-[85px] max-w-[105px] snap-start cursor-pointer group relative pt-2"
                 >
-                  {/* Category Image Tile - Borderless Cutout */}
+                  {/* Category Pastel Base Tile */}
                   <div
-                    className={`aspect-square w-full ${visual.bg} rounded-2xl relative shadow-sm border ${
-                      isSelected ? "border-indigo-600 ring-3 ring-indigo-400/50 scale-105" : "border-slate-200/80"
-                    } p-1 flex items-center justify-center transition-all group-hover:scale-105`}
+                    className={`aspect-square w-full ${visual.bg} rounded-[1.6rem] relative shadow-md border ${
+                      isSelected ? "border-indigo-600 ring-3 ring-indigo-400/50 scale-105" : "border-white/70"
+                    } transition-all group-hover:scale-105 flex items-center justify-center p-0 overflow-visible`}
                   >
-                    <img
-                      src={visual.image}
-                      alt={cat.name}
-                      className="w-full h-full object-contain drop-shadow-md"
-                    />
+                    {/* 3D Cutout filling and bursting 125% past tile edges */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <img
+                        src={visual.image}
+                        alt={cat.name}
+                        loading="eager"
+                        className="w-[125%] h-[125%] max-w-none object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.25)] transition-transform group-hover:scale-110 -translate-y-1"
+                      />
+                    </div>
+
                     {isSelected && (
-                      <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-indigo-600 border border-white" />
+                      <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 border border-white z-20" />
                     )}
                   </div>
 
                   {/* Category Name & Arrow underneath */}
-                  <div className="mt-1.5 text-left">
-                    <span className="text-[11px] font-bold text-slate-800 leading-tight block truncate">
+                  <div className="mt-2 text-left">
+                    <span className="text-[11px] font-extrabold text-slate-900 leading-tight block truncate">
                       {cat.name.split(" ")[0]} <span className="text-slate-400 font-normal">›</span>
                     </span>
                   </div>
@@ -397,6 +430,7 @@ export default function PublicDiscoveryPage() {
                     <img
                       src={visual.image}
                       alt={cat.name}
+                      loading="eager"
                       className="w-full h-full object-contain filter drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]"
                     />
                   </div>
@@ -516,9 +550,11 @@ export default function PublicDiscoveryPage() {
         <footer className="mt-16 pt-8 border-t border-slate-200/80 pb-6 text-slate-500 text-xs">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
-                O
-              </div>
+              <img
+                src="/logo.png"
+                alt="Offerzonline Logo"
+                className="w-7 h-7 object-contain rounded-full bg-white p-0.5 border border-slate-100"
+              />
               <span className="font-extrabold text-slate-900 text-sm tracking-tight">Offerzonline</span>
             </div>
 
@@ -527,7 +563,6 @@ export default function PublicDiscoveryPage() {
               <a href="#" className="hover:text-indigo-600 transition">Verified Deals</a>
               <a href="#" className="hover:text-indigo-600 transition">Privacy Policy</a>
               <a href="#" className="hover:text-indigo-600 transition">Terms of Service</a>
-              <Link href="/admin" className="hover:text-indigo-600 transition font-bold text-indigo-600">Admin Portal</Link>
             </div>
 
             <p className="text-[11px] text-slate-400">
@@ -559,14 +594,6 @@ export default function PublicDiscoveryPage() {
             <Layers size={18} />
           </button>
 
-          {/* Central Active Button */}
-          <button 
-            onClick={() => setActiveTab("sparkle")}
-            className="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 scale-105 hover:scale-110 transition-transform"
-          >
-            <Sparkles size={20} />
-          </button>
-
           <button 
             onClick={() => setActiveTab("deals")}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
@@ -576,17 +603,42 @@ export default function PublicDiscoveryPage() {
             <Tag size={18} />
           </button>
 
-          <Link 
-            href="/admin"
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-all"
+          <button 
+            onClick={() => setActiveTab("saved")}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+              activeTab === "saved" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
+            }`}
           >
-            <User size={18} />
-          </Link>
+            <Bookmark size={18} />
+          </button>
         </nav>
       </div>
 
+      {/* Scroll to Top Floating Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-20 sm:bottom-24 right-5 sm:right-8 z-40 bg-white/95 hover:bg-white text-indigo-600 border border-slate-200/90 shadow-xl p-3 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 animate-in fade-in zoom-in"
+          title="Scroll to Top"
+        >
+          <ArrowUp size={20} />
+        </button>
+      )}
+
       {/* Offer Detail Modal */}
       <OfferModal ad={selectedAd} onClose={() => setSelectedAd(null)} />
+
+      {/* Location Selection Modal */}
+      <LocationModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        currentLocationName={locationName}
+        onSelectLocation={(name, lat, lng) => {
+          setLocationName(name);
+          setLocation({ lat, lng });
+        }}
+        onDetectGPS={detectLocation}
+      />
     </div>
   );
 }

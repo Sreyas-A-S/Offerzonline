@@ -3,33 +3,44 @@
 import { useState, useEffect } from "react";
 import { 
   Plus, Trash2, Eye, MousePointerClick, TrendingUp, Upload, 
-  MapPin, CheckCircle, RefreshCw, Store
+  MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 export default function AdminDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const [ads, setAds] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "ads" | "create">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "ads" | "categories" | "create">("overview");
 
-  // Form State for New Ad
-  const [formData, setFormData] = useState({
-    title: "",
-    categoryId: "1",
-    mediaUrl: "",
-    mediaType: "image",
-    adFormat: "300x250",
-    targetUrl: "https://",
-    latitude: 28.6139,
-    longitude: 77.209,
-    radiusKm: 5,
-    weightPriority: 1,
-  });
+  // Check authentication on mount
+  useEffect(() => {
+    const isAuth = sessionStorage.getItem("admin_authenticated") === "true";
+    setIsAuthenticated(isAuth);
+  }, []);
 
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginUsername === "admin" && (loginPassword === "password123" || loginPassword === "offerz2026")) {
+      sessionStorage.setItem("admin_authenticated", "true");
+      setIsAuthenticated(true);
+      setAuthError(null);
+    } else {
+      setAuthError("Invalid Admin Username or Password");
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("admin_authenticated");
+    setIsAuthenticated(false);
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -46,8 +57,10 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated]);
 
   // Handle File Upload to /api/upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,6 +148,70 @@ export default function AdminDashboard() {
   const totalClicks = ads.reduce((acc, curr) => acc + parseInt(curr.clicks || 0, 10), 0);
   const avgCtr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(2) : "0.00";
 
+  // Login Screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
+        <div className="bg-white/95 backdrop-blur-2xl border border-white/20 p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl space-y-6 animate-in zoom-in-95">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto text-indigo-600 border border-indigo-100 shadow-sm">
+              <Lock size={28} />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Admin Authentication</h2>
+            <p className="text-xs text-slate-500">Sign in with master credentials to access management hub</p>
+          </div>
+
+          {authError && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold p-3.5 rounded-2xl text-center">
+              {authError}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Admin Username
+              </label>
+              <input
+                type="text"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                placeholder="admin"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white font-medium"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Master Password
+              </label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white font-medium"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black py-3.5 rounded-2xl text-xs shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ShieldCheck size={16} /> Unlock Admin Dashboard
+            </button>
+          </form>
+
+          <p className="text-[11px] text-center text-slate-400">
+            Default credentials: <span className="font-mono text-slate-600 font-bold">admin</span> / <span className="font-mono text-slate-600 font-bold">offerz2026</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col relative">
       {/* Dynamic Background Glow */}
@@ -143,47 +220,69 @@ export default function AdminDashboard() {
       {/* Top Navbar */}
       <header className="border-b border-slate-200/60 bg-white/60 backdrop-blur-xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-0 z-40 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-md">
-            O
-          </div>
+          <img
+            src="/logo.png"
+            alt="Offerzonline Logo"
+            className="w-10 h-10 object-contain rounded-xl shadow-md bg-white p-0.5 border border-slate-100"
+          />
           <div>
             <h1 className="font-bold text-xl text-slate-900 tracking-tight">Offerzonline Admin</h1>
             <p className="text-xs text-slate-500">Single-Admin Ad Server & Geo-Targeting Hub</p>
           </div>
         </div>
 
-        <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200 text-xs font-semibold">
+        <div className="flex items-center gap-3">
+          <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200 text-xs font-semibold">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
+                activeTab === "overview"
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              Analytics Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("ads")}
+              className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
+                activeTab === "ads"
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              Campaigns ({ads.filter((a) => a.is_active).length})
+            </button>
+            <button
+              onClick={() => setActiveTab("categories")}
+              className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
+                activeTab === "categories"
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              Categories ({categories.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("create")}
+              className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-1 ${
+                activeTab === "create"
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              <Plus size={14} /> Create Campaign
+            </button>
+          </nav>
+
           <button
-            onClick={() => setActiveTab("overview")}
-            className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
-              activeTab === "overview"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-950"
-            }`}
+            onClick={handleLogout}
+            className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1 transition"
+            title="Log Out"
           >
-            Analytics Overview
+            <LogOut size={16} />
           </button>
-          <button
-            onClick={() => setActiveTab("ads")}
-            className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
-              activeTab === "ads"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-950"
-            }`}
-          >
-            Campaigns ({ads.filter((a) => a.is_active).length})
-          </button>
-          <button
-            onClick={() => setActiveTab("create")}
-            className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-1 ${
-              activeTab === "create"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-950"
-            }`}
-          >
-            <Plus size={14} /> Create Campaign
-          </button>
-        </nav>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -470,6 +569,73 @@ export default function AdminDashboard() {
                 <CheckCircle size={18} /> Launch Geo-Targeted Campaign
               </button>
             </form>
+          </div>
+        )}
+
+        {/* Categories Tab */}
+        {activeTab === "categories" && (
+          <div className="space-y-8">
+            {/* Create Category Card */}
+            <div className="bg-white border border-slate-200/60 p-6 sm:p-8 rounded-[2.5rem] shadow-sm max-w-xl">
+              <h3 className="font-bold text-lg text-slate-900 mb-4 tracking-tight">Add New Backend Category</h3>
+              
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const input = form.elements.namedItem("catName") as HTMLInputElement;
+                if (!input || !input.value.trim()) return;
+
+                try {
+                  const res = await fetch("/api/admin/categories", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: input.value.trim() }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setMessage({ type: "success", text: `Category "${input.value}" created successfully!` });
+                    input.value = "";
+                    fetchDashboardData();
+                  } else {
+                    setMessage({ type: "error", text: data.error || "Failed to create category" });
+                  }
+                } catch (err: any) {
+                  setMessage({ type: "error", text: err.message });
+                }
+              }} className="flex items-center gap-3">
+                <input
+                  type="text"
+                  name="catName"
+                  placeholder="e.g. Beauty & Spa"
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium"
+                />
+                <button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
+                >
+                  <Plus size={14} /> Add Category
+                </button>
+              </form>
+            </div>
+
+            {/* Existing Categories Table */}
+            <div className="bg-white border border-slate-200/60 p-6 sm:p-8 rounded-[2.5rem] shadow-sm">
+              <h3 className="font-bold text-lg text-slate-900 mb-6 tracking-tight">All Active Backend Categories</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map((cat) => (
+                  <div key={cat.id} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm">{cat.name}</h4>
+                      <p className="text-[10px] text-slate-400 font-mono">slug: {cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}</p>
+                    </div>
+                    <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-200">
+                      ID #{cat.id}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </main>
