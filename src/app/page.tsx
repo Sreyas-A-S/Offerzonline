@@ -258,43 +258,7 @@ export default function PublicDiscoveryPage() {
           </button>
         </div>
 
-        {/* Today at a Glance Summary Cards */}
-        <section ref={statsRef} className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs sm:text-sm font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-              <Clock size={14} className="text-indigo-600" /> Today at a Glance
-            </h2>
-          </div>
 
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-            {/* Card 1 */}
-            <div className="animate-stat-card bg-sky-50/90 border border-sky-200/90 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white flex items-center justify-center shadow-sm mb-2">
-                <Percent size={16} />
-              </div>
-              <span className="text-[10px] sm:text-xs font-bold text-sky-800 block">Active Deals</span>
-              <span className="text-xl sm:text-3xl font-black text-slate-900 leading-tight">{ads.length}</span>
-            </div>
-
-            {/* Card 2 */}
-            <div className="animate-stat-card bg-indigo-50/90 border border-indigo-200/90 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-sm mb-2">
-                <Layers size={16} />
-              </div>
-              <span className="text-[10px] sm:text-xs font-bold text-indigo-800 block">Categories</span>
-              <span className="text-xl sm:text-3xl font-black text-slate-900 leading-tight">{categories.length}</span>
-            </div>
-
-            {/* Card 3 */}
-            <div className="animate-stat-card bg-emerald-50/90 border border-emerald-200/90 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-400 to-teal-500 text-white flex items-center justify-center shadow-sm mb-2">
-                <Bookmark size={16} />
-              </div>
-              <span className="text-[10px] sm:text-xs font-bold text-emerald-800 block">Saved</span>
-              <span className="text-xl sm:text-3xl font-black text-slate-900 leading-tight">{savedAdIds.length}</span>
-            </div>
-          </div>
-        </section>
 
         {/* Explore Categories Section - PLACED ABOVE RECOMMENDED FOR YOU */}
         <section className="space-y-4">
@@ -303,7 +267,7 @@ export default function PublicDiscoveryPage() {
             <span className="text-xs font-bold text-indigo-600 cursor-pointer hover:underline">See All ↗</span>
           </div>
 
-          {/* Dedicated Category Cards Grid - Wider 2x3 Grid on Desktop */}
+          {/* Dedicated Category Cards Grid - Strictly 16:9 Outer Aspect Ratio (3x2 Grid on Desktop) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {categories.map((cat) => {
               const visual = CATEGORY_VISUALS[cat.name] || DEFAULT_VISUAL;
@@ -313,45 +277,43 @@ export default function PublicDiscoveryPage() {
                 <div
                   key={cat.id}
                   onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                  className={`group relative ${visual.bg} border ${
+                  className={`group relative aspect-[16/9] w-full ${visual.bg} border ${
                     isSelected ? "border-indigo-600 ring-2 ring-indigo-400 scale-[1.02]" : visual.border
-                  } rounded-[2rem] p-4 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden`}
+                  } rounded-[2rem] p-3.5 sm:p-4 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden`}
                 >
-                  {/* Rating / Badge Tag */}
-                  <div className="flex items-center justify-between mb-3 z-10">
-                    <span className="text-xs font-black text-slate-900">
+                  {/* Top Bar: Title & Rating Tag */}
+                  <div className="flex items-center justify-between z-10">
+                    <span className="text-xs sm:text-sm font-black text-slate-900 line-clamp-1">
                       {cat.name}
                     </span>
-                    <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-slate-200/80 text-xs font-bold text-slate-800 flex items-center gap-1 shadow-2xs">
-                      <Star size={12} className="fill-amber-400 text-amber-400" />
+                    <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-slate-200/80 text-[10px] sm:text-xs font-bold text-slate-800 flex items-center gap-1 shadow-2xs shrink-0">
+                      <Star size={11} className="fill-amber-400 text-amber-400" />
                       {visual.rating}
                     </div>
                   </div>
 
-                  {/* Category Image Frame - Wider Aspect Ratio */}
-                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden mb-3 bg-white/60 shadow-inner">
+                  {/* Center Image Frame */}
+                  <div className="relative h-20 sm:h-24 w-full rounded-xl sm:rounded-2xl overflow-hidden my-1 bg-white/60 shadow-inner">
                     <img
                       src={visual.image}
                       alt={cat.name}
                       className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                     />
                     {isSelected && (
-                      <div className="absolute top-2 left-2 bg-indigo-600 text-white font-bold text-[10px] px-2.5 py-0.5 rounded-full shadow-sm">
+                      <div className="absolute top-1.5 left-1.5 bg-indigo-600 text-white font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full shadow-sm">
                         Selected
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Bar: Specs & Action Button */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div>
-                      <span className="text-xs font-bold text-slate-600 block">
-                        {visual.count}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between z-10">
+                    <span className="text-[11px] sm:text-xs font-bold text-slate-600">
+                      {visual.count}
+                    </span>
 
-                    <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 hover:bg-indigo-600 hover:text-white flex items-center justify-center group-hover:scale-110 transition-all shrink-0 shadow-2xs">
-                      <ShoppingBag size={14} />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 hover:bg-indigo-600 hover:text-white flex items-center justify-center group-hover:scale-110 transition-all shrink-0 shadow-2xs">
+                      <ShoppingBag size={13} />
                     </div>
                   </div>
                 </div>
