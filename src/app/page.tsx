@@ -350,7 +350,7 @@ export default function PublicDiscoveryPage() {
                       </span>
                     </div>
 
-                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 hover:bg-indigo-600 hover:text-white flex items-center justify-center group-hover:scale-110 transition-all shrink-0 shadow-2xs">
                       <ShoppingBag size={14} />
                     </div>
                   </div>
@@ -461,13 +461,13 @@ export default function PublicDiscoveryPage() {
 
       </div>
 
-      {/* Floating Pill Bottom Navigation for Mobile & Responsive Desktop */}
+      {/* Floating Pill Bottom Navigation for Light Mode */}
       <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-xs sm:max-w-md w-full px-4">
-        <nav className="floating-nav px-4 py-2.5 rounded-full flex items-center justify-between shadow-2xl">
+        <nav className="floating-nav px-4 py-2.5 rounded-full flex items-center justify-between shadow-xl">
           <button 
             onClick={() => setActiveTab("home")}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              activeTab === "home" ? "bg-white/20 text-white" : "text-slate-400 hover:text-white"
+              activeTab === "home" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
             }`}
           >
             <Compass size={18} />
@@ -476,7 +476,7 @@ export default function PublicDiscoveryPage() {
           <button 
             onClick={() => setActiveTab("categories")}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              activeTab === "categories" ? "bg-white/20 text-white" : "text-slate-400 hover:text-white"
+              activeTab === "categories" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
             }`}
           >
             <Layers size={18} />
@@ -485,7 +485,7 @@ export default function PublicDiscoveryPage() {
           {/* Central Active Button */}
           <button 
             onClick={() => setActiveTab("sparkle")}
-            className="w-11 h-11 rounded-full bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/30 scale-105 hover:scale-110 transition-transform"
+            className="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 scale-105 hover:scale-110 transition-transform"
           >
             <Sparkles size={20} />
           </button>
@@ -493,7 +493,7 @@ export default function PublicDiscoveryPage() {
           <button 
             onClick={() => setActiveTab("deals")}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              activeTab === "deals" ? "bg-white/20 text-white" : "text-slate-400 hover:text-white"
+              activeTab === "deals" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
             }`}
           >
             <Tag size={18} />
@@ -501,7 +501,7 @@ export default function PublicDiscoveryPage() {
 
           <Link 
             href="/admin"
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-all"
           >
             <User size={18} />
           </Link>

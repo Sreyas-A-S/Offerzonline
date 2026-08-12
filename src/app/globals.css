@@ -53,11 +53,11 @@ body {
   box-shadow: 0 20px 35px -5px rgba(99, 102, 241, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.06);
 }
 
-/* Floating Bottom Navigation for Mobile */
+/* Floating Bottom Navigation for Light Mode */
 .floating-nav {
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1), 0 5px 15px -3px rgba(99, 102, 241, 0.08);
 }
