@@ -72,14 +72,14 @@ const MOCK_ADS = [
 ];
 
 export async function GET(req: NextRequest) {
-  try {
-    const searchParams = req.nextUrl.searchParams;
-    const lat = parseFloat(searchParams.get("lat") || "0");
-    const lng = parseFloat(searchParams.get("lng") || "0");
-    const categoryId = searchParams.get("category");
-    const format = searchParams.get("format");
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const searchParams = req.nextUrl.searchParams;
+  const lat = parseFloat(searchParams.get("lat") || "0");
+  const lng = parseFloat(searchParams.get("lng") || "0");
+  const categoryId = searchParams.get("category");
+  const format = searchParams.get("format");
+  const limit = parseInt(searchParams.get("limit") || "20", 10);
 
+  try {
     const client = await pool.connect();
     try {
       let query = `

@@ -1,8 +1,33 @@
+# dependencies
 node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+
+# build
+dist/
+build/
+
+# env files
 .env
 .env.local
 .env.*.local
-dist/
-build/
-.DS_Store
+
+# logs
 *.log
+
+# misc
+.DS_Store
+*.pem
+.vercel/
+*.tsbuildinfo
+
+# temp scripts
+test-db-temp.js
+
+.next/cache/webpack/client-development/index.pack.gz
+.next/cache/webpack/client-development/index.pack.gz
+.next/cache/webpack/client-development
+.next/cache/**

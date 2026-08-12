@@ -3,8 +3,14 @@ import { pool } from "./index";
 export async function initializeDatabase() {
   const client = await pool.connect();
   try {
-    // 1. Enable PostGIS Extension
-    await client.query(`CREATE EXTENSION IF NOT EXISTS postgis;`);
+    let hasPostGIS = false;
+    try {
+      await client.query(`CREATE EXTENSION IF NOT EXISTS postgis;`);
+      hasPostGIS = true;
+      console.log("PostGIS extension enabled.");
+    } catch (err: any) {
+      console.warn("PostGIS extension not available on this PostgreSQL instance. Falling back to standard lat/lng columns:", err.message);
+    }
 
     // 2. Create Categories table
     await client.query(`
@@ -17,26 +23,52 @@ export async function initializeDatabase() {
       );
     `);
 
-    // 3. Create Ads table with PostGIS geography point column
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS ads (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-        media_url TEXT NOT NULL,
-        media_type VARCHAR(50) NOT NULL,
-        ad_format VARCHAR(50) NOT NULL,
-        target_url TEXT NOT NULL,
-        latitude DECIMAL(10, 7) NOT NULL,
-        longitude DECIMAL(10, 7) NOT NULL,
-        radius_km INTEGER NOT NULL DEFAULT 5,
-        location GEOGRAPHY(Point, 4326),
-        weight_priority INTEGER NOT NULL DEFAULT 1,
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+    // 3. Create Ads table
+    if (hasPostGIS) {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ads (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+          media_url TEXT NOT NULL,
+          media_type VARCHAR(50) NOT NULL,
+          ad_format VARCHAR(50) NOT NULL,
+          target_url TEXT NOT NULL,
+          latitude DECIMAL(10, 7) NOT NULL,
+          longitude DECIMAL(10, 7) NOT NULL,
+          radius_km INTEGER NOT NULL DEFAULT 5,
+          location GEOGRAPHY(Point, 4326),
+          weight_priority INTEGER NOT NULL DEFAULT 1,
+          is_active BOOLEAN NOT NULL DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_ads_location_gist 
+        ON ads USING GIST (location);
+      `);
+    } else {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ads (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+          media_url TEXT NOT NULL,
+          media_type VARCHAR(50) NOT NULL,
+          ad_format VARCHAR(50) NOT NULL,
+          target_url TEXT NOT NULL,
+          latitude DECIMAL(10, 7) NOT NULL,
+          longitude DECIMAL(10, 7) NOT NULL,
+          radius_km INTEGER NOT NULL DEFAULT 5,
+          weight_priority INTEGER NOT NULL DEFAULT 1,
+          is_active BOOLEAN NOT NULL DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    }
 
     // 4. Create Analytics Logs table
     await client.query(`
@@ -51,13 +83,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // 5. Create Spatial Indexing (GIST) on location column for sub-5ms ST_DWithin queries
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_ads_location_gist 
-      ON ads USING GIST (location);
-    `);
-
-    // 6. Seed initial categories if empty
+    // 5. Seed initial categories if empty
     const catCheck = await client.query(`SELECT COUNT(*) FROM categories;`);
     if (parseInt(catCheck.rows[0].count, 10) === 0) {
       await client.query(`
@@ -71,7 +97,7 @@ export async function initializeDatabase() {
       `);
     }
 
-    console.log("Database initialized successfully with PostGIS extension & spatial indexing.");
+    console.log("Database initialized successfully.");
   } catch (error) {
     console.error("Error initializing database:", error);
   } finally {
