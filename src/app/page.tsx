@@ -6,70 +6,121 @@ import { OfferModal } from "@/components/OfferModal";
 import { LottieAnimation } from "@/components/LottieAnimation";
 import { 
   MapPin, Navigation, Sparkles, Store, Search, Mic, Bell, 
-  Heart, ArrowUpRight, Tag, Bookmark, Layers, Percent, Clock, Compass, User, Star, ShoppingBag
+  Heart, ArrowUpRight, Tag, Bookmark, Layers, Percent, Clock, Compass, User, Star, ShoppingBag,
+  Utensils, Car, Plane, Smartphone, Dumbbell, ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
 import gsap from "gsap";
 
-// Visual metadata for category cards matching the reference design
-const CATEGORY_VISUALS: Record<string, { bg: string; border: string; text: string; image: string; rating: string; count: string }> = {
-  "Retail & Shopping": {
-    bg: "bg-[#fef3c7]", // Pastel Yellow/Peach
-    border: "border-amber-300",
-    text: "text-amber-950",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&auto=format&fit=crop&q=80",
-    rating: "4.9",
-    count: "12 Deals"
-  },
+// Category Visual Metadata inspired by the reference design with 3D cutouts & sub-tags
+const CATEGORY_CUTOUT_CARDS: Record<string, { 
+  bg: string; 
+  titleColor: string; 
+  subPillBg: string;
+  subPillText: string;
+  image: string; 
+  align: "right" | "left";
+  blendMode?: string;
+  subTags: { label: string; icon: any }[];
+}> = {
   "Food & Dining": {
-    bg: "bg-[#ffedd5]", // Soft Coral / Peach
-    border: "border-orange-300",
-    text: "text-orange-950",
-    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&auto=format&fit=crop&q=80",
-    rating: "4.8",
-    count: "18 Deals"
-  },
-  "Electronics & Tech": {
-    bg: "bg-[#dbeafe]", // Baby Blue
-    border: "border-blue-300",
-    text: "text-blue-950",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop&q=80",
-    rating: "4.9",
-    count: "15 Deals"
-  },
-  "Health & Fitness": {
-    bg: "bg-[#dcfce7]", // Mint Green
-    border: "border-emerald-300",
-    text: "text-emerald-950",
-    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80",
-    rating: "4.7",
-    count: "9 Deals"
+    bg: "bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a]", // Soft Golden Cream Gradient
+    titleColor: "text-slate-900",
+    subPillBg: "bg-white/80 border border-amber-200/80 shadow-2xs",
+    subPillText: "text-amber-950 font-extrabold",
+    image: "/images/categories/food.png",
+    align: "right",
+    blendMode: "mix-blend-multiply",
+    subTags: [
+      { label: "Restaurants", icon: Utensils },
+      { label: "Takeout", icon: ShoppingBag },
+      { label: "Cafes", icon: Sparkles }
+    ]
   },
   "Services & Repair": {
-    bg: "bg-[#fce7f3]", // Soft Pink
-    border: "border-pink-300",
-    text: "text-pink-950",
-    image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&auto=format&fit=crop&q=80",
-    rating: "4.6",
-    count: "7 Deals"
+    bg: "bg-gradient-to-br from-[#1e293b] via-[#334155] to-[#0f172a]", // Dark Charcoal Gradient
+    titleColor: "text-white",
+    subPillBg: "bg-white/15 border border-white/15 backdrop-blur-md",
+    subPillText: "text-slate-100 font-extrabold",
+    image: "/images/categories/repair.png",
+    align: "right",
+    blendMode: "mix-blend-lighten",
+    subTags: [
+      { label: "Auto", icon: Car },
+      { label: "Services", icon: ShieldCheck },
+      { label: "Repairs", icon: Store }
+    ]
   },
   "Entertainment & Events": {
-    bg: "bg-[#f3e8ff]", // Soft Lavender / Violet
-    border: "border-purple-300",
-    text: "text-purple-950",
-    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&auto=format&fit=crop&q=80",
-    rating: "4.8",
-    count: "11 Deals"
+    bg: "bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]", // Soft Sky Cyan Gradient
+    titleColor: "text-slate-950",
+    subPillBg: "bg-white/80 border border-sky-200/80 shadow-2xs",
+    subPillText: "text-sky-950 font-extrabold",
+    image: "/images/categories/travel.png",
+    align: "left",
+    blendMode: "mix-blend-multiply",
+    subTags: [
+      { label: "Hotels", icon: Store },
+      { label: "Flights", icon: Plane },
+      { label: "Events", icon: Sparkles }
+    ]
+  },
+  "Retail & Shopping": {
+    bg: "bg-gradient-to-br from-[#7c3aed] via-[#6d28d9] to-[#4c1d95]", // Deep Royal Violet Gradient
+    titleColor: "text-white",
+    subPillBg: "bg-white/20 border border-white/20 backdrop-blur-md",
+    subPillText: "text-white font-extrabold",
+    image: "/images/categories/shopping.png",
+    align: "right",
+    blendMode: "mix-blend-screen",
+    subTags: [
+      { label: "Fashion", icon: ShoppingBag },
+      { label: "Footwear", icon: Tag },
+      { label: "Deals", icon: Percent }
+    ]
+  },
+  "Electronics & Tech": {
+    bg: "bg-gradient-to-br from-[#fef9c3] via-[#fef08a] to-[#fde047]", // Golden Yellow Gradient
+    titleColor: "text-slate-950",
+    subPillBg: "bg-white/80 border border-yellow-300/80 shadow-2xs",
+    subPillText: "text-slate-900 font-extrabold",
+    image: "/images/categories/tech.png",
+    align: "right",
+    blendMode: "mix-blend-multiply",
+    subTags: [
+      { label: "Gadgets", icon: Smartphone },
+      { label: "Audio", icon: Sparkles },
+      { label: "Tech", icon: Store }
+    ]
+  },
+  "Health & Fitness": {
+    bg: "bg-gradient-to-br from-[#ecfdf5] via-[#d1fae5] to-[#a7f3d0]", // Fresh Mint Gradient
+    titleColor: "text-emerald-950",
+    subPillBg: "bg-white/80 border border-emerald-300/80 shadow-2xs",
+    subPillText: "text-emerald-950 font-extrabold",
+    image: "/images/categories/fitness.png",
+    align: "right",
+    blendMode: "mix-blend-multiply",
+    subTags: [
+      { label: "Gyms", icon: Dumbbell },
+      { label: "Wellness", icon: Sparkles },
+      { label: "Sports", icon: Tag }
+    ]
   }
 };
 
-const DEFAULT_VISUAL = {
-  bg: "bg-[#e0e7ff]",
-  border: "border-indigo-300",
-  text: "text-indigo-950",
-  image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop&q=80",
-  rating: "4.8",
-  count: "10 Deals"
+const DEFAULT_CUTOUT_CARD = {
+  bg: "bg-[#e2e8f0]",
+  titleColor: "text-slate-900",
+  subPillBg: "bg-white/80 border border-slate-200",
+  subPillText: "text-slate-800",
+  image: "/images/categories/shopping.png",
+  align: "right" as const,
+  subTags: [
+    { label: "Offers", icon: Tag },
+    { label: "Deals", icon: Percent },
+    { label: "Local", icon: MapPin }
+  ]
 };
 
 export default function PublicDiscoveryPage() {
@@ -83,7 +134,6 @@ export default function PublicDiscoveryPage() {
   const [activeTab, setActiveTab] = useState<"home" | "categories" | "sparkle" | "deals" | "profile">("home");
 
   const headerRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
   // User location state
@@ -165,16 +215,6 @@ export default function PublicDiscoveryPage() {
         stagger: 0.1,
       });
 
-      // Stat Cards Stagger Animation
-      gsap.from(".animate-stat-card", {
-        y: 30,
-        opacity: 0,
-        duration: 0.6,
-        delay: 0.2,
-        stagger: 0.1,
-        ease: "back.out(1.4)",
-      });
-
       // Hero Card Spring Animation
       gsap.from(".animate-hero-card", {
         scale: 0.94,
@@ -221,7 +261,7 @@ export default function PublicDiscoveryPage() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Offerzonline Genius
+                Offerzonline
               </h1>
             </div>
           </div>
@@ -258,64 +298,115 @@ export default function PublicDiscoveryPage() {
           </button>
         </div>
 
-
-
-        {/* Explore Categories Section - PLACED ABOVE RECOMMENDED FOR YOU */}
+        {/* Explore Categories Section - Cutout 3D Card Style matching Reference Screenshot */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Shop By Category</h2>
-            <span className="text-xs font-bold text-indigo-600 cursor-pointer hover:underline">See All ↗</span>
+            <h2 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">Shop By Category</h2>
+            {selectedCategory !== "all" && (
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className="text-xs font-bold text-indigo-600 hover:underline"
+              >
+                Reset Filter ↺
+              </button>
+            )}
           </div>
 
-          {/* Dedicated Category Cards Grid - Strictly 16:9 Outer Aspect Ratio (3x2 Grid on Desktop) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {/* Mobile Horizontal Scrollable Category Bar (at least 4 displayed at once) */}
+          <div className="md:hidden flex items-start gap-3 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x">
             {categories.map((cat) => {
-              const visual = CATEGORY_VISUALS[cat.name] || DEFAULT_VISUAL;
+              const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
               const isSelected = selectedCategory === cat.id.toString();
 
               return (
                 <div
                   key={cat.id}
                   onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                  className={`group relative aspect-[16/9] w-full ${visual.bg} border ${
-                    isSelected ? "border-indigo-600 ring-2 ring-indigo-400 scale-[1.02]" : visual.border
-                  } rounded-[2rem] p-3.5 sm:p-4 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden`}
+                  className="flex-shrink-0 w-[21vw] min-w-[82px] max-w-[100px] snap-start cursor-pointer group"
                 >
-                  {/* Top Bar: Title & Rating Tag */}
-                  <div className="flex items-center justify-between z-10">
-                    <span className="text-xs sm:text-sm font-black text-slate-900 line-clamp-1">
-                      {cat.name}
-                    </span>
-                    <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-slate-200/80 text-[10px] sm:text-xs font-bold text-slate-800 flex items-center gap-1 shadow-2xs shrink-0">
-                      <Star size={11} className="fill-amber-400 text-amber-400" />
-                      {visual.rating}
-                    </div>
-                  </div>
-
-                  {/* Center Image Frame */}
-                  <div className="relative h-20 sm:h-24 w-full rounded-xl sm:rounded-2xl overflow-hidden my-1 bg-white/60 shadow-inner">
+                  {/* Category Image Tile - Borderless Cutout */}
+                  <div
+                    className={`aspect-square w-full ${visual.bg} rounded-2xl relative shadow-sm border ${
+                      isSelected ? "border-indigo-600 ring-3 ring-indigo-400/50 scale-105" : "border-slate-200/80"
+                    } p-1 flex items-center justify-center transition-all group-hover:scale-105`}
+                  >
                     <img
                       src={visual.image}
                       alt={cat.name}
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                      className="w-full h-full object-contain drop-shadow-md"
                     />
                     {isSelected && (
-                      <div className="absolute top-1.5 left-1.5 bg-indigo-600 text-white font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full shadow-sm">
-                        Selected
-                      </div>
+                      <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-indigo-600 border border-white" />
                     )}
                   </div>
 
-                  {/* Bottom Bar: Specs & Action Button */}
-                  <div className="flex items-center justify-between z-10">
-                    <span className="text-[11px] sm:text-xs font-bold text-slate-600">
-                      {visual.count}
+                  {/* Category Name & Arrow underneath */}
+                  <div className="mt-1.5 text-left">
+                    <span className="text-[11px] font-bold text-slate-800 leading-tight block truncate">
+                      {cat.name.split(" ")[0]} <span className="text-slate-400 font-normal">›</span>
                     </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 hover:bg-indigo-600 hover:text-white flex items-center justify-center group-hover:scale-110 transition-all shrink-0 shadow-2xs">
-                      <ShoppingBag size={13} />
+          {/* Desktop Banner Grid (md:grid) */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {categories.map((cat) => {
+              const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
+              const isSelected = selectedCategory === cat.id.toString();
+
+              return (
+                <div
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
+                  className={`group relative ${visual.bg} rounded-[2.2rem] p-5 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-visible min-h-[175px] sm:min-h-[190px] flex flex-col justify-between border ${
+                    isSelected ? "border-indigo-600 ring-4 ring-indigo-400/50 scale-[1.02]" : "border-white/60"
+                  }`}
+                >
+                  {/* Left Column Content */}
+                  <div className={`z-10 space-y-3 ${visual.align === "left" ? "pl-32 sm:pl-36" : "pr-32 sm:pr-36"}`}>
+                    <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${visual.titleColor} drop-shadow-2xs`}>
+                      {cat.name}
+                    </h3>
+
+                    {/* Sub-Tag Pills matching reference design */}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {visual.subTags.map((sub, idx) => {
+                        const Icon = sub.icon;
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-extrabold ${visual.subPillBg} ${visual.subPillText} shadow-xs hover:scale-105 transition-transform`}
+                          >
+                            <Icon size={12} />
+                            <span>{sub.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* 3D Cutout Image - OVERFLOWING OUT OF CARD BOUNDARIES */}
+                  <div
+                    className={`absolute -bottom-3 sm:-bottom-5 ${
+                      visual.align === "left" ? "-left-5 sm:-left-8" : "-right-5 sm:-right-8"
+                    } w-44 sm:w-52 h-44 sm:h-52 transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-2 pointer-events-none z-20`}
+                  >
+                    <img
+                      src={visual.image}
+                      alt={cat.name}
+                      className="w-full h-full object-contain filter drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]"
+                    />
+                  </div>
+
+                  {/* Selected Indicator Badge */}
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 z-20 bg-indigo-600 text-white font-black text-[10px] uppercase px-3 py-1 rounded-full shadow-md animate-pulse">
+                      Active Filter
+                    </div>
+                  )}
                 </div>
               );
             })}
