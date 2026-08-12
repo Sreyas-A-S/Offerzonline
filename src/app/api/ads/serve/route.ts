@@ -82,52 +82,113 @@ export async function GET(req: NextRequest) {
   try {
     const client = await pool.connect();
     try {
-      let query = `
-        SELECT 
-          a.id,
-          a.title,
-          a.category_id,
-          c.name as category_name,
-          a.media_url,
-          a.media_type,
-          a.ad_format,
-          a.target_url,
-          a.latitude,
-          a.longitude,
-          a.radius_km,
-          a.weight_priority,
-          ROUND(
-            (ST_Distance(
-              a.location,
-              ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-            ) / 1000)::numeric, 2
-          ) as distance_km
-        FROM ads a
-        LEFT JOIN categories c ON a.category_id = c.id
-        WHERE a.is_active = TRUE
-      `;
+      let query = "";
+      const queryParams: any[] = [];
 
-      const queryParams: any[] = [lng, lat];
-      let paramCounter = 3;
+      // Check if location column exists
+      const colCheck = await client.query(`
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name='ads' AND column_name='location'
+      `);
+      const hasLocationCol = colCheck.rows.length > 0;
 
-      if (lat !== 0 || lng !== 0) {
-        query += ` AND ST_DWithin(a.location, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, a.radius_km * 1000)`;
+      if (hasLocationCol) {
+        query = `
+          SELECT 
+            a.id,
+            a.title,
+            a.category_id,
+            c.name as category_name,
+            a.media_url,
+            a.media_type,
+            a.ad_format,
+            a.target_url,
+            a.latitude,
+            a.longitude,
+            a.radius_km,
+            a.weight_priority,
+            ROUND(
+              (ST_Distance(
+                a.location,
+                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+              ) / 1000)::numeric, 2
+            ) as distance_km
+          FROM ads a
+          LEFT JOIN categories c ON a.category_id = c.id
+          WHERE a.is_active = TRUE
+        `;
+        queryParams.push(lng, lat);
+        let paramCounter = 3;
+
+        if (lat !== 0 || lng !== 0) {
+          query += ` AND ST_DWithin(a.location, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, a.radius_km * 1000)`;
+        }
+
+        if (categoryId && categoryId !== "all") {
+          query += ` AND a.category_id = $${paramCounter}`;
+          queryParams.push(parseInt(categoryId, 10));
+          paramCounter++;
+        }
+
+        if (format) {
+          query += ` AND a.ad_format = $${paramCounter}`;
+          queryParams.push(format);
+          paramCounter++;
+        }
+
+        query += ` ORDER BY a.weight_priority DESC, distance_km ASC LIMIT $${paramCounter}`;
+        queryParams.push(limit);
+      } else {
+        // Fallback to standard Haversine distance query for PostGIS-less PostgreSQL setup
+        query = `
+          SELECT 
+            a.id,
+            a.title,
+            a.category_id,
+            c.name as category_name,
+            a.media_url,
+            a.media_type,
+            a.ad_format,
+            a.target_url,
+            a.latitude,
+            a.longitude,
+            a.radius_km,
+            a.weight_priority,
+            ROUND(
+              (6371 * acos(
+                LEAST(1.0, GREATEST(-1.0,
+                  cos(radians($2)) * cos(radians(a.latitude)) *
+                  cos(radians(a.longitude) - radians($1)) +
+                  sin(radians($2)) * sin(radians(a.latitude))
+                ))
+              ))::numeric, 2
+            ) as distance_km
+          FROM ads a
+          LEFT JOIN categories c ON a.category_id = c.id
+          WHERE a.is_active = TRUE
+        `;
+        queryParams.push(lng, lat);
+        let paramCounter = 3;
+
+        if (lat !== 0 || lng !== 0) {
+          query += ` AND (6371 * acos(LEAST(1.0, GREATEST(-1.0, cos(radians($2)) * cos(radians(a.latitude)) * cos(radians(a.longitude) - radians($1)) + sin(radians($2)) * sin(radians(a.latitude)))))) <= a.radius_km`;
+        }
+
+        if (categoryId && categoryId !== "all") {
+          query += ` AND a.category_id = $${paramCounter}`;
+          queryParams.push(parseInt(categoryId, 10));
+          paramCounter++;
+        }
+
+        if (format) {
+          query += ` AND a.ad_format = $${paramCounter}`;
+          queryParams.push(format);
+          paramCounter++;
+        }
+
+        query += ` ORDER BY a.weight_priority DESC, distance_km ASC LIMIT $${paramCounter}`;
+        queryParams.push(limit);
       }
-
-      if (categoryId && categoryId !== "all") {
-        query += ` AND a.category_id = $${paramCounter}`;
-        queryParams.push(parseInt(categoryId, 10));
-        paramCounter++;
-      }
-
-      if (format) {
-        query += ` AND a.ad_format = $${paramCounter}`;
-        queryParams.push(format);
-        paramCounter++;
-      }
-
-      query += ` ORDER BY a.weight_priority DESC, distance_km ASC LIMIT $${paramCounter}`;
-      queryParams.push(limit);
 
       const result = await client.query(query, queryParams);
 

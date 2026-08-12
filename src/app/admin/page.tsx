@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { 
   Plus, Trash2, Eye, MousePointerClick, TrendingUp, Upload, 
-  MapPin, CheckCircle, RefreshCw, BarChart2, Layers, AlertTriangle 
+  MapPin, CheckCircle, RefreshCw, Store
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -136,46 +136,49 @@ export default function AdminDashboard() {
   const avgCtr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(2) : "0.00";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col relative">
+      {/* Dynamic Background Glow */}
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-[120px] pointer-events-none" />
+
       {/* Top Navbar */}
-      <header className="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-slate-200/60 bg-white/60 backdrop-blur-xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-0 z-40 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center text-slate-950 font-bold text-lg">
+          <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-md">
             O
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white">Offerzonline Admin</h1>
-            <p className="text-xs text-slate-400">Single-Admin Ad Server & Geo-Targeting Hub</p>
+            <h1 className="font-bold text-xl text-slate-900 tracking-tight">Offerzonline Admin</h1>
+            <p className="text-xs text-slate-500">Single-Admin Ad Server & Geo-Targeting Hub</p>
           </div>
         </div>
 
-        <nav className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-semibold">
+        <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200 text-xs font-semibold">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`px-4 py-2 rounded-xl transition ${
+            className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
               activeTab === "overview"
-                ? "bg-emerald-500 text-slate-950 font-bold"
-                : "text-slate-400 hover:text-white"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-950"
             }`}
           >
             Analytics Overview
           </button>
           <button
             onClick={() => setActiveTab("ads")}
-            className={`px-4 py-2 rounded-xl transition ${
+            className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
               activeTab === "ads"
-                ? "bg-emerald-500 text-slate-950 font-bold"
-                : "text-slate-400 hover:text-white"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-950"
             }`}
           >
             Campaigns ({ads.filter((a) => a.is_active).length})
           </button>
           <button
             onClick={() => setActiveTab("create")}
-            className={`px-4 py-2 rounded-xl transition flex items-center gap-1 ${
+            className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-1 ${
               activeTab === "create"
-                ? "bg-emerald-500 text-slate-950 font-bold"
-                : "text-slate-400 hover:text-white"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-950"
             }`}
           >
             <Plus size={14} /> Create Campaign
@@ -184,13 +187,13 @@ export default function AdminDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-6 relative z-10">
         {message && (
           <div
-            className={`mb-6 p-4 rounded-2xl border flex items-center justify-between text-sm ${
+            className={`mb-6 p-4 rounded-2xl border flex items-center justify-between text-sm transition-all duration-300 ${
               message.type === "success"
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                ? "bg-emerald-50 border-emerald-100 text-emerald-800 shadow-sm"
+                : "bg-rose-50 border-rose-105 text-rose-800 shadow-sm"
             }`}
           >
             <span>{message.text}</span>
@@ -201,46 +204,52 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === "overview" && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <div className="flex items-center justify-between text-slate-400 text-sm mb-2">
+              <div className="bg-white border border-slate-200/60 p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl" />
+                <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">
                   <span>Total Impressions</span>
-                  <Eye size={18} className="text-emerald-400" />
+                  <Eye size={18} className="text-indigo-600" />
                 </div>
-                <h3 className="text-3xl font-extrabold text-white">{totalViews}</h3>
+                <h3 className="text-4xl font-extrabold text-slate-950">{totalViews}</h3>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <div className="flex items-center justify-between text-slate-400 text-sm mb-2">
+              <div className="bg-white border border-slate-200/60 p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl" />
+                <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">
                   <span>Total Clicks</span>
-                  <MousePointerClick size={18} className="text-emerald-400" />
+                  <MousePointerClick size={18} className="text-purple-600" />
                 </div>
-                <h3 className="text-3xl font-extrabold text-white">{totalClicks}</h3>
+                <h3 className="text-4xl font-extrabold text-slate-950">{totalClicks}</h3>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <div className="flex items-center justify-between text-slate-400 text-sm mb-2">
+              <div className="bg-white border border-slate-200/60 p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 rounded-full blur-2xl" />
+                <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">
                   <span>Average CTR</span>
-                  <TrendingUp size={18} className="text-emerald-400" />
+                  <TrendingUp size={18} className="text-pink-600" />
                 </div>
-                <h3 className="text-3xl font-extrabold text-white">{avgCtr}%</h3>
+                <h3 className="text-4xl font-extrabold text-slate-950">{avgCtr}%</h3>
               </div>
             </div>
 
             {/* Performance Chart */}
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-              <h3 className="font-bold text-lg text-white mb-6">Campaign Performance Comparison</h3>
-              <div className="h-72 w-full">
+            <div className="bg-white border border-slate-200/60 p-6 sm:p-8 rounded-[2.5rem] shadow-sm">
+              <h3 className="font-bold text-lg text-slate-900 mb-6 tracking-tight">Campaign Performance Comparison</h3>
+              <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={ads}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="title" stroke="#64748b" fontSize={12} />
-                    <YAxis stroke="#64748b" fontSize={12} />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "12px" }} />
-                    <Bar dataKey="views" fill="#22c55e" name="Impressions" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="clicks" fill="#3b82f6" name="Clicks" radius={[6, 6, 0, 0]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.03)" />
+                    <XAxis dataKey="title" stroke="#64748b" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: "#ffffff", borderColor: "rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }} 
+                      labelStyle={{ fontWeight: "bold", color: "#1e293b" }}
+                    />
+                    <Bar dataKey="views" fill="#4f46e5" name="Impressions" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="clicks" fill="#9333ea" name="Clicks" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -249,17 +258,17 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-white">All Ad Campaigns</h3>
-              <button onClick={fetchDashboardData} className="text-slate-400 hover:text-white p-2">
-                <RefreshCw size={16} />
+          <div className="bg-white border border-slate-200/60 rounded-[2.5rem] overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-200/60 flex items-center justify-between">
+              <h3 className="font-bold text-lg text-slate-900 tracking-tight">All Ad Campaigns</h3>
+              <button onClick={fetchDashboardData} className="text-slate-600 hover:text-slate-950 p-2.5 rounded-xl bg-slate-50 border border-slate-200 transition-all">
+                <RefreshCw size={14} />
               </button>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-300">
-                <thead className="bg-slate-950 text-slate-400 uppercase text-xs">
+              <table className="w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200/60">
                   <tr>
                     <th className="px-6 py-4">Campaign Title</th>
                     <th className="px-6 py-4">Category</th>
@@ -272,24 +281,28 @@ export default function AdminDashboard() {
                     <th className="px-6 py-4">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800">
+                <tbody className="divide-y divide-slate-100">
                   {ads.map((ad) => (
-                    <tr key={ad.id} className="hover:bg-slate-800/50">
-                      <td className="px-6 py-4 font-semibold text-white">{ad.title}</td>
-                      <td className="px-6 py-4">{ad.category_name || "Uncategorized"}</td>
-                      <td className="px-6 py-4 font-mono text-xs">{ad.ad_format}</td>
-                      <td className="px-6 py-4">{ad.radius_km} km</td>
-                      <td className="px-6 py-4">{ad.views}</td>
-                      <td className="px-6 py-4">{ad.clicks}</td>
-                      <td className="px-6 py-4 font-semibold text-emerald-400">{ad.ctr}%</td>
+                    <tr key={ad.id} className="hover:bg-slate-50/50 transition">
+                      <td className="px-6 py-4 font-semibold text-slate-900">{ad.title}</td>
+                      <td className="px-6 py-4">
+                        <span className="bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full text-xs font-medium text-slate-600">
+                          {ad.category_name || "Uncategorized"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-500">{ad.ad_format}</td>
+                      <td className="px-6 py-4 text-slate-800 font-semibold">{ad.radius_km} km</td>
+                      <td className="px-6 py-4 text-slate-600">{ad.views}</td>
+                      <td className="px-6 py-4 text-slate-600">{ad.clicks}</td>
+                      <td className="px-6 py-4 font-bold text-indigo-600">{ad.ctr}%</td>
                       <td className="px-6 py-4">
                         {ad.is_active ? (
-                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2.5 py-1 rounded-full font-semibold">
+                          <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs px-2.5 py-1 rounded-full font-bold">
                             Active
                           </span>
                         ) : (
-                          <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-2.5 py-1 rounded-full font-semibold">
-                            Soft Deleted
+                          <span className="bg-rose-55 text-rose-700 border border-rose-100 text-xs px-2.5 py-1 rounded-full font-bold">
+                            Deactivated
                           </span>
                         )}
                       </td>
@@ -297,10 +310,10 @@ export default function AdminDashboard() {
                         {ad.is_active && (
                           <button
                             onClick={() => handleDeleteAd(ad.id)}
-                            className="text-rose-400 hover:text-rose-300 p-2 rounded-lg hover:bg-rose-500/10 transition"
+                            className="text-rose-600 hover:text-rose-700 p-2.5 rounded-xl hover:bg-rose-50 transition border border-transparent hover:border-rose-100"
                             title="Soft delete & Purge Cloudflare Cache"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} />
                           </button>
                         )}
                       </td>
@@ -313,32 +326,32 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === "create" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-3xl mx-auto">
-            <h3 className="font-bold text-xl text-white mb-6">Create Geo-Targeted Ad Campaign</h3>
+          <div className="bg-white border border-slate-200/60 rounded-[2.5rem] p-8 max-w-3xl mx-auto shadow-sm">
+            <h3 className="font-bold text-xl text-slate-900 mb-6 tracking-tight">Create Geo-Targeted Ad Campaign</h3>
 
             <form onSubmit={handleCreateAd} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Campaign Title</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Campaign Title</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g. 50% Off Gourmet Pizza Deals"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-50 transition-all duration-300"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Category</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Category</label>
                   <select
                     value={formData.categoryId}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-400 focus:bg-white transition-all duration-300"
                   >
                     {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <option key={c.id} value={c.id} className="bg-white">
                         {c.name}
                       </option>
                     ))}
@@ -346,37 +359,37 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Ad Format</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Ad Format</label>
                   <select
                     value={formData.adFormat}
                     onChange={(e) => setFormData({ ...formData, adFormat: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-400 focus:bg-white transition-all duration-300"
                   >
-                    <option value="300x250">300x250 Medium Rectangle</option>
-                    <option value="728x90">728x90 Leaderboard</option>
-                    <option value="1080x1920">1080x1920 Mobile Story</option>
-                    <option value="responsive">Responsive Container</option>
+                    <option value="300x250" className="bg-white">300x250 Medium Rectangle</option>
+                    <option value="728x90" className="bg-white">728x90 Leaderboard</option>
+                    <option value="1080x1920" className="bg-white">1080x1920 Mobile Story</option>
+                    <option value="responsive" className="bg-white">Responsive Container</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Target Landing URL</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Target Landing URL</label>
                 <input
                   type="url"
                   required
                   value={formData.targetUrl}
                   onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-50 transition-all duration-300"
                 />
               </div>
 
               {/* Media File Upload */}
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                   Upload Media (Image / GIF / Video)
                 </label>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4 bg-slate-50 p-4 border border-slate-200 rounded-2xl">
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -386,70 +399,73 @@ export default function AdminDashboard() {
                   />
                   <label
                     htmlFor="media-upload"
-                    className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-3 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer transition text-slate-200"
+                    className="bg-white hover:bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition text-slate-700 shadow-sm"
                   >
-                    <Upload size={16} /> {uploading ? "Compressing & Uploading..." : "Choose File"}
+                    <Upload size={14} /> {uploading ? "Compressing & Uploading..." : "Choose File"}
                   </label>
                   {formData.mediaUrl && (
-                    <span className="text-xs text-emerald-400 font-mono truncate max-w-xs">
-                      Uploaded: {formData.mediaUrl}
+                    <span className="text-xs text-indigo-650 font-mono truncate max-w-xs block">
+                      Uploaded: {formData.mediaUrl.split('/').pop()}
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Geolocation Pin Selector */}
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
+              <div className="bg-slate-50 p-6 border border-slate-200 rounded-[2rem] space-y-6">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
                   Target Geolocation & Coverage Radius ({formData.radiusKm} km)
                 </label>
-                <div className="grid grid-cols-2 gap-4 mb-3">
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs text-slate-400">Latitude</span>
+                    <span className="text-xs text-slate-500 block mb-1">Latitude</span>
                     <input
                       type="number"
                       step="0.0001"
                       value={formData.latitude}
                       onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 text-xs focus:outline-none focus:border-indigo-400"
                     />
                   </div>
                   <div>
-                    <span className="text-xs text-slate-400">Longitude</span>
+                    <span className="text-xs text-slate-500 block mb-1">Longitude</span>
                     <input
                       type="number"
                       step="0.0001"
                       value={formData.longitude}
                       onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 text-xs focus:outline-none focus:border-indigo-400"
                     />
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="text-xs text-slate-400 block mb-1">Target Radius: {formData.radiusKm} km</label>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-2">Target Radius: {formData.radiusKm} km</label>
                   <input
                     type="range"
                     min="1"
                     max="50"
                     value={formData.radiusKm}
                     onChange={(e) => setFormData({ ...formData, radiusKm: parseInt(e.target.value, 10) })}
-                    className="w-full accent-emerald-500"
+                    className="w-full accent-indigo-650"
                   />
                 </div>
 
-                <MapPicker
-                  lat={formData.latitude}
-                  lng={formData.longitude}
-                  radiusKm={formData.radiusKm}
-                  onChange={(lat, lng) => setFormData({ ...formData, latitude: lat, longitude: lng })}
-                />
+                <div className="rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-inner">
+                  <MapPicker
+                    lat={formData.latitude}
+                    lng={formData.longitude}
+                    radiusKm={formData.radiusKm}
+                    onChange={(lat, lng) => setFormData({ ...formData, latitude: lat, longitude: lng })}
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={uploading}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 rounded-xl transition text-sm flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-2xl transition-all duration-300 text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-600/15"
               >
                 <CheckCircle size={18} /> Launch Geo-Targeted Campaign
               </button>

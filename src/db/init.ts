@@ -87,14 +87,27 @@ export async function initializeDatabase() {
     const catCheck = await client.query(`SELECT COUNT(*) FROM categories;`);
     if (parseInt(catCheck.rows[0].count, 10) === 0) {
       await client.query(`
-        INSERT INTO categories (name, slug, icon) VALUES
-        ('Retail & Shopping', 'retail-shopping', 'shopping-bag'),
-        ('Food & Dining', 'food-dining', 'utensils'),
-        ('Services & Repair', 'services-repair', 'wrench'),
-        ('Entertainment & Events', 'entertainment-events', 'ticket'),
-        ('Health & Fitness', 'health-fitness', 'heart-pulse'),
-        ('Electronics & Tech', 'electronics-tech', 'laptop');
+        INSERT INTO categories (id, name, slug, icon) VALUES
+        (1, 'Retail & Shopping', 'retail-shopping', 'shopping-bag'),
+        (2, 'Food & Dining', 'food-dining', 'utensils'),
+        (3, 'Services & Repair', 'services-repair', 'wrench'),
+        (4, 'Entertainment & Events', 'entertainment-events', 'ticket'),
+        (5, 'Health & Fitness', 'health-fitness', 'heart-pulse'),
+        (6, 'Electronics & Tech', 'electronics-tech', 'laptop');
       `);
+      await client.query(`SELECT setval('categories_id_seq', 6, true);`);
+    }
+
+    // 6. Seed initial ads if empty
+    const adCheck = await client.query(`SELECT COUNT(*) FROM ads;`);
+    if (parseInt(adCheck.rows[0].count, 10) === 0) {
+      await client.query(`
+        INSERT INTO ads (id, title, category_id, media_url, media_type, ad_format, target_url, latitude, longitude, radius_km, weight_priority, is_active) VALUES
+        (1, '50% Off Gourmet Pizza & Pasta Combo', 2, 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80', 'image', '300x250', 'https://offerzonline.com/deals/pizza', 28.6139, 77.209, 10, 5, true),
+        (2, 'Buy 1 Get 1 Free Premium Gym Membership', 5, 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80', 'image', 'responsive', 'https://offerzonline.com/deals/fitness', 28.6139, 77.209, 15, 4, true),
+        (3, 'Electronics Clearance - Up to 40% Off Laptops', 6, 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop&q=80', 'image', '728x90', 'https://offerzonline.com/deals/laptops', 28.6139, 77.209, 25, 3, true);
+      `);
+      await client.query(`SELECT setval('ads_id_seq', 3, true);`);
     }
 
     console.log("Database initialized successfully.");
