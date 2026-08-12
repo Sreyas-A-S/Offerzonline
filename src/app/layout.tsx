@@ -7,8 +7,8 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Offerzonline",
-  description: "Test",
+  title: "Offerzonline - Location-Based Ad Server & Local Discovery",
+  description: "Discover verified local business offers, deals, and targeted advertisements near you.",
 };
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="light">
+    <html lang="en" className="light" suppressHydrationWarning>
       <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen antialiased`}>
         {children}
         <PWAInstallPrompt />

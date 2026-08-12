@@ -1,6 +1,6 @@
 "use client";
 
-import { X, MapPin, ExternalLink, ShieldCheck } from "lucide-react";
+import { X, MapPin, ExternalLink, ShieldCheck, Tag, Clock, Layers, Award } from "lucide-react";
 
 interface OfferModalProps {
   ad: any;
@@ -12,15 +12,17 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200/80 rounded-[2.5rem] max-w-2xl w-full overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200">
+      <div className="bg-white border border-white rounded-[2.5rem] max-w-lg w-full overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200">
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 bg-white/90 hover:bg-slate-100 text-slate-700 p-2.5 rounded-full border border-slate-200/60 shadow-sm transition z-10"
+          className="absolute top-4 right-4 bg-white/90 hover:bg-white text-slate-700 p-2.5 rounded-full border border-slate-100 shadow-sm transition z-10"
         >
           <X size={16} />
         </button>
 
-        <div className="relative aspect-video bg-slate-100 rounded-t-[2.5rem] overflow-hidden">
+        {/* Media Header */}
+        <div className="relative aspect-video bg-purple-50 rounded-t-[2.5rem] overflow-hidden">
           {ad.media_type === "video" ? (
             <video
               src={ad.media_url}
@@ -37,30 +39,55 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
           )}
         </div>
 
-        <div className="p-8">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-650 mb-3 uppercase tracking-wider">
-            <ShieldCheck size={14} /> Verified Local Business Offer
+        {/* Modal Body */}
+        <div className="p-6 space-y-5">
+          <div className="flex items-center gap-1 text-xs font-bold text-purple-600 uppercase tracking-wider">
+            <ShieldCheck size={14} /> Verified Business Promotion
           </div>
 
-          <h2 className="text-3xl font-extrabold text-slate-900 mb-3 leading-tight">{ad.title}</h2>
+          <h2 className="text-2xl font-black text-slate-900 leading-tight">{ad.title}</h2>
 
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 mb-8">
+          {/* Specs Row Grid matching the Mockup recipe spec chips */}
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <div className="bg-pink-100/70 p-2.5 rounded-2xl border border-pink-200/80">
+              <span className="text-[10px] font-bold text-slate-500 block uppercase">Radius</span>
+              <span className="text-xs font-black text-slate-900">{ad.radius_km || 10} km</span>
+            </div>
+
+            <div className="bg-sky-100/70 p-2.5 rounded-2xl border border-sky-200/80">
+              <span className="text-[10px] font-bold text-slate-500 block uppercase">Format</span>
+              <span className="text-xs font-black text-slate-900 truncate block">{ad.ad_format || "Card"}</span>
+            </div>
+
+            <div className="bg-emerald-100/70 p-2.5 rounded-2xl border border-emerald-200/80">
+              <span className="text-[10px] font-bold text-slate-500 block uppercase">Priority</span>
+              <span className="text-xs font-black text-slate-900">P{ad.weight_priority || 1}</span>
+            </div>
+
+            <div className="bg-amber-100/70 p-2.5 rounded-2xl border border-amber-200/80">
+              <span className="text-[10px] font-bold text-slate-500 block uppercase">Status</span>
+              <span className="text-xs font-black text-slate-900">Verified</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
             {ad.category_name && (
-              <span className="bg-slate-50 border border-slate-200 px-3 py-1 rounded-full text-xs font-semibold text-slate-650">
-                {ad.category_name}
+              <span className="bg-slate-100 px-3 py-1 rounded-full font-semibold text-slate-700">
+                Category: {ad.category_name}
               </span>
             )}
             {ad.distance_km !== undefined && (
-              <span className="flex items-center gap-1 text-indigo-650 font-bold">
-                <MapPin size={14} /> {ad.distance_km} km away from your location
+              <span className="flex items-center gap-1 text-purple-600 font-bold">
+                <MapPin size={12} /> {ad.distance_km} km away
               </span>
             )}
           </div>
 
-          <div className="pt-6 border-t border-slate-150 flex items-center justify-between gap-4">
+          {/* Action Footer */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-700 text-sm font-semibold transition"
+              className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
             >
               Close
             </button>
@@ -68,7 +95,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
               href={`/api/track/click?ad_id=${ad.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm flex items-center gap-2 shadow-md transition-all duration-300"
+              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-sky-400 via-indigo-500 to-purple-500 hover:from-sky-500 hover:to-purple-600 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all"
             >
               Claim / View Deal <ExternalLink size={14} />
             </a>

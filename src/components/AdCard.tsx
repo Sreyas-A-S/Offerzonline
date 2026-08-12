@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MapPin, ExternalLink, Tag } from "lucide-react";
+import { MapPin, ExternalLink, Tag, Heart } from "lucide-react";
 
 interface AdCardProps {
   ad: {
@@ -16,64 +16,11 @@ interface AdCardProps {
   };
   userLocationName?: string;
   onSelect: (ad: any) => void;
+  isSaved?: boolean;
+  onToggleSave?: (e: React.MouseEvent) => void;
 }
 
-// Map categories to beautiful soft light colored themes inspired by the reference images
-function getCategoryColor(categoryName?: string) {
-  if (!categoryName) return { bg: "bg-white", border: "border-slate-100", text: "text-slate-700", badge: "bg-slate-100 text-slate-650" };
-  const name = categoryName.toLowerCase();
-  
-  if (name.includes("food") || name.includes("restaurant") || name.includes("dining")) {
-    return {
-      bg: "bg-orange-50/70",
-      border: "border-orange-200 group-hover:border-orange-400",
-      text: "text-orange-950",
-      badge: "bg-orange-100 text-orange-700 border border-orange-200"
-    };
-  }
-  if (name.includes("electro") || name.includes("tech") || name.includes("gadget")) {
-    return {
-      bg: "bg-sky-50/70",
-      border: "border-sky-200 group-hover:border-sky-400",
-      text: "text-sky-950",
-      badge: "bg-sky-100 text-sky-700 border border-sky-200"
-    };
-  }
-  if (name.includes("fashion") || name.includes("clothing") || name.includes("beauty")) {
-    return {
-      bg: "bg-pink-50/70",
-      border: "border-pink-200 group-hover:border-pink-400",
-      text: "text-pink-950",
-      badge: "bg-pink-100 text-pink-700 border border-pink-200"
-    };
-  }
-  if (name.includes("grocer") || name.includes("supermarket") || name.includes("fresh")) {
-    return {
-      bg: "bg-emerald-50/70",
-      border: "border-emerald-200 group-hover:border-emerald-400",
-      text: "text-emerald-950",
-      badge: "bg-emerald-100 text-emerald-700 border border-emerald-200"
-    };
-  }
-  if (name.includes("health") || name.includes("wellness") || name.includes("fit")) {
-    return {
-      bg: "bg-purple-50/70",
-      border: "border-purple-200 group-hover:border-purple-400",
-      text: "text-purple-950",
-      badge: "bg-purple-100 text-purple-700 border border-purple-200"
-    };
-  }
-
-  // Default theme
-  return {
-    bg: "bg-white",
-    border: "border-slate-200 group-hover:border-indigo-300",
-    text: "text-slate-800",
-    badge: "bg-indigo-50 text-indigo-700 border border-indigo-100"
-  };
-}
-
-export function AdCard({ ad, userLocationName, onSelect }: AdCardProps) {
+export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }: AdCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const hasTracked = useRef(false);
 
@@ -106,16 +53,15 @@ export function AdCard({ ad, userLocationName, onSelect }: AdCardProps) {
     return () => observer.disconnect();
   }, [ad.id, userLocationName]);
 
-  const theme = getCategoryColor(ad.category_name);
-
   return (
     <div
       ref={cardRef}
       onClick={() => onSelect(ad)}
-      className={`group ${theme.bg} border ${theme.border} rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col justify-between`}
+      className="group relative bg-white/80 border border-white/90 rounded-[2rem] p-4 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 cursor-pointer backdrop-blur-md flex flex-col justify-between"
     >
       <div>
-        <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden rounded-[2rem] m-2.5 shadow-inner">
+        {/* Card Header Media */}
+        <div className="relative aspect-[4/3] bg-purple-50/50 rounded-2xl overflow-hidden mb-3">
           {ad.media_type === "video" ? (
             <video
               src={ad.media_url}
@@ -133,35 +79,44 @@ export function AdCard({ ad, userLocationName, onSelect }: AdCardProps) {
             />
           )}
 
-          {ad.distance_km !== undefined && (
-            <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-md border border-slate-100 text-slate-800 font-semibold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-              <MapPin size={10} className="text-indigo-600" />
-              {ad.distance_km} km away
-            </div>
-          )}
+          {/* Heart Bookmark Icon */}
+          <button
+            onClick={(e) => onToggleSave && onToggleSave(e)}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md shadow-sm flex items-center justify-center text-slate-600 hover:text-pink-500 transition z-10"
+          >
+            <Heart size={14} className={isSaved ? "fill-pink-500 text-pink-500" : ""} />
+          </button>
 
-          {ad.category_name && (
-            <div className={`absolute top-3 right-3 font-semibold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm ${theme.badge}`}>
-              <Tag size={10} />
-              {ad.category_name}
+          {/* Distance Badge */}
+          {ad.distance_km !== undefined && (
+            <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md text-slate-800 font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+              <MapPin size={10} className="text-purple-600" />
+              {ad.distance_km} km away
             </div>
           )}
         </div>
 
-        <div className="px-5 py-3">
-          <h3 className={`font-bold text-lg ${theme.text} group-hover:text-indigo-600 transition-colors line-clamp-2`}>
+        {/* Info */}
+        <div className="px-1 space-y-1 mb-3">
+          {ad.category_name && (
+            <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">
+              {ad.category_name}
+            </span>
+          )}
+          <h3 className="font-extrabold text-slate-900 text-base line-clamp-1 group-hover:text-purple-600 transition-colors">
             {ad.title}
           </h3>
         </div>
       </div>
 
-      <div className="px-5 pb-5 pt-0">
+      {/* Action Button */}
+      <div className="pt-2">
         <a
           href={`/api/track/click?ad_id=${ad.id}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="w-full bg-white hover:bg-indigo-600 hover:text-white border border-slate-200 text-slate-600 font-bold py-3 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 text-xs shadow-sm hover:shadow-md"
+          className="w-full bg-slate-900 hover:bg-purple-600 text-white font-bold py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-xs shadow-sm"
         >
           View Offer <ExternalLink size={12} />
         </a>
