@@ -206,10 +206,10 @@ export default function PublicDiscoveryPage() {
     <div className="min-h-screen bg-white text-slate-800 pb-32 pt-3 px-3 sm:px-6 lg:px-8 selection:bg-indigo-100 selection:text-indigo-900">
       
       {/* Background Soft Glows */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-gradient-to-b from-indigo-50/60 via-purple-50/30 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-indigo-50/60 via-purple-50/30 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* Main Container */}
-      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         
         {/* Top Header Bar */}
         <header ref={headerRef} className="flex items-center justify-between pt-1 animate-header">
@@ -420,6 +420,30 @@ export default function PublicDiscoveryPage() {
             </div>
           )}
         </section>
+
+        {/* Simple Professional Footer */}
+        <footer className="mt-16 pt-8 border-t border-slate-200/80 pb-6 text-slate-500 text-xs">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                O
+              </div>
+              <span className="font-extrabold text-slate-900 text-sm tracking-tight">Offerzonline</span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-slate-600">
+              <a href="#" className="hover:text-indigo-600 transition">About Us</a>
+              <a href="#" className="hover:text-indigo-600 transition">Verified Deals</a>
+              <a href="#" className="hover:text-indigo-600 transition">Privacy Policy</a>
+              <a href="#" className="hover:text-indigo-600 transition">Terms of Service</a>
+              <Link href="/admin" className="hover:text-indigo-600 transition font-bold text-indigo-600">Admin Portal</Link>
+            </div>
+
+            <p className="text-[11px] text-slate-400">
+              © {new Date().getFullYear()} Offerzonline. All rights reserved.
+            </p>
+          </div>
+        </footer>
 
       </div>
 

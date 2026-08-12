@@ -134,14 +134,14 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Action Button - Vibrant Indigo Color Scheme */}
       <div className="pt-2">
         <a
           href={`/api/track/click?ad_id=${ad.id}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-xs shadow-sm hover:shadow-md"
+          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-xs shadow-sm shadow-indigo-500/20"
         >
           View Offer <ExternalLink size={12} />
         </a>

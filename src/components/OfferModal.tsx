@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { X, MapPin, ExternalLink, ShieldCheck } from "lucide-react";
 
 interface OfferModalProps {
@@ -8,15 +9,40 @@ interface OfferModalProps {
 }
 
 export function OfferModal({ ad, onClose }: OfferModalProps) {
+  const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (ad) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [ad]);
+
   if (!ad) return null;
 
+  // Click outside to close handler
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (modalContentRef.current && !modalContentRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white border border-slate-200 rounded-[2rem] sm:rounded-[2.5rem] max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in fade-in zoom-in duration-200 scrollbar-none">
+    <div
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+    >
+      <div
+        ref={modalContentRef}
+        className="bg-white border border-slate-200 rounded-[2rem] sm:rounded-[2.5rem] max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl relative scrollbar-none animate-in zoom-in-95 duration-200 my-auto"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3.5 right-3.5 bg-white/95 hover:bg-white text-slate-700 p-2 sm:p-2.5 rounded-full border border-slate-200 shadow-md transition z-10"
+          className="absolute top-3.5 right-3.5 bg-white/95 hover:bg-slate-100 text-slate-700 p-2 sm:p-2.5 rounded-full border border-slate-200 shadow-md transition z-10"
         >
           <X size={16} />
         </button>
@@ -47,24 +73,24 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{ad.title}</h2>
 
-          {/* Specs Row Grid matching the Mockup recipe spec chips - Vibrant Colors */}
+          {/* Specs Row Grid - Vibrant Colors */}
           <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="bg-rose-100/90 p-2 sm:p-2.5 rounded-2xl border border-rose-300">
+            <div className="bg-rose-50/90 p-2 sm:p-2.5 rounded-2xl border border-rose-200">
               <span className="text-[9px] sm:text-[10px] font-bold text-rose-900 block uppercase">Radius</span>
               <span className="text-xs sm:text-sm font-black text-slate-900">{ad.radius_km || 10} km</span>
             </div>
 
-            <div className="bg-sky-100/90 p-2 sm:p-2.5 rounded-2xl border border-sky-300">
+            <div className="bg-sky-50/90 p-2 sm:p-2.5 rounded-2xl border border-sky-200">
               <span className="text-[9px] sm:text-[10px] font-bold text-sky-900 block uppercase">Format</span>
               <span className="text-xs sm:text-sm font-black text-slate-900 truncate block">{ad.ad_format || "Card"}</span>
             </div>
 
-            <div className="bg-emerald-100/90 p-2 sm:p-2.5 rounded-2xl border border-emerald-300">
+            <div className="bg-emerald-50/90 p-2 sm:p-2.5 rounded-2xl border border-emerald-200">
               <span className="text-[9px] sm:text-[10px] font-bold text-emerald-900 block uppercase">Priority</span>
               <span className="text-xs sm:text-sm font-black text-slate-900">P{ad.weight_priority || 1}</span>
             </div>
 
-            <div className="bg-amber-100/90 p-2 sm:p-2.5 rounded-2xl border border-amber-300">
+            <div className="bg-amber-50/90 p-2 sm:p-2.5 rounded-2xl border border-amber-200">
               <span className="text-[9px] sm:text-[10px] font-bold text-amber-900 block uppercase">Status</span>
               <span className="text-xs sm:text-sm font-black text-slate-900">Active</span>
             </div>
@@ -83,7 +109,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
             )}
           </div>
 
-          {/* Action Footer */}
+          {/* Action Footer - Vibrant Indigo Button Color Scheme */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
             <button
               onClick={onClose}
@@ -95,7 +121,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
               href={`/api/track/click?ad_id=${ad.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2.5 sm:py-3 rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all"
+              className="flex-1 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/25 transition-all"
             >
               Claim / View Deal <ExternalLink size={14} />
             </a>

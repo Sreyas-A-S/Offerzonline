@@ -1,5 +1,7 @@
 {
   "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
-  "/admin/page": "app/admin/page.js",
-  "/page": "app/page.js"
+  "/api/track/click/route": "app/api/track/click/route.js",
+  "/api/ads/serve/route": "app/api/ads/serve/route.js",
+  "/page": "app/page.js",
+  "/admin/page": "app/admin/page.js"
 }
