@@ -1,4 +1,4 @@
-const CACHE_NAME = 'offerzonline-cache-v1';
+                                                                                                                                      const CACHE_NAME = 'offerzonline-cache-v1';
 const OFFLINE_URL = '/~offline';
 
 const ASSETS_TO_CACHE = [
@@ -32,6 +32,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Bypass service worker for admin routes and authentication APIs
+  const url = new URL(event.request.url);
+  if (
+    url.pathname.startsWith('/admin') ||
+    url.pathname.startsWith('/api/admin') ||
+    url.pathname.startsWith('/api/auth')
+  ) {
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -41,7 +56,14 @@ self.addEventListener('fetch', (event) => {
   } else {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        return cachedResponse || fetch(event.request);
+        return cachedResponse || fetch(event.request).catch((err) => {
+          console.warn("Service worker fetch failed (likely offline):", err);
+          return new Response("Offline / Network Error", {
+            status: 503,
+            statusText: "Service Unavailable",
+            headers: new Headers({ "Content-Type": "text/plain" }),
+          });
+        });
       })
     );
   }

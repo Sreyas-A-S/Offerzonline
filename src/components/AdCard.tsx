@@ -122,26 +122,21 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }
         </div>
 
         {/* Info */}
-        <div className="px-1 space-y-1.5 mb-3">
-          {ad.category_name && (
-            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border inline-block ${badgeStyle}`}>
-              {ad.category_name}
-            </span>
-          )}
-          <h3 className="font-extrabold text-slate-900 text-sm sm:text-base line-clamp-2 group-hover:text-indigo-600 transition-colors leading-snug">
+        <div className="px-1 space-y-1 mb-3">
+          <h3 className="font-semibold text-slate-800 text-xs sm:text-sm line-clamp-2 group-hover:text-slate-900 transition-colors leading-snug">
             {ad.title}
           </h3>
         </div>
       </div>
 
-      {/* Action Button - Vibrant Indigo Color Scheme */}
+      {/* Action Button - Premium Dark Slate Color Scheme */}
       <div className="pt-2">
         <a
           href={`/api/track/click?ad_id=${ad.id}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-xs shadow-sm shadow-indigo-500/20"
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider"
         >
           View Offer <ExternalLink size={12} />
         </a>

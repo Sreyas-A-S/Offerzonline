@@ -134,6 +134,7 @@ const INITIAL_CATEGORIES = [
 ];
 
 export default function PublicDiscoveryPage() {
+  const [showPreloader, setShowPreloader] = useState(true);
   const [ads, setAds] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
   const [loading, setLoading] = useState(true);
@@ -147,6 +148,14 @@ export default function PublicDiscoveryPage() {
 
   const headerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Preloader Timer
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPreloader(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Scroll to top button visibility listener
   useEffect(() => {
@@ -267,6 +276,24 @@ export default function PublicDiscoveryPage() {
 
   const featuredAd = filteredAds.length > 0 ? filteredAds[0] : null;
 
+  if (showPreloader) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center animate-in fade-in duration-300">
+        <div className="flex flex-col items-center space-y-4">
+          <img
+            src="/logo.png"
+            alt="Offerzonline Logo"
+            className="w-20 h-20 object-contain rounded-full shadow-lg p-1 border border-slate-100 bg-white animate-bounce"
+          />
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Offerzonline</h2>
+          <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-slate-900 rounded-full animate-[pulse_1s_infinite] w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-800 pb-32 pt-3 px-3 sm:px-6 lg:px-8 selection:bg-indigo-100 selection:text-indigo-900">
       
@@ -276,55 +303,71 @@ export default function PublicDiscoveryPage() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         
-        {/* Top Header Bar */}
-        <header ref={headerRef} className="flex items-center justify-between pt-1 animate-header">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <img
-              src="/logo.png"
-              alt="Offerzonline Logo"
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-full shadow-md shrink-0 bg-white p-0.5 border border-slate-100"
-            />
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+        {/* Top Header / Navbar */}
+        <header ref={headerRef} className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pt-1 animate-header bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-3xl shadow-xs">
+          <div className="flex items-center justify-between gap-3">
+            {/* Logo */}
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt="Offerzonline Logo"
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full shadow-md shrink-0 bg-white p-0.5 border border-slate-100"
+              />
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
                 Offerzonline
               </h1>
             </div>
+
+            {/* Mobile Location & Bell */}
+            <div className="flex items-center gap-2 md:hidden">
+              <button
+                onClick={() => setIsLocationModalOpen(true)}
+                className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer group"
+              >
+                <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition" />
+                <span className="max-w-[70px] truncate text-slate-900">{locationName}</span>
+                <ChevronDown size={11} className="text-slate-400" />
+              </button>
+
+              <button className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition shrink-0">
+                <Bell size={14} />
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Search Bar Input in Navbar */}
+          <div className="relative flex-1 max-w-xl mx-0 md:mx-6">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
+              <Search size={15} />
+            </div>
+            <input
+              type="text"
+              placeholder="Search deals, stores, or categories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200/90 rounded-2xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950/10 focus:bg-white transition-all shadow-2xs"
+            />
+            <button className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition">
+              <Mic size={15} />
+            </button>
+          </div>
+
+          {/* Desktop Location Selector & Bell */}
+          <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => setIsLocationModalOpen(true)}
-              className="bg-white/90 hover:bg-slate-50 border border-slate-200/90 shadow-xs hover:border-indigo-300 text-slate-800 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer group"
+              className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-4 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all cursor-pointer group shadow-2xs"
             >
-              <LottieAnimation type="pulse" className="w-4 h-4 shrink-0" />
-              <div className="flex items-center gap-1">
-                <span className="max-w-[95px] sm:max-w-[140px] truncate text-slate-900">{locationName}</span>
-                <ChevronDown size={13} className="text-slate-400 group-hover:text-indigo-600 transition" />
-              </div>
+              <MapPin size={13} className="text-indigo-650 group-hover:scale-105 transition" />
+              <span className="max-w-[120px] truncate text-slate-900 font-extrabold">{locationName}</span>
+              <ChevronDown size={12} className="text-slate-400 group-hover:text-slate-655 transition" />
             </button>
 
-            <button className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 border border-slate-200/80 shadow-sm flex items-center justify-center text-slate-700 hover:text-indigo-600 hover:bg-slate-100 transition shrink-0">
-              <Bell size={16} />
+            <button className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-650 hover:text-slate-900 hover:bg-slate-100 transition shrink-0 shadow-2xs">
+              <Bell size={15} />
             </button>
           </div>
         </header>
-
-        {/* Search Bar Input */}
-        <div className="relative animate-header">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-600 flex items-center">
-            <Sparkles size={18} />
-          </div>
-          <input
-            type="text"
-            placeholder="Search deals, stores, or categories..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50/80 border border-slate-200 rounded-2xl pl-11 pr-11 py-3.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white shadow-sm transition-all"
-          />
-          <button className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition">
-            <Mic size={18} />
-          </button>
-        </div>
 
         {/* Explore Categories Section - Cutout 3D Card Style matching Reference Screenshot */}
         <section className="space-y-4">
@@ -340,8 +383,8 @@ export default function PublicDiscoveryPage() {
             )}
           </div>
 
-          {/* Mobile Horizontal Scrollable Category Bar - 3D Pop Out Design (at least 4 displayed at once) */}
-          <div className="md:hidden flex items-start gap-3.5 overflow-x-auto pb-4 pt-3 scrollbar-none snap-x overflow-y-visible">
+          {/* Mobile Category Grid - No Scroll, displayed fully in a grid */}
+          <div className="md:hidden grid grid-cols-3 gap-x-3.5 gap-y-4 pt-3 pb-2 overflow-y-visible">
             {categories.map((cat) => {
               const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
               const isSelected = selectedCategory === cat.id.toString();
@@ -350,7 +393,7 @@ export default function PublicDiscoveryPage() {
                 <div
                   key={cat.id}
                   onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                  className="flex-shrink-0 w-[22vw] min-w-[85px] max-w-[105px] snap-start cursor-pointer group relative pt-2"
+                  className="w-full cursor-pointer group relative pt-2"
                 >
                   {/* Category Pastel Base Tile */}
                   <div
@@ -374,7 +417,7 @@ export default function PublicDiscoveryPage() {
                   </div>
 
                   {/* Category Name & Arrow underneath */}
-                  <div className="mt-2 text-left">
+                  <div className="mt-2 text-center">
                     <span className="text-[11px] font-extrabold text-slate-900 leading-tight block truncate">
                       {cat.name.split(" ")[0]} <span className="text-slate-400 font-normal">›</span>
                     </span>
@@ -488,19 +531,14 @@ export default function PublicDiscoveryPage() {
 
               {/* Title & Tags */}
               <div className="text-center space-y-2">
-                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-base sm:text-lg font-semibold text-slate-800 line-clamp-1 group-hover:text-slate-900 transition-colors">
                   {featuredAd.title}
                 </h3>
                 <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                  <span className="bg-indigo-100 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-200">
+                  <span className="bg-indigo-150 text-indigo-850 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-200">
                     ⚡ Verified Deal
                   </span>
-                  {featuredAd.category_name && (
-                    <span className="bg-pink-100 text-pink-700 text-[11px] font-bold px-3 py-1 rounded-full border border-pink-200">
-                      {featuredAd.category_name}
-                    </span>
-                  )}
-                  <span className="bg-emerald-100 text-emerald-700 text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-200">
+                  <span className="bg-emerald-150 text-emerald-850 text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-200">
                     Nearby
                   </span>
                 </div>
@@ -573,46 +611,6 @@ export default function PublicDiscoveryPage() {
 
       </div>
 
-      {/* Floating Pill Bottom Navigation for Light Mode */}
-      <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-xs sm:max-w-md w-full px-4">
-        <nav className="floating-nav px-4 py-2.5 rounded-full flex items-center justify-between shadow-xl">
-          <button 
-            onClick={() => setActiveTab("home")}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              activeTab === "home" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
-            }`}
-          >
-            <Compass size={18} />
-          </button>
-          
-          <button 
-            onClick={() => setActiveTab("categories")}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              activeTab === "categories" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
-            }`}
-          >
-            <Layers size={18} />
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("deals")}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              activeTab === "deals" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
-            }`}
-          >
-            <Tag size={18} />
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("saved")}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              activeTab === "saved" ? "bg-indigo-50 text-indigo-600 font-bold shadow-2xs" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-100"
-            }`}
-          >
-            <Bookmark size={18} />
-          </button>
-        </nav>
-      </div>
 
       {/* Scroll to Top Floating Button */}
       {showScrollTop && (

@@ -58,7 +58,7 @@ export function LocationModal({
   return (
     <div
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto scroll-smooth animate-in fade-in duration-200"
     >
       <div
         ref={modalRef}
@@ -90,7 +90,7 @@ export function LocationModal({
             onDetectGPS();
             onClose();
           }}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold p-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-indigo-500/20 text-xs transition-all"
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold p-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-md text-xs transition-all"
         >
           <Navigation size={14} className="animate-pulse" />
           <span>Detect Current GPS Location</span>
@@ -114,7 +114,7 @@ export function LocationModal({
             Popular Areas & Cities
           </span>
 
-          <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1 scrollbar-none">
+          <div className="max-h-60 overflow-y-auto scroll-smooth space-y-1.5 pr-1 scrollbar-none">
             {filteredLocations.map((loc) => {
               const isCurrent = currentLocationName.includes(loc.name.split(",")[0]);
 

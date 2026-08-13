@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { 
   Plus, Trash2, Eye, MousePointerClick, TrendingUp, Upload, 
-  MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck
+  MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
+  Menu, X, Layers, BarChart2
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -19,6 +20,20 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "ads" | "categories" | "create">("overview");
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    categoryId: "1",
+    adFormat: "300x250",
+    targetUrl: "",
+    mediaUrl: "",
+    mediaType: "image",
+    latitude: 28.6139,
+    longitude: 77.2090,
+    radiusKm: 10,
+    weightPriority: 5,
+  });
 
   // Check authentication on mount
   useEffect(() => {
@@ -26,20 +41,33 @@ export default function AdminDashboard() {
     setIsAuthenticated(isAuth);
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginUsername === "admin" && (loginPassword === "password123" || loginPassword === "offerz2026")) {
-      sessionStorage.setItem("admin_authenticated", "true");
-      setIsAuthenticated(true);
-      setAuthError(null);
-    } else {
-      setAuthError("Invalid Admin Username or Password");
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem("admin_authenticated", "true");
+        setIsAuthenticated(true);
+      } else {
+        setAuthError(data.error || "Invalid Admin Username or Password");
+      }
+    } catch (err) {
+      setAuthError("Failed to authenticate with server. Please try again.");
     }
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("admin_authenticated");
-    setIsAuthenticated(false);
+    if (confirm("Are you sure you want to log out of the admin panel?")) {
+      sessionStorage.removeItem("admin_authenticated");
+      setIsAuthenticated(false);
+      setIsSidebarOpen(false);
+    }
   };
 
   const fetchDashboardData = async () => {
@@ -213,80 +241,160 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col relative">
-      {/* Dynamic Background Glow */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-[120px] pointer-events-none" />
-
-      {/* Top Navbar */}
-      <header className="border-b border-slate-200/60 bg-white/60 backdrop-blur-xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-0 z-40 shadow-sm">
-        <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col md:flex-row relative">
+      
+      {/* Mobile Top Header */}
+      <header className="md:hidden flex items-center justify-between bg-slate-900 text-white px-5 py-4 border-b border-slate-800 sticky top-0 z-40">
+        <div className="flex items-center gap-2.5">
           <img
             src="/logo.png"
             alt="Offerzonline Logo"
-            className="w-10 h-10 object-contain rounded-xl shadow-md bg-white p-0.5 border border-slate-100"
+            className="w-8 h-8 object-contain rounded-lg bg-white p-0.5"
           />
-          <div>
-            <h1 className="font-bold text-xl text-slate-900 tracking-tight">Offerzonline Admin</h1>
-            <p className="text-xs text-slate-500">Single-Admin Ad Server & Geo-Targeting Hub</p>
-          </div>
+          <span className="font-black text-sm tracking-tight">Offerzonline Admin</span>
         </div>
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-1.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition"
+        >
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </header>
 
-        <div className="flex items-center gap-3">
-          <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200 text-xs font-semibold">
+      {/* Left Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-100 flex flex-col justify-between border-r border-slate-800 transform md:transform-none md:relative transition-transform duration-300 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="flex flex-col">
+          {/* Sidebar Header */}
+          <div className="px-6 py-6 border-b border-slate-800 flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="Offerzonline Logo"
+              className="w-9 h-9 object-contain rounded-xl bg-white p-0.5"
+            />
+            <div>
+              <h2 className="font-extrabold text-sm text-white tracking-tight">Offerzonline</h2>
+              <span className="text-[10px] text-slate-400 font-bold block">Ad Server Control Panel</span>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="p-4 space-y-1.5 flex-1">
             <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
+              onClick={() => {
+                setActiveTab("overview");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
                 activeTab === "overview"
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-950"
+                  ? "bg-indigo-650 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
               }`}
             >
-              Analytics Overview
+              <BarChart2 size={16} />
+              <span>Analytics Overview</span>
             </button>
+
             <button
-              onClick={() => setActiveTab("ads")}
-              className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
+              onClick={() => {
+                setActiveTab("ads");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
                 activeTab === "ads"
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-950"
+                  ? "bg-indigo-650 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
               }`}
             >
-              Campaigns ({ads.filter((a) => a.is_active).length})
+              <Store size={16} />
+              <span>Campaigns ({ads.filter((a) => a.is_active).length})</span>
             </button>
+
             <button
-              onClick={() => setActiveTab("categories")}
-              className={`px-4 py-2.5 rounded-xl transition-all duration-300 ${
+              onClick={() => {
+                setActiveTab("categories");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
                 activeTab === "categories"
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-950"
+                  ? "bg-indigo-650 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
               }`}
             >
-              Categories ({categories.length})
+              <Layers size={16} />
+              <span>Categories ({categories.length})</span>
             </button>
+
             <button
-              onClick={() => setActiveTab("create")}
-              className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-1 ${
+              onClick={() => {
+                setActiveTab("create");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
                 activeTab === "create"
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-950"
+                  ? "bg-indigo-650 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
               }`}
             >
-              <Plus size={14} /> Create Campaign
+              <Plus size={16} />
+              <span>Create Campaign</span>
             </button>
           </nav>
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-350 font-black text-xs border border-slate-700">
+              AD
+            </div>
+            <div>
+              <span className="text-xs font-extrabold text-white block">Administrator</span>
+              <span className="text-[10px] text-slate-400 font-medium block">Active Session</span>
+            </div>
+          </div>
 
           <button
             onClick={handleLogout}
-            className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1 transition"
+            className="p-2 bg-slate-800 hover:bg-rose-955 hover:text-rose-455 text-slate-400 rounded-xl transition border border-slate-700 hover:border-rose-900/50"
             title="Log Out"
           >
-            <LogOut size={16} />
+            <LogOut size={14} />
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 relative z-10">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-955/60 backdrop-blur-xs md:hidden"
+        />
+      )}
+
+      {/* Main Workspace */}
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
+        
+        {/* Desktop Navbar */}
+        <header className="hidden md:flex items-center justify-between px-8 py-5 bg-white border-b border-slate-200">
+          <div>
+            <h1 className="font-extrabold text-lg text-slate-900 tracking-tight capitalize">
+              {activeTab === "overview" ? "Analytics Overview" : activeTab === "create" ? "Create Campaign" : activeTab}
+            </h1>
+            <p className="text-[11px] text-slate-500">Manage localized targets, media conversion, and edge cached deliveries</p>
+          </div>
+
+          <div className="text-[11px] bg-slate-100 border border-slate-200 font-bold px-3 py-1.5 rounded-full text-slate-650 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Server Status: Connected
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
         {message && (
           <div
             className={`mb-6 p-4 rounded-2xl border flex items-center justify-between text-sm transition-all duration-300 ${
@@ -638,7 +746,23 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-      </main>
+        </main>
+
+        {/* Footer */}
+        <footer className="py-5 px-6 sm:px-8 border-t border-slate-200 bg-white text-slate-500 text-[11px] font-medium flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <img
+              src="/logo.png"
+              alt="Offerzonline Logo"
+              className="w-5.5 h-5.5 object-contain rounded-md bg-white p-0.5 border border-slate-100"
+            />
+            <span className="font-bold text-slate-900">Offerzonline Admin</span>
+          </div>
+          <p className="text-center sm:text-right">
+            © {new Date().getFullYear()} Offerzonline. Built with Next.js & Cloudflare.
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
