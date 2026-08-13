@@ -131,7 +131,7 @@ const DEFAULT_INITIAL_ADS = [
     title: "50% Off Gourmet Pizza & Pasta Combo",
     category_name: "Food & Dining",
     category_id: 2,
-    media_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80",
+    media_url: "/images/categories/food.png",
     media_type: "image",
     ad_format: "300x250",
     target_url: "https://offerzonline.com/deals/pizza",
@@ -150,7 +150,7 @@ const DEFAULT_INITIAL_ADS = [
     title: "Buy 1 Get 1 Free Premium Gym Membership",
     category_name: "Health & Fitness",
     category_id: 5,
-    media_url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80",
+    media_url: "/images/categories/fitness.png",
     media_type: "image",
     ad_format: "responsive",
     target_url: "https://offerzonline.com/deals/fitness",
@@ -425,8 +425,8 @@ export default function PublicDiscoveryPage() {
             )}
           </div>
 
-          {/* Mobile Category Grid - No Scroll, displayed fully in a grid */}
-          <div className="md:hidden grid grid-cols-3 gap-x-3.5 gap-y-4 pt-3 pb-2 overflow-y-visible">
+          {/* Mobile-Style Category Row - Horizontal Scroll, shown on Desktop too when active filter is chosen */}
+          <div className={`${selectedCategory !== "all" ? "flex md:justify-center animate-switch-mode" : "md:hidden flex"} flex-row overflow-x-auto scrollbar-none gap-3 md:gap-6 pt-3 pb-4 overflow-y-visible`}>
             {categories.map((cat) => {
               const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
               const isSelected = selectedCategory === cat.id.toString();
@@ -435,11 +435,11 @@ export default function PublicDiscoveryPage() {
                 <div
                   key={cat.id}
                   onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                  className="w-full cursor-pointer group relative pt-2"
+                  className="w-[22%] md:w-28 shrink-0 cursor-pointer group relative pt-2"
                 >
                   {/* Category Pastel Base Tile */}
                   <div
-                    className={`aspect-square w-full ${visual.bg} rounded-[1.6rem] relative shadow-md border ${
+                    className={`aspect-square w-full md:w-28 md:h-28 ${visual.bg} rounded-[1.6rem] relative shadow-md border ${
                       isSelected ? "border-indigo-600 ring-3 ring-indigo-400/50 scale-105" : "border-white/70"
                     } transition-all group-hover:scale-105 flex items-center justify-center p-0 overflow-visible`}
                   >
@@ -472,8 +472,8 @@ export default function PublicDiscoveryPage() {
             })}
           </div>
 
-          {/* Desktop Banner Grid (md:grid) */}
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {/* Desktop Banner Grid (md:grid) - Hidden when active filter is chosen */}
+          <div className={`${selectedCategory !== "all" ? "hidden" : "hidden md:grid animate-switch-mode"} md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6`}>
             {categories.map((cat) => {
               const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
               const isSelected = selectedCategory === cat.id.toString();
@@ -539,11 +539,13 @@ export default function PublicDiscoveryPage() {
         </section>
 
         {/* Featured Hero Card ("Recommended for You") */}
-        {featuredAd && (
+        {featuredAd && selectedCategory === "all" && (
           <section ref={heroRef} className="space-y-3 animate-hero-card">
             <div className="flex items-center justify-between">
               <h2 className="text-sm sm:text-base font-bold text-slate-900">Recommended for You</h2>
-              <span className="text-xs font-bold text-indigo-600 cursor-pointer hover:underline">View All</span>
+              <Link href="/offers" className="text-xs font-bold text-indigo-600 hover:underline">
+                View All
+              </Link>
             </div>
 
             <div 
@@ -603,7 +605,9 @@ export default function PublicDiscoveryPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm sm:text-base font-bold text-slate-900">Popular Offers</h2>
-            <span className="text-xs font-bold text-indigo-600 cursor-pointer hover:underline">View All</span>
+            <Link href="/offers" className="text-xs font-bold text-indigo-600 hover:underline">
+              View All
+            </Link>
           </div>
 
           {loading ? (

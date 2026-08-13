@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MapPin, ExternalLink, Heart } from "lucide-react";
+import { MapPin, ArrowUpRight, Heart } from "lucide-react";
 import Image from "next/image";
 
 interface AdCardProps {
@@ -108,6 +108,18 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }
             />
           )}
 
+          {/* Floating Action Arrow redirect icon */}
+          <a
+            href={`/api/track/click?ad_id=${ad.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-2.5 left-2.5 w-8 h-8 rounded-full bg-slate-900/90 backdrop-blur-md shadow-sm flex items-center justify-center text-white hover:bg-slate-950 hover:scale-105 transition z-10 border border-slate-800"
+            title="View Offer"
+          >
+            <ArrowUpRight size={14} />
+          </a>
+
           {/* Heart Bookmark Icon */}
           <button
             onClick={(e) => onToggleSave && onToggleSave(e)}
@@ -133,18 +145,8 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }
         </div>
       </div>
 
-      {/* Action Button - Premium Dark Slate Color Scheme */}
-      <div className="pt-2">
-        <a
-          href={`/api/track/click?ad_id=${ad.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider"
-        >
-          View Offer <ExternalLink size={12} />
-        </a>
-      </div>
+      {/* Bottom padding adjustment */}
+      <div className="pt-0" />
     </div>
   );
 }
