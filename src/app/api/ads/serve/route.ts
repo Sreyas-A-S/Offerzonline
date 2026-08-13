@@ -73,6 +73,7 @@ const MOCK_ADS = [
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
+  const adId = searchParams.get("id");
   const lat = parseFloat(searchParams.get("lat") || "0");
   const lng = parseFloat(searchParams.get("lng") || "0");
   const categoryId = searchParams.get("category");
@@ -82,6 +83,30 @@ export async function GET(req: NextRequest) {
   try {
     const client = await pool.connect();
     try {
+      if (adId) {
+        const result = await client.query(`
+          SELECT 
+            a.id,
+            a.title,
+            a.category_id,
+            c.name as category_name,
+            a.media_url,
+            a.media_type,
+            a.ad_format,
+            a.target_url,
+            a.latitude,
+            a.longitude,
+            a.radius_km,
+            a.weight_priority,
+            a.description,
+            a.expires_at
+          FROM ads a
+          LEFT JOIN categories c ON a.category_id = c.id
+          WHERE a.id = $1
+        `, [parseInt(adId, 10)]);
+        return NextResponse.json({ ads: result.rows });
+      }
+
       let query = "";
       const queryParams: any[] = [];
 
@@ -208,6 +233,11 @@ export async function GET(req: NextRequest) {
     console.warn("PostgreSQL connection fallback triggered in /api/ads/serve:", error.message);
     
     // Smooth fallback to mock ads so frontend/UI never breaks while DB credentials are being set up
+    if (adId) {
+      const match = MOCK_ADS.find((a) => a.id === parseInt(adId, 10));
+      return NextResponse.json({ ads: match ? [match] : [] }, { status: 200 });
+    }
+
     let filteredMockAds = MOCK_ADS;
     if (categoryId && categoryId !== "all") {
       filteredMockAds = filteredMockAds.filter((a) => a.category_id === parseInt(categoryId, 10));

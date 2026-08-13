@@ -279,6 +279,29 @@ export default function PublicDiscoveryPage() {
     fetchCategories();
   }, []);
 
+  // Auto-open shared ad from URL query parameter
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const shareAdId = params.get("ad");
+      if (shareAdId) {
+        const found = ads.find((a) => a.id.toString() === shareAdId);
+        if (found) {
+          setSelectedAd(found);
+        } else {
+          fetch(`/api/ads/serve?id=${shareAdId}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.ads && data.ads.length > 0) {
+                setSelectedAd(data.ads[0]);
+              }
+            })
+            .catch((err) => console.error("Error fetching shared ad:", err));
+        }
+      }
+    }
+  }, [ads]);
+
   // GSAP Entrance Animations
   useEffect(() => {
     const ctx = gsap.context(() => {

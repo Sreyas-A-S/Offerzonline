@@ -4,25 +4,26 @@ import { pool } from "@/db";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { adId, referrer, userLocation } = body;
-
-    if (!adId) {
-      return NextResponse.json({ error: "adId required" }, { status: 400 });
-    }
+    const { adId, adIds, referrer, userLocation } = body;
 
     const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const idsToLog: number[] = adIds ? adIds : (adId ? [adId] : []);
+
+    if (idsToLog.length === 0) {
+      return NextResponse.json({ error: "adId or adIds required" }, { status: 400 });
+    }
 
     try {
       const client = await pool.connect();
       try {
-        // Verify if ad exists in DB to prevent FK violation with mock ads
-        const adCheck = await client.query("SELECT id FROM ads WHERE id = $1", [adId]);
-        if (adCheck.rows.length > 0) {
-          await client.query(
-            `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip, user_location_name) VALUES ($1, 'impression', $2, $3, $4)`,
-            [adId, referrer || "direct", ip, userLocation || "Unknown"]
-          );
-        }
+        // Bulk verify and insert analytics logs in a single query
+        await client.query(
+          `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip, user_location_name)
+           SELECT id, 'impression', $2, $3, $4
+           FROM ads
+           WHERE id = ANY($1::int[])`,
+          [idsToLog, referrer || "direct", ip, userLocation || "Unknown"]
+        );
       } finally {
         client.release();
       }

@@ -50,21 +50,47 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
   const hasTracked = useRef(false);
 
   useEffect(() => {
+    // Set up global batching structures on mounting
+    if (typeof window !== "undefined") {
+      const win = window as any;
+      win.__impressionQueue = win.__impressionQueue || [];
+      
+      if (!win.__impressionInterval) {
+        win.__impressionInterval = setInterval(() => {
+          const queue = win.__impressionQueue || [];
+          if (queue.length === 0) return;
+          
+          const adIds = [...queue];
+          win.__impressionQueue = [];
+          
+          fetch("/api/track/impression", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              adIds,
+              referrer: document.referrer,
+              userLocation: userLocationName || "Unknown",
+            }),
+          }).catch((err) => console.error("Batch impression error:", err));
+        }, 1200); // Flush queue every 1.2 seconds
+      }
+    }
+
     // Real-time impression tracking via IntersectionObserver
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasTracked.current) {
             hasTracked.current = true;
-            fetch("/api/track/impression", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                adId: ad.id,
-                referrer: document.referrer,
-                userLocation: userLocationName || "Unknown",
-              }),
-            }).catch((err) => console.error("Impression error:", err));
+            
+            // Queue impression event
+            if (typeof window !== "undefined") {
+              const win = window as any;
+              win.__impressionQueue = win.__impressionQueue || [];
+              if (!win.__impressionQueue.includes(ad.id)) {
+                win.__impressionQueue.push(ad.id);
+              }
+            }
           }
         });
       },
