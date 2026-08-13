@@ -179,7 +179,7 @@ export default function PublicDiscoveryPage() {
   const [showPreloader, setShowPreloader] = useState(false);
   const [ads, setAds] = useState<any[]>(DEFAULT_INITIAL_ADS);
   const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedAd, setSelectedAd] = useState<any>(null);
