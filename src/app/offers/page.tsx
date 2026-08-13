@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { AdCard } from "@/components/AdCard";
 import { OfferModal } from "@/components/OfferModal";
+import { LocationModal } from "@/components/LocationModal";
 import { LottieAnimation } from "@/components/LottieAnimation";
 import { 
-  ArrowLeft, Search, MapPin, Tag, Sparkles, AlertCircle, Bookmark, Compass
+  ArrowLeft, Search, MapPin, ChevronDown, Compass
 } from "lucide-react";
 import Link from "next/link";
 
@@ -27,12 +28,41 @@ export default function OffersListingPage() {
   const [selectedAd, setSelectedAd] = useState<any>(null);
   const [savedAdIds, setSavedAdIds] = useState<number[]>([]);
 
+  // Location State
+  const [location, setLocation] = useState<{ lat: number; lng: number }>({ lat: 28.6139, lng: 77.209 });
+  const [locationName, setLocationName] = useState("Detecting location...");
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+
+  // Auto-Detect Location
+  const detectLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setLocation(coords);
+          setLocationName(`${coords.lat.toFixed(3)}°, ${coords.lng.toFixed(3)}°`);
+        },
+        () => {
+          setLocationName("New Delhi (Default)");
+        }
+      );
+    } else {
+      setLocationName("New Delhi (Default)");
+    }
+  };
+
+  useEffect(() => {
+    detectLocation();
+  }, []);
+
+  // Fetch ads based on chosen category and location coordinates
   useEffect(() => {
     async function loadAllOffers() {
       setLoading(true);
       try {
-        // Query without coordinates to fetch all active ads globally
         const query = new URLSearchParams({
+          lat: location.lat.toString(),
+          lng: location.lng.toString(),
           category: selectedCategory,
           limit: "50"
         });
@@ -46,7 +76,7 @@ export default function OffersListingPage() {
       }
     }
     loadAllOffers();
-  }, [selectedCategory]);
+  }, [selectedCategory, location]);
 
   const toggleSaveAd = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -67,38 +97,66 @@ export default function OffersListingPage() {
 
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Top Navigation / Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 backdrop-blur-md border border-slate-200/60 p-4 sm:p-5 rounded-3xl shadow-sm">
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/" 
-              className="p-2 hover:bg-slate-100 rounded-full transition text-slate-600 hover:text-slate-900 border border-slate-200/60"
-            >
-              <ArrowLeft size={18} />
-            </Link>
-            <div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-950 tracking-tight flex items-center gap-1.5">
-                <Compass className="text-indigo-600" size={20} />
-                All Verified Offers
-              </h1>
-              <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
-                Discover the best local discounts and deals
-              </p>
+        {/* Top Header / Navbar */}
+        <header className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/80 backdrop-blur-md border border-slate-200/60 p-4 sm:p-5 rounded-3xl shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <Link 
+                href="/" 
+                className="p-2 hover:bg-slate-100 rounded-full transition text-slate-650 hover:text-slate-900 border border-slate-200/60"
+              >
+                <ArrowLeft size={16} />
+              </Link>
+              <img
+                src="/logo.png"
+                alt="Offerzonline Logo"
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full shadow-md shrink-0 bg-white p-0.5 border border-slate-100"
+              />
+              <div>
+                <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  Offerzonline
+                </h1>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">All Verified Offers</span>
+              </div>
+            </div>
+
+            {/* Mobile Location Selector */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsLocationModalOpen(true)}
+                className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer group"
+              >
+                <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition" />
+                <span className="max-w-[70px] truncate text-slate-900">{locationName}</span>
+                <ChevronDown size={11} className="text-slate-400" />
+              </button>
             </div>
           </div>
 
-          {/* Search bar inside Listing Header */}
-          <div className="relative w-full sm:max-w-xs">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
-              <Search size={14} />
+          {/* Search bar */}
+          <div className="relative flex-1 max-w-xl mx-0 md:mx-6">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
+              <Search size={15} />
             </div>
             <input
               type="text"
               placeholder="Search active offers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950/10 focus:bg-white transition-all shadow-inner"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950/10 focus:bg-white transition-all shadow-2xs"
             />
+          </div>
+
+          {/* Desktop Location Selector */}
+          <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => setIsLocationModalOpen(true)}
+              className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-4 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+            >
+              <MapPin size={13} className="text-indigo-650 group-hover:scale-105 transition" />
+              <span className="max-w-[120px] truncate text-slate-900 font-extrabold">{locationName}</span>
+              <ChevronDown size={12} className="text-slate-400 group-hover:text-slate-655 transition" />
+            </button>
           </div>
         </header>
 
@@ -138,14 +196,15 @@ export default function OffersListingPage() {
             </div>
           ) : filteredAds.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-              {filteredAds.map((ad) => (
+              {filteredAds.map((ad, idx) => (
                 <AdCard
                   key={ad.id}
                   ad={ad}
-                  userLocationName="National"
+                  userLocationName={locationName}
                   onSelect={(selected) => setSelectedAd(selected)}
                   isSaved={savedAdIds.includes(ad.id)}
                   onToggleSave={(e) => toggleSaveAd(ad.id, e)}
+                  priority={idx < 4}
                 />
               ))}
             </div>
@@ -159,10 +218,47 @@ export default function OffersListingPage() {
             </div>
           )}
         </main>
+
+        {/* Simple Professional Footer */}
+        <footer className="mt-16 pt-8 border-t border-slate-200/80 pb-6 text-slate-500 text-xs">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt="Offerzonline Logo"
+                className="w-7 h-7 object-contain rounded-full bg-white p-0.5 border border-slate-100"
+              />
+              <span className="font-extrabold text-slate-900 text-sm tracking-tight">Offerzonline</span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-slate-600">
+              <a href="#" className="hover:text-indigo-600 transition">About Us</a>
+              <a href="#" className="hover:text-indigo-600 transition">Verified Deals</a>
+              <a href="#" className="hover:text-indigo-600 transition">Privacy Policy</a>
+              <a href="#" className="hover:text-indigo-600 transition">Terms of Service</a>
+            </div>
+
+            <p className="text-[11px] text-slate-400">
+              © {new Date().getFullYear()} Offerzonline. All rights reserved.
+            </p>
+          </div>
+        </footer>
       </div>
 
       {/* Offer Detail Modal */}
       <OfferModal ad={selectedAd} onClose={() => setSelectedAd(null)} />
+
+      {/* Location Selection Modal */}
+      <LocationModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        currentLocationName={locationName}
+        onSelectLocation={(name, lat, lng) => {
+          setLocationName(name);
+          setLocation({ lat, lng });
+        }}
+        onDetectGPS={detectLocation}
+      />
     </div>
   );
 }

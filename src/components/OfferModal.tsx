@@ -72,11 +72,15 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
         <div className="relative aspect-video bg-slate-100 rounded-t-2xl overflow-hidden">
           {ad.media_type === "video" ? (
             <video
-              src={ad.media_url}
               controls
               autoPlay
+              muted
+              playsInline
+              preload="auto"
               className="w-full h-full object-cover"
-            />
+            >
+              <source src={ad.media_url} type="video/mp4" />
+            </video>
           ) : (
             <img
               src={ad.media_url}

@@ -687,7 +687,7 @@ export default function AdminDashboard() {
                       {formData.mediaUrl ? (
                         <div className="w-full h-48 rounded-xl overflow-hidden border border-[#1e293b] bg-slate-950 flex items-center justify-center relative">
                           {formData.mediaType === "video" ? (
-                            <video src={formData.mediaUrl} className="w-full h-full object-contain" controls muted autoPlay loop />
+                            <video src={formData.mediaUrl} className="w-full h-full object-contain" controls muted autoPlay loop playsInline preload="metadata" />
                           ) : (
                             <img src={formData.mediaUrl} alt="Upload preview" className="w-full h-full object-contain" />
                           )}
@@ -848,7 +848,7 @@ export default function AdminDashboard() {
                             title="Preview Media"
                           >
                             {ad.media_type === "video" ? (
-                              <video src={ad.media_url} className="w-full h-full object-cover" muted />
+                              <video src={ad.media_url} className="w-full h-full object-cover" muted playsInline preload="none" />
                             ) : (
                               <img src={ad.media_url} alt={ad.title} className="w-full h-full object-cover" />
                             )}
@@ -1154,6 +1154,9 @@ export default function AdminDashboard() {
                   className="max-w-full max-h-[78vh] object-contain rounded-lg" 
                   controls 
                   autoPlay 
+                  muted
+                  playsInline
+                  preload="metadata"
                   loop
                 />
               ) : (

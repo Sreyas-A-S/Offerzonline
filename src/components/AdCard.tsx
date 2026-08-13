@@ -19,6 +19,7 @@ interface AdCardProps {
   onSelect: (ad: any) => void;
   isSaved?: boolean;
   onToggleSave?: (e: React.MouseEvent) => void;
+  priority?: boolean;
 }
 
 function getVibrantCategoryBadge(categoryName?: string) {
@@ -44,7 +45,7 @@ function getVibrantCategoryBadge(categoryName?: string) {
   return "bg-indigo-100 text-indigo-900 border-indigo-300";
 }
 
-export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }: AdCardProps) {
+export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, priority = false }: AdCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const hasTracked = useRef(false);
 
@@ -83,20 +84,22 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }
     <div
       ref={cardRef}
       onClick={() => onSelect(ad)}
-      className="group relative bg-white border border-slate-200/90 rounded-[2rem] p-3.5 sm:p-4 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col justify-between"
+      className="group relative transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
     >
       <div>
         {/* Card Header Media */}
         <div className="relative aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden mb-3 shadow-inner">
           {ad.media_type === "video" ? (
             <video
-              src={ad.media_url}
               autoPlay
               loop
               muted
               playsInline
+              preload="none"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+            >
+              <source src={ad.media_url} type="video/mp4" />
+            </video>
           ) : (
             <Image
               src={ad.media_url}
@@ -104,6 +107,7 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               unoptimized={true}
+              priority={priority}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           )}

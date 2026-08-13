@@ -618,7 +618,7 @@ export default function PublicDiscoveryPage() {
             </div>
           ) : filteredAds.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-              {filteredAds.map((ad) => (
+              {filteredAds.map((ad, idx) => (
                 <AdCard
                   key={ad.id}
                   ad={ad}
@@ -626,6 +626,7 @@ export default function PublicDiscoveryPage() {
                   onSelect={(selected) => setSelectedAd(selected)}
                   isSaved={savedAdIds.includes(ad.id)}
                   onToggleSave={(e) => toggleSaveAd(ad.id, e)}
+                  priority={idx < 4}
                 />
               ))}
             </div>
