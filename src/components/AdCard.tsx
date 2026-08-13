@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { MapPin, ExternalLink, Heart } from "lucide-react";
+import Image from "next/image";
 
 interface AdCardProps {
   ad: {
@@ -97,9 +98,12 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave }
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <img
+            <Image
               src={ad.media_url}
               alt={ad.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              unoptimized={true}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           )}

@@ -17,16 +17,10 @@
       "static/chunks/_pages-dir-browser_node_modules_next_dist_pages__error_js.js"
     ]
   },
-  "components\\MapPicker.tsx -> leaflet": {
-    "id": "components\\MapPicker.tsx -> leaflet",
+  "components\\MapPicker.tsx -> ./InnerMap": {
+    "id": "components\\MapPicker.tsx -> ./InnerMap",
     "files": [
-      "static/chunks/_app-pages-browser_node_modules_leaflet_dist_leaflet-src_js.js"
-    ]
-  },
-  "components\\MapPicker.tsx -> react-leaflet": {
-    "id": "components\\MapPicker.tsx -> react-leaflet",
-    "files": [
-      "static/chunks/_app-pages-browser_node_modules_react-leaflet_lib_index_js.js"
+      "static/chunks/_app-pages-browser_src_components_InnerMap_tsx.js"
     ]
   }
 }

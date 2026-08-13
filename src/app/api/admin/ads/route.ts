@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority } = body;
+    const { title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt } = body;
 
     try {
       const client = await pool.connect();
@@ -100,12 +100,13 @@ export async function POST(req: NextRequest) {
           `
           INSERT INTO ads (
             title, category_id, media_url, media_type, ad_format, target_url, 
-            latitude, longitude, radius_km, location, weight_priority, is_active
+            latitude, longitude, radius_km, location, weight_priority, is_active,
+            description, expires_at
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE, $11, $12)
           RETURNING *
           `,
-          [title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority || 1]
+          [title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority || 1, description || null, expiresAt || null]
         );
 
         return NextResponse.json({ success: true, ad: result.rows[0] });
@@ -128,6 +129,8 @@ export async function POST(req: NextRequest) {
         longitude,
         radius_km: radiusKm,
         weight_priority: weightPriority || 1,
+        description: description || null,
+        expires_at: expiresAt || null,
         distance_km: 0.5,
         views: 0,
         clicks: 0,

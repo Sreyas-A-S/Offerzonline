@@ -11,6 +11,7 @@ import {
   Utensils, Car, Plane, Smartphone, Dumbbell, ShieldCheck, ChevronDown, ArrowUp
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import gsap from "gsap";
 
 // Category Visual Metadata inspired by the reference design with 3D cutouts & sub-tags
@@ -124,6 +125,47 @@ const DEFAULT_CUTOUT_CARD = {
   ]
 };
 
+const DEFAULT_INITIAL_ADS = [
+  {
+    id: 1,
+    title: "50% Off Gourmet Pizza & Pasta Combo",
+    category_name: "Food & Dining",
+    category_id: 2,
+    media_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80",
+    media_type: "image",
+    ad_format: "300x250",
+    target_url: "https://offerzonline.com/deals/pizza",
+    latitude: 28.6139,
+    longitude: 77.209,
+    radius_km: 10,
+    weight_priority: 5,
+    distance_km: 1.2,
+    views: 142,
+    clicks: 18,
+    ctr: 12.68,
+    is_active: true,
+  },
+  {
+    id: 2,
+    title: "Buy 1 Get 1 Free Premium Gym Membership",
+    category_name: "Health & Fitness",
+    category_id: 5,
+    media_url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80",
+    media_type: "image",
+    ad_format: "responsive",
+    target_url: "https://offerzonline.com/deals/fitness",
+    latitude: 28.6139,
+    longitude: 77.209,
+    radius_km: 15,
+    weight_priority: 4,
+    distance_km: 3.4,
+    views: 98,
+    clicks: 11,
+    ctr: 11.22,
+    is_active: true,
+  },
+];
+
 const INITIAL_CATEGORIES = [
   { id: 1, name: "Food & Dining" },
   { id: 2, name: "Retail & Shopping" },
@@ -134,8 +176,8 @@ const INITIAL_CATEGORIES = [
 ];
 
 export default function PublicDiscoveryPage() {
-  const [showPreloader, setShowPreloader] = useState(true);
-  const [ads, setAds] = useState<any[]>([]);
+  const [showPreloader, setShowPreloader] = useState(false);
+  const [ads, setAds] = useState<any[]>(DEFAULT_INITIAL_ADS);
   const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -403,10 +445,13 @@ export default function PublicDiscoveryPage() {
                   >
                     {/* 3D Cutout filling and bursting 125% past tile edges */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <img
+                      <Image
                         src={visual.image}
                         alt={cat.name}
-                        loading="eager"
+                        width={96}
+                        height={96}
+                        priority={true}
+                        unoptimized={true}
                         className="w-[125%] h-[125%] max-w-none object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.25)] transition-transform group-hover:scale-110 -translate-y-1"
                       />
                     </div>
@@ -470,10 +515,13 @@ export default function PublicDiscoveryPage() {
                       visual.align === "left" ? "-left-5 sm:-left-8" : "-right-5 sm:-right-8"
                     } w-44 sm:w-52 h-44 sm:h-52 transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-2 pointer-events-none z-20`}
                   >
-                    <img
+                    <Image
                       src={visual.image}
                       alt={cat.name}
-                      loading="eager"
+                      width={208}
+                      height={208}
+                      priority={true}
+                      unoptimized={true}
                       className="w-full h-full object-contain filter drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]"
                     />
                   </div>
@@ -516,9 +564,13 @@ export default function PublicDiscoveryPage() {
 
               {/* Media Container */}
               <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden mb-4 bg-slate-100 shadow-inner">
-                <img 
+                <Image 
                   src={featuredAd.media_url} 
                   alt={featuredAd.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 1200px"
+                  priority={true}
+                  unoptimized={true}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
                 {featuredAd.distance_km !== undefined && (

@@ -18,7 +18,7 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
-  icon: varchar("icon", { length: 100 }),
+  icon: text("icon"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -35,6 +35,8 @@ export const ads = pgTable("ads", {
   radiusKm: integer("radius_km").notNull().default(5),
   weightPriority: integer("weight_priority").notNull().default(1),
   isActive: boolean("is_active").notNull().default(true),
+  description: text("description"),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
