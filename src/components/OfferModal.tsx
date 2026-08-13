@@ -12,6 +12,26 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   const modalContentRef = useRef<HTMLDivElement>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+
+  const mediaUrls = ad && ad.media_url ? ad.media_url.split(",") : [];
+
+  const handlePrevMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : mediaUrls.length - 1));
+  };
+
+  const handleNextMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMediaIndex((prev) => (prev < mediaUrls.length - 1 ? prev + 1 : 0));
+  };
+
+  const getOptimizedUrl = (url: string) => {
+    if (url.includes("images.unsplash.com") && !url.includes("w=")) {
+      return `${url}${url.includes("?") ? "&" : "?"}auto=format&fit=crop&w=1200&q=85`;
+    }
+    return url;
+  };
 
   // Lock/unlock body scroll when modal status changes
   useEffect(() => {
@@ -121,24 +141,59 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
         {/* Modal Inner Wrapper */}
         <div className="flex-1">
           {/* Media Header Banner */}
-          <div className="relative w-full aspect-video md:aspect-[21/9] bg-slate-950 overflow-hidden shadow-md">
-            {ad.media_type === "video" ? (
-              <video
-                controls
-                autoPlay
-                muted
-                playsInline
-                preload="auto"
-                className="w-full h-full object-contain"
-              >
-                <source src={ad.media_url} type="video/mp4" />
-              </video>
-            ) : (
-              <img
-                src={ad.media_url}
-                alt={ad.title}
-                className="w-full h-full object-cover"
-              />
+          <div className="relative w-full aspect-video md:aspect-[21/9] bg-slate-950 overflow-hidden shadow-md group">
+            {mediaUrls.length > 0 && (() => {
+              const currentUrl = mediaUrls[activeMediaIndex];
+              const isVideo = currentUrl.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || ad.media_type === "video" && !currentUrl.includes(".");
+              return isVideo ? (
+                <video
+                  key={currentUrl}
+                  controls
+                  autoPlay
+                  muted
+                  playsInline
+                  preload="auto"
+                  className="w-full h-full object-contain"
+                >
+                  <source src={currentUrl} type="video/mp4" />
+                </video>
+              ) : (
+                <img
+                  key={currentUrl}
+                  src={getOptimizedUrl(currentUrl)}
+                  alt={ad.title}
+                  className="w-full h-full object-cover"
+                />
+              );
+            })()}
+
+            {/* Navigation Arrows for Slider */}
+            {mediaUrls.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevMedia}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center text-lg font-black shadow-md cursor-pointer transition select-none"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={handleNextMedia}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center text-lg font-black shadow-md cursor-pointer transition select-none"
+                >
+                  ›
+                </button>
+                {/* Dots indicator */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 bg-slate-950/40 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                  {mediaUrls.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        idx === activeMediaIndex ? "bg-white w-3.5" : "bg-white/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </div>
 

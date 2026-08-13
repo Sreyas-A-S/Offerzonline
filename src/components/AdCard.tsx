@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPin, ArrowUpRight, Heart } from "lucide-react";
 import Image from "next/image";
 
@@ -48,6 +48,26 @@ function getVibrantCategoryBadge(categoryName?: string) {
 export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, priority = false }: AdCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const hasTracked = useRef(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+
+  const mediaUrls = ad.media_url ? ad.media_url.split(",") : [];
+
+  const handlePrevMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : mediaUrls.length - 1));
+  };
+
+  const handleNextMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMediaIndex((prev) => (prev < mediaUrls.length - 1 ? prev + 1 : 0));
+  };
+
+  const getOptimizedUrl = (url: string) => {
+    if (url.includes("images.unsplash.com") && !url.includes("w=")) {
+      return `${url}${url.includes("?") ? "&" : "?"}auto=format&fit=crop&w=600&q=80`;
+    }
+    return url;
+  };
 
   useEffect(() => {
     // Set up global batching structures on mounting
@@ -114,28 +134,63 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
     >
       <div>
         {/* Card Header Media */}
-        <div className="relative aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden mb-3 shadow-inner">
-          {ad.media_type === "video" ? (
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="none"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            >
-              <source src={ad.media_url} type="video/mp4" />
-            </video>
-          ) : (
-            <Image
-              src={ad.media_url}
-              alt={ad.title}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              unoptimized={true}
-              priority={priority}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+        <div className="relative aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden mb-3 shadow-inner group/media">
+          {mediaUrls.length > 0 && (() => {
+            const currentUrl = mediaUrls[activeMediaIndex];
+            const isVideo = currentUrl.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || ad.media_type === "video" && !currentUrl.includes(".");
+            return isVideo ? (
+              <video
+                key={currentUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="none"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              >
+                <source src={currentUrl} type="video/mp4" />
+              </video>
+            ) : (
+              <Image
+                key={currentUrl}
+                src={getOptimizedUrl(currentUrl)}
+                alt={ad.title}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                unoptimized={true}
+                priority={priority}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            );
+          })()}
+
+          {/* Navigation Arrows for Card Slider */}
+          {mediaUrls.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevMedia}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-6 h-6 rounded-full bg-white/90 hover:bg-white text-slate-800 flex items-center justify-center text-[10px] font-black shadow-md cursor-pointer opacity-0 group-hover/media:opacity-100 transition-opacity select-none"
+              >
+                ‹
+              </button>
+              <button
+                onClick={handleNextMedia}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-6 h-6 rounded-full bg-white/90 hover:bg-white text-slate-800 flex items-center justify-center text-[10px] font-black shadow-md cursor-pointer opacity-0 group-hover/media:opacity-100 transition-opacity select-none"
+              >
+                ›
+              </button>
+              {/* Indicators */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+                {mediaUrls.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`w-1 h-1 rounded-full transition-all ${
+                      idx === activeMediaIndex ? "bg-white w-2.5" : "bg-white/40"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
           )}
 
           {/* Floating Action Arrow redirect icon */}

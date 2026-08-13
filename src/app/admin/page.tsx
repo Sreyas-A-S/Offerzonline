@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { 
   Plus, Trash2, Eye, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
-  Menu, X, Layers, BarChart2
+  Menu, X, Layers, BarChart2, Code, Copy, Check
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -70,6 +70,8 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: string } | null>(null);
+  const [embedAd, setEmbedAd] = useState<any>(null);
+  const [copiedType, setCopiedType] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -198,12 +200,16 @@ export default function AdminDashboard() {
         });
         const result = await res.json();
         if (result.success) {
-          setFormData((prev) => ({
-            ...prev,
-            mediaUrl: result.url,
-            mediaType: "video",
-            adFormat: "responsive",
-          }));
+          setFormData((prev) => {
+            const currentUrls = prev.mediaUrl ? prev.mediaUrl.split(",") : [];
+            currentUrls.push(result.url);
+            return {
+              ...prev,
+              mediaUrl: currentUrls.join(","),
+              mediaType: "video",
+              adFormat: "responsive",
+            };
+          });
           setMessage({ type: "success", text: "Video uploaded and compressed successfully!" });
         } else {
           setMessage({ type: "error", text: result.error || "Upload failed" });
@@ -250,12 +256,16 @@ export default function AdminDashboard() {
       });
       const result = await res.json();
       if (result.success) {
-        setFormData((prev) => ({
-          ...prev,
-          mediaUrl: result.url,
-          mediaType: "image",
-          adFormat: cropResName,
-        }));
+        setFormData((prev) => {
+          const currentUrls = prev.mediaUrl ? prev.mediaUrl.split(",") : [];
+          currentUrls.push(result.url);
+          return {
+            ...prev,
+            mediaUrl: currentUrls.join(","),
+            mediaType: "image",
+            adFormat: cropResName,
+          };
+        });
         setMessage({ type: "success", text: "Media cropped, compressed & uploaded successfully!" });
       } else {
         setMessage({ type: "error", text: result.error || "Upload failed" });
@@ -652,6 +662,7 @@ export default function AdminDashboard() {
                       </label>
                     </div>
                     <div className="flex flex-col gap-4 bg-[#0b0f19] p-4 border border-[#1e293b] rounded-2xl">
+                      {/* Upload action row */}
                       <div className="flex flex-wrap items-center gap-4">
                         <input
                           type="file"
@@ -675,22 +686,50 @@ export default function AdminDashboard() {
                             </span>
                           ))}
                         </div>
-
-                        {formData.mediaUrl && (
-                          <span className="text-xs text-indigo-400 font-mono truncate max-w-xs block">
-                            Uploaded: {formData.mediaUrl.split("/").pop()}
-                          </span>
-                        )}
                       </div>
+
+                      {/* Uploaded filenames list */}
+                      {formData.mediaUrl && (
+                        <div className="flex flex-wrap gap-1.5 max-w-xs">
+                          {formData.mediaUrl.split(",").map((url, idx) => (
+                            <span key={idx} className="text-[10px] text-indigo-400 font-mono truncate max-w-[80px] bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded block">
+                              {url.split("/").pop()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       
-                      {/* Live Preview Container to utilize space */}
+                      {/* Live Preview Container to utilize space - Multi-Grid Slider previews */}
                       {formData.mediaUrl ? (
-                        <div className="w-full h-48 rounded-xl overflow-hidden border border-[#1e293b] bg-slate-950 flex items-center justify-center relative">
-                          {formData.mediaType === "video" ? (
-                            <video src={formData.mediaUrl} className="w-full h-full object-contain" controls muted autoPlay loop playsInline preload="metadata" />
-                          ) : (
-                            <img src={formData.mediaUrl} alt="Upload preview" className="w-full h-full object-contain" />
-                          )}
+                        <div className="grid grid-cols-2 gap-3.5 p-3.5 bg-slate-950/40 border border-[#1e293b] rounded-2xl min-h-[140px]">
+                          {formData.mediaUrl.split(",").map((url, index) => {
+                            const isVideo = url.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || formData.mediaType === "video" && !url.includes(".");
+                            return (
+                              <div key={index} className="relative aspect-video rounded-xl overflow-hidden border border-[#1e293b] bg-slate-950 flex items-center justify-center group/preview">
+                                {isVideo ? (
+                                  <video src={url} className="w-full h-full object-cover" muted playsInline preload="none" />
+                                ) : (
+                                  <img src={url} alt={`Upload preview ${index + 1}`} className="w-full h-full object-cover" />
+                                )}
+                                {/* Remove button */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = formData.mediaUrl.split(",");
+                                    const filtered = list.filter((_, idx) => idx !== index);
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      mediaUrl: filtered.join(",")
+                                    }));
+                                  }}
+                                  className="absolute top-1.5 right-1.5 p-1 rounded-full bg-red-650 hover:bg-red-700 text-white shadow-md transition cursor-pointer z-10 opacity-0 group-hover/preview:opacity-100"
+                                  title="Remove file"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="w-full h-48 rounded-xl border border-dashed border-[#1e293b] bg-slate-950/25 flex flex-col items-center justify-center text-slate-500 gap-2">
@@ -891,15 +930,24 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          {ad.is_active && (
+                          <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleDeleteAd(ad.id)}
-                              className="text-rose-455 hover:text-rose-355 p-2.5 rounded-xl hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40"
-                              title="Soft delete & Purge Cloudflare Cache"
+                              onClick={() => setEmbedAd(ad)}
+                              className="text-indigo-400 hover:text-indigo-300 p-2.5 rounded-xl hover:bg-indigo-950/20 transition border border-transparent hover:border-indigo-900/40 cursor-pointer"
+                              title="Get embed tag script code"
                             >
-                              <Trash2 size={14} />
+                              <Code size={14} />
                             </button>
-                          )}
+                            {ad.is_active && (
+                              <button
+                                onClick={() => handleDeleteAd(ad.id)}
+                                className="text-rose-455 hover:text-rose-355 p-2.5 rounded-xl hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40 cursor-pointer"
+                                title="Soft delete & Purge Cloudflare Cache"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1294,6 +1342,93 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Embed Integration Modal */}
+      {embedAd && (() => {
+        const host = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+        const scriptCode = `<script src="${host}/ad.js" data-placement="${embedAd.ad_format || "responsive"}"></script>`;
+        const iframeCode = `<iframe src="${host}/embed/frame?format=${embedAd.ad_format || "responsive"}" width="${embedAd.ad_format === "300x250" ? "300" : embedAd.ad_format === "728x90" ? "728" : "100%"}" height="${embedAd.ad_format === "728x90" ? "90" : "250"}" frameborder="0" scrolling="no"></iframe>`;
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] max-w-xl w-full p-6 sm:p-8 space-y-6 relative shadow-2xl">
+              <button
+                onClick={() => setEmbedAd(null)}
+                className="absolute top-6 right-6 text-slate-400 hover:text-white p-2 hover:bg-slate-900 rounded-full transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">Get Embed Code</h3>
+                <p className="text-xs text-slate-405">
+                  Embed sponsor placements for <span className="text-indigo-400 font-bold">"{embedAd.title}"</span> on other websites.
+                </p>
+              </div>
+
+              {/* Code Option 1: Dynamic JS Tag */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-350 uppercase tracking-wider">Method A: JS Script Tag (Recommended)</span>
+                  <button
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(scriptCode);
+                      setCopiedType("script");
+                      setTimeout(() => setCopiedType(null), 2000);
+                    }}
+                    className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 bg-indigo-950/20 border border-indigo-900/30 px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                  >
+                    {copiedType === "script" ? (
+                      <>
+                        <Check size={12} className="text-emerald-400" /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={12} /> Copy Code
+                      </>
+                    )}
+                  </button>
+                </div>
+                <pre className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-xl text-[10px] text-slate-300 font-mono overflow-x-auto select-all whitespace-pre-wrap break-all">
+                  {scriptCode}
+                </pre>
+              </div>
+
+              {/* Code Option 2: Standalone Iframe */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-350 uppercase tracking-wider">Method B: Direct Iframe Embed</span>
+                  <button
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(iframeCode);
+                      setCopiedType("iframe");
+                      setTimeout(() => setCopiedType(null), 2000);
+                    }}
+                    className="text-[11px] font-bold text-indigo-400 hover:text-indigo-305 flex items-center gap-1 bg-indigo-950/20 border border-indigo-900/30 px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                  >
+                    {copiedType === "iframe" ? (
+                      <>
+                        <Check size={12} className="text-emerald-400" /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={12} /> Copy Code
+                      </>
+                    )}
+                  </button>
+                </div>
+                <pre className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-xl text-[10px] text-slate-300 font-mono overflow-x-auto select-all whitespace-pre-wrap break-all">
+                  {iframeCode}
+                </pre>
+              </div>
+
+              <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl text-[10px] text-slate-400 leading-normal">
+                💡 **Integrations Guide:** The script tag automatically requests browser GPS permissions from the visitor to fetch nearest local geo-targeted ad campaigns dynamically.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
