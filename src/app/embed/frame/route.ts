@@ -7,9 +7,13 @@ export async function GET(req: NextRequest) {
   const lat = searchParams.get("lat") || "0";
   const lng = searchParams.get("lng") || "0";
   const format = searchParams.get("format") || "responsive";
+  const adId = searchParams.get("id");
 
   const host = req.nextUrl.origin;
-  const serveUrl = `${host}/api/ads/serve?lat=${lat}&lng=${lng}&format=${format}&limit=1`;
+  let serveUrl = `${host}/api/ads/serve?lat=${lat}&lng=${lng}&format=${format}&limit=1`;
+  if (adId) {
+    serveUrl += `&id=${adId}`;
+  }
 
   const html = `
     <!DOCTYPE html>

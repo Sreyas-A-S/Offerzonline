@@ -21,14 +21,17 @@
     iframe.style.height = '250px';
   }
 
+  const adId = currentScript.getAttribute('data-ad-id') || '';
+  const idQuery = adId ? `&id=${adId}` : '';
+
   // Fetch geotargeted ad via iframe
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const { latitude, longitude } = pos.coords;
-      iframe.src = `${serverUrl}/embed/frame?lat=${latitude}&lng=${longitude}&format=${placement}`;
+      iframe.src = `${serverUrl}/embed/frame?lat=${latitude}&lng=${longitude}&format=${placement}${idQuery}`;
     },
     () => {
-      iframe.src = `${serverUrl}/embed/frame?format=${placement}`;
+      iframe.src = `${serverUrl}/embed/frame?format=${placement}${idQuery}`;
     }
   );
 

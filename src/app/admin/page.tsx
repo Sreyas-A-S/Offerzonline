@@ -1346,8 +1346,8 @@ export default function AdminDashboard() {
       {/* Embed Integration Modal */}
       {embedAd && (() => {
         const host = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-        const scriptCode = `<script src="${host}/ad.js" data-placement="${embedAd.ad_format || "responsive"}"></script>`;
-        const iframeCode = `<iframe src="${host}/embed/frame?format=${embedAd.ad_format || "responsive"}" width="${embedAd.ad_format === "300x250" ? "300" : embedAd.ad_format === "728x90" ? "728" : "100%"}" height="${embedAd.ad_format === "728x90" ? "90" : "250"}" frameborder="0" scrolling="no"></iframe>`;
+        const scriptCode = `<script src="${host}/ad.js" data-placement="${embedAd.ad_format || "responsive"}" data-ad-id="${embedAd.id}"></script>`;
+        const iframeCode = `<iframe src="${host}/embed/frame?format=${embedAd.ad_format || "responsive"}&id=${embedAd.id}" width="${embedAd.ad_format === "300x250" ? "300" : embedAd.ad_format === "728x90" ? "728" : "100%"}" height="${embedAd.ad_format === "728x90" ? "90" : "250"}" frameborder="0" scrolling="no"></iframe>`;
 
         return (
           <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">

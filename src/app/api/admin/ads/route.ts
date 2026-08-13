@@ -59,20 +59,20 @@ export async function GET(req: NextRequest) {
         SELECT 
           a.*,
           c.name as category_name,
-          COALESCE(i.views, 0) as views,
-          COALESCE(cl.clicks, 0) as clicks,
+          views,
+          clicks,
           CASE 
-            WHEN COALESCE(i.views, 0) > 0 THEN ROUND((COALESCE(cl.clicks, 0)::numeric / i.views::numeric) * 100, 2)
+            WHEN views > 0 THEN ROUND((clicks::numeric / views::numeric) * 100, 2)
             ELSE 0 
           END as ctr
-        FROM ads a
+        FROM (
+          SELECT 
+            a.*,
+            (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression') as views,
+            (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'click') as clicks
+          FROM ads a
+        ) a
         LEFT JOIN categories c ON a.category_id = c.id
-        LEFT JOIN (
-          SELECT ad_id, COUNT(*) as views FROM analytics_logs WHERE event_type = 'impression' GROUP BY ad_id
-        ) i ON a.id = i.ad_id
-        LEFT JOIN (
-          SELECT ad_id, COUNT(*) as clicks FROM analytics_logs WHERE event_type = 'click' GROUP BY ad_id
-        ) cl ON a.id = cl.ad_id
         ORDER BY a.created_at DESC
       `);
 
