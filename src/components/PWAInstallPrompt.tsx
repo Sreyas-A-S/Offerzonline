@@ -55,7 +55,7 @@ export function PWAInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 left-auto max-w-[calc(100vw-2rem)] sm:max-w-md md:max-w-sm bg-slate-100 border border-slate-350 text-slate-800 p-4 rounded-2xl shadow-xl z-50 flex items-center justify-between gap-4 relative pr-10">
+    <div className="fixed bottom-5 right-5 left-auto max-w-[calc(100vw-2.5rem)] sm:max-w-md md:max-w-sm bg-white/95 backdrop-blur-md border border-slate-200/80 text-slate-800 p-4 rounded-2xl shadow-2xl z-[9999] flex items-center justify-between gap-4 relative pr-10">
       <div>
         <h4 className="font-extrabold text-slate-950 text-sm">Install Offerzonline App</h4>
         <p className="text-xs text-slate-600">Get instant local offer alerts offline & on home screen</p>
