@@ -184,7 +184,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                 </button>
                 {/* Dots indicator */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 bg-slate-950/40 px-2.5 py-1 rounded-full backdrop-blur-xs">
-                  {mediaUrls.map((_, idx) => (
+                  {mediaUrls.map((_: string, idx: number) => (
                     <div
                       key={idx}
                       className={`w-1.5 h-1.5 rounded-full transition-all ${
