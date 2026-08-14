@@ -217,23 +217,42 @@ export default function PublicDiscoveryPage() {
   const [locationName, setLocationName] = useState("Detecting location...");
   const [geoError, setLocationError] = useState<string | null>(null);
 
-  // Location Auto-Detection
+  // Location Auto-Detection with Reverse Geocoding
   const detectLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setLocation(coords);
-          setLocationName(`${coords.lat.toFixed(3)}°, ${coords.lng.toFixed(3)}°`);
           setLocationError(null);
+
+          try {
+            // Reverse geocode lat/lng to human readable location name
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}`
+            );
+            const data = await res.json();
+            const address = data.address || {};
+            const cityOrArea =
+              address.suburb ||
+              address.neighbourhood ||
+              address.city ||
+              address.town ||
+              address.district ||
+              address.county ||
+              "Current Location";
+            setLocationName(cityOrArea);
+          } catch {
+            setLocationName("Current Location");
+          }
         },
-        (err) => {
+        () => {
           setLocationError("Geolocation access denied. Showing default location.");
-          setLocationName("New Delhi (Default)");
+          setLocationName("Nearby Deals");
         }
       );
     } else {
-      setLocationName("New Delhi (Default)");
+      setLocationName("Nearby Deals");
     }
   };
 
