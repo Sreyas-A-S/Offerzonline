@@ -52,7 +52,8 @@ export function PWAInstallPrompt() {
     localStorage.setItem("pwa_prompt_dismissed_until", tomorrow.toString());
   };
 
-  if (!showPrompt) return null;
+  // Hide the floating popup overlay for now
+  return null;
 
   return (
     <div className="fixed bottom-5 right-5 left-auto max-w-[calc(100vw-2.5rem)] sm:max-w-md md:max-w-sm bg-white/95 backdrop-blur-md border border-slate-200/80 text-slate-800 p-4 rounded-2xl shadow-2xl z-[9999] flex items-center justify-between gap-4 relative pr-10">

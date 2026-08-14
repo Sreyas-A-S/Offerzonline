@@ -8,7 +8,7 @@ import { LottieAnimation } from "@/components/LottieAnimation";
 import { 
   MapPin, Navigation, Sparkles, Store, Search, Mic, Bell, 
   Heart, ArrowUpRight, Tag, Bookmark, Layers, Percent, Clock, Compass, User, Star, ShoppingBag,
-  Utensils, Car, Plane, Smartphone, Dumbbell, ShieldCheck, ChevronDown, ArrowUp
+  Utensils, Car, Plane, Smartphone, Dumbbell, ShieldCheck, ChevronDown, ArrowUp, Download
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -430,6 +430,20 @@ export default function PublicDiscoveryPage() {
 
             <button className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-650 hover:text-slate-900 hover:bg-slate-100 transition shrink-0 shadow-2xs">
               <Bell size={15} />
+            </button>
+
+            <button
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  const event = new CustomEvent("trigger-pwa-install");
+                  window.dispatchEvent(event);
+                }
+              }}
+              className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              title="Install Offerzonline App"
+            >
+              <Download size={13} />
+              <span>Install App</span>
             </button>
           </div>
         </header>
