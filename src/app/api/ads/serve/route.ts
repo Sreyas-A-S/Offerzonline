@@ -195,7 +195,7 @@ export async function GET(req: NextRequest) {
         queryParams.push(lng, lat);
         let paramCounter = 3;
 
-        if (lat !== 0 || lng !== 0) {
+        if (lat !== 0 && lng !== 0) {
           query += ` AND (6371 * acos(LEAST(1.0, GREATEST(-1.0, cos(radians($2)) * cos(radians(a.latitude)) * cos(radians(a.longitude) - radians($1)) + sin(radians($2)) * sin(radians(a.latitude)))))) <= a.radius_km`;
         }
 
