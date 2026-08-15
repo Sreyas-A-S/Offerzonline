@@ -25,21 +25,25 @@ export async function uploadToR2(
   const publicUrlBase = process.env.CLOUDFLARE_R2_PUBLIC_URL;
 
   if (r2Client) {
-    await r2Client.send(
-      new PutObjectCommand({
-        Bucket: bucketName,
-        Key: fileName,
-        Body: fileBuffer,
-        ContentType: contentType,
-      })
-    );
+    try {
+      await r2Client.send(
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: fileName,
+          Body: fileBuffer,
+          ContentType: contentType,
+        })
+      );
 
-    if (publicUrlBase) {
-      return `${publicUrlBase.replace(/\/$/, "")}/${fileName}`;
+      if (publicUrlBase) {
+        return `${publicUrlBase.replace(/\/$/, "")}/${fileName}`;
+      }
+    } catch (r2Error: any) {
+      console.warn("Cloudflare R2 connection/SSL warning, falling back to local storage:", r2Error.message);
     }
   }
 
-  // Fallback to local public uploads if R2 credentials are not configured yet
+  // Fallback to local public uploads if R2 credentials are missing or failing SSL handshake
   return `/uploads/${fileName}`;
 }
 
