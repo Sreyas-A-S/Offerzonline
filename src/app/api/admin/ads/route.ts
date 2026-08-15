@@ -145,6 +145,90 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, isActive } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Ad ID required for update" }, { status: 400 });
+    }
+
+    try {
+      const client = await pool.connect();
+      try {
+        const result = await client.query(
+          `
+          UPDATE ads 
+          SET 
+            title = $1, 
+            category_id = $2, 
+            media_url = $3, 
+            media_type = $4, 
+            ad_format = $5, 
+            target_url = $6, 
+            latitude = $7, 
+            longitude = $8, 
+            radius_km = $9, 
+            location = ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, 
+            weight_priority = $10, 
+            is_active = $11, 
+            description = $12, 
+            expires_at = $13,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = $14
+          RETURNING *
+          `,
+          [
+            title,
+            categoryId,
+            mediaUrl,
+            mediaType,
+            adFormat,
+            targetUrl,
+            latitude,
+            longitude,
+            radiusKm,
+            weightPriority || 1,
+            isActive !== undefined ? isActive : true,
+            description || null,
+            expiresAt || null,
+            id,
+          ]
+        );
+
+        return NextResponse.json({ success: true, ad: result.rows[0] });
+      } finally {
+        client.release();
+      }
+    } catch (dbErr: any) {
+      MOCK_STORED_ADS = MOCK_STORED_ADS.map((a) =>
+        a.id.toString() === id.toString()
+          ? {
+              ...a,
+              title,
+              category_id: categoryId,
+              media_url: mediaUrl,
+              media_type: mediaType,
+              ad_format: adFormat,
+              target_url: targetUrl,
+              latitude,
+              longitude,
+              radius_km: radiusKm,
+              weight_priority: weightPriority,
+              description,
+              expires_at: expiresAt,
+              is_active: isActive !== undefined ? isActive : a.is_active,
+            }
+          : a
+      );
+      return NextResponse.json({ success: true });
+    }
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

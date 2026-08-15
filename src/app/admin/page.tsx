@@ -76,6 +76,7 @@ export default function AdminDashboard() {
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [editingAd, setEditingAd] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     categoryId: "1",
@@ -362,8 +363,8 @@ export default function AdminDashboard() {
     }
   };
 
-  // Create Ad
-  const handleCreateAd = async (e: React.FormEvent) => {
+  // Save Ad (Create or Update)
+  const handleSaveAd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.mediaUrl) {
       setMessage({ type: "error", text: "Please upload media file first!" });
@@ -371,11 +372,13 @@ export default function AdminDashboard() {
     }
 
     try {
+      const isEditing = Boolean(editingAd);
       const res = await fetch("/api/admin/ads", {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          id: editingAd ? editingAd.id : undefined,
           categoryId: parseInt(formData.categoryId, 10),
           radiusKm: parseInt(formData.radiusKm.toString(), 10),
           weightPriority: parseInt(formData.weightPriority.toString(), 10),
@@ -385,7 +388,8 @@ export default function AdminDashboard() {
 
       const result = await res.json();
       if (result.success) {
-        setMessage({ type: "success", text: "Ad created successfully!" });
+        setMessage({ type: "success", text: isEditing ? "Ad campaign updated successfully!" : "Ad created successfully!" });
+        setEditingAd(null);
         setFormData({
           title: "",
           categoryId: "1",
@@ -403,11 +407,30 @@ export default function AdminDashboard() {
         fetchDashboardData();
         setShowCreateForm(false);
       } else {
-        setMessage({ type: "error", text: result.error || "Failed to create ad" });
+        setMessage({ type: "error", text: result.error || "Failed to save ad campaign" });
       }
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Submit exception" });
     }
+  };
+
+  const openEditAdForm = (ad: any) => {
+    setEditingAd(ad);
+    setFormData({
+      title: ad.title || "",
+      categoryId: (ad.category_id || ad.categoryId || "1").toString(),
+      adFormat: ad.ad_format || ad.adFormat || "responsive",
+      targetUrl: ad.target_url || ad.targetUrl || "",
+      mediaUrl: ad.media_url || ad.mediaUrl || "",
+      mediaType: ad.media_type || ad.mediaType || "image",
+      latitude: parseFloat(ad.latitude) || 28.6139,
+      longitude: parseFloat(ad.longitude) || 77.2090,
+      radiusKm: parseInt((ad.radius_km || ad.radiusKm || 10).toString(), 10),
+      weightPriority: parseInt((ad.weight_priority || ad.weightPriority || 5).toString(), 10),
+      description: ad.description || "",
+      expiresAt: ad.expires_at ? new Date(ad.expires_at).toISOString().split("T")[0] : "",
+    });
+    setShowCreateForm(true);
   };
 
   // Soft Delete Ad (Triggers Cloudflare purge)
@@ -910,17 +933,22 @@ export default function AdminDashboard() {
           return showCreateForm ? (
             <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] p-8 max-w-5xl mx-auto shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-xl text-white tracking-tight">Create Ad</h3>
+                <h3 className="font-bold text-xl text-white tracking-tight">
+                  {editingAd ? "Edit Ad Campaign" : "Create Ad"}
+                </h3>
                 <button
                   type="button"
-                  onClick={() => setShowCreateForm(false)}
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setEditingAd(null);
+                  }}
                   className="text-slate-350 hover:text-white px-3.5 py-1.5 rounded-xl bg-slate-900 border border-[#1e293b] text-xs font-bold transition"
                 >
                   ← Back to Ads
                 </button>
               </div>
 
-              <form onSubmit={handleCreateAd} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <form onSubmit={handleSaveAd} className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column: Media First & Geolocation */}
                 <div className="space-y-6">
                   {/* Media File Upload */}
@@ -1102,7 +1130,7 @@ export default function AdminDashboard() {
                     disabled={uploading}
                     className="w-full bg-indigo-600 hover:bg-indigo-750 text-white font-bold py-4 rounded-2xl transition-all duration-300 text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-600/15 mt-6 md:mt-0"
                   >
-                    <CheckCircle size={18} /> Launch Geo-Targeted Ad
+                    <CheckCircle size={18} /> {editingAd ? "Update Ad Campaign" : "Launch Geo-Targeted Ad"}
                   </button>
                 </div>
               </form>
@@ -1200,6 +1228,13 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openEditAdForm(ad)}
+                              className="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 px-2.5 py-1.5 rounded-xl transition border border-indigo-800/60 flex items-center gap-1 text-xs font-bold cursor-pointer"
+                              title="Edit Ad Campaign Details"
+                            >
+                              Edit
+                            </button>
                             <button
                               onClick={() => openAdReportModal(ad)}
                               className="bg-purple-950/60 hover:bg-purple-900 text-purple-300 px-2.5 py-1.5 rounded-xl transition border border-purple-800/60 flex items-center gap-1 text-xs font-bold cursor-pointer"
