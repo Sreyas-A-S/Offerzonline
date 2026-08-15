@@ -43,10 +43,13 @@ export const ads = pgTable("ads", {
 
 export const analyticsLogs = pgTable("analytics_logs", {
   id: serial("id").primaryKey(),
-  adId: integer("ad_id").references(() => ads.id, { onDelete: "cascade" }).notNull(),
-  eventType: varchar("event_type", { length: 20 }).notNull(), // 'impression' | 'click'
+  adId: integer("ad_id").references(() => ads.id, { onDelete: "cascade" }),
+  eventType: varchar("event_type", { length: 50 }).notNull(), // 'page_view' | 'impression' | 'click'
+  pagePath: varchar("page_path", { length: 255 }),
+  visitorId: varchar("visitor_id", { length: 100 }), // Persistent anonymous device UUID
   referrerDomain: varchar("referrer_domain", { length: 255 }),
   userIp: varchar("user_ip", { length: 100 }),
+  userAgent: text("user_agent"),
   userLocationName: varchar("user_location_name", { length: 255 }),
   timestamp: timestamp("timestamp").defaultNow(),
 });

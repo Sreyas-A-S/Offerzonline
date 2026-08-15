@@ -165,6 +165,14 @@ export default function AdminDashboard() {
     }
   };
 
+  const [analyticsSummary, setAnalyticsSummary] = useState({
+    totalPageViews: 0,
+    totalUniqueVisitors: 0,
+    totalAdImpressions: 0,
+    totalAdClicks: 0,
+  });
+  const [recentAuditLogs, setRecentAuditLogs] = useState<any[]>([]);
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -177,6 +185,15 @@ export default function AdminDashboard() {
       const settingsData = await settingsRes.json();
       if (settingsData.settings?.logo) {
         setSiteLogo(settingsData.settings.logo);
+      }
+
+      const analyticsRes = await fetch("/api/admin/analytics");
+      const analyticsData = await analyticsRes.json();
+      if (analyticsData.summary) {
+        setAnalyticsSummary(analyticsData.summary);
+      }
+      if (analyticsData.recentLogs) {
+        setRecentAuditLogs(analyticsData.recentLogs);
       }
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -675,32 +692,41 @@ export default function AdminDashboard() {
         {activeTab === "overview" && (
           <div className="space-y-8">
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#38bdf8]/5 rounded-full blur-2xl" />
+                <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
+                  <span>Public Page Hits</span>
+                  <BarChart2 size={18} className="text-sky-400" />
+                </div>
+                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalPageViews}</h3>
+              </div>
+
+              <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#a855f7]/5 rounded-full blur-2xl" />
+                <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
+                  <span>Unique Visitors</span>
+                  <ShieldCheck size={18} className="text-purple-400" />
+                </div>
+                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalUniqueVisitors}</h3>
+              </div>
+
               <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl" />
                 <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>Total Impressions</span>
+                  <span>Ad Impressions</span>
                   <Eye size={18} className="text-indigo-400" />
                 </div>
                 <h3 className="text-4xl font-extrabold text-white">{totalViews}</h3>
               </div>
 
               <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl" />
                 <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>Total Clicks</span>
-                  <MousePointerClick size={18} className="text-purple-400" />
+                  <span>Ad Clicks (CTR {avgCtr}%)</span>
+                  <MousePointerClick size={18} className="text-emerald-400" />
                 </div>
                 <h3 className="text-4xl font-extrabold text-white">{totalClicks}</h3>
-              </div>
-
-              <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 rounded-full blur-2xl" />
-                <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>Average CTR</span>
-                  <TrendingUp size={18} className="text-pink-400" />
-                </div>
-                <h3 className="text-4xl font-extrabold text-white">{avgCtr}%</h3>
               </div>
             </div>
 
@@ -718,9 +744,75 @@ export default function AdminDashboard() {
                       labelStyle={{ fontWeight: "bold", color: "#fff" }}
                     />
                     <Bar dataKey="views" fill="#4f46e5" name="Impressions" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="clicks" fill="#9333ea" name="Clicks" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="clicks" fill="#9333ea" name="Clicks" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Detailed Visitors Audit Log */}
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-lg text-white tracking-tight">Real-Time Traffic Audit Log</h3>
+                  <p className="text-xs text-slate-400">Detailed records of IP addresses, user agents, detected locations, and events</p>
+                </div>
+                <button
+                  onClick={fetchDashboardData}
+                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <RefreshCw size={13} /> Refresh
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-[#1e293b] bg-[#0b0f19]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#131b2e] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#1e293b]">
+                    <tr>
+                      <th className="p-3.5">Event</th>
+                      <th className="p-3.5">IP Address</th>
+                      <th className="p-3.5">User Location</th>
+                      <th className="p-3.5">Browser Agent / Device</th>
+                      <th className="p-3.5">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
+                    {recentAuditLogs.length > 0 ? (
+                      recentAuditLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="p-3.5">
+                            <span
+                              className={`px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase ${
+                                log.event_type === "click"
+                                  ? "bg-emerald-950 border border-emerald-800 text-emerald-300"
+                                  : log.event_type === "page_view"
+                                  ? "bg-sky-950 border border-sky-800 text-sky-300"
+                                  : "bg-indigo-950 border border-indigo-800 text-indigo-300"
+                              }`}
+                            >
+                              {log.event_type}
+                            </span>
+                            {log.ad_title && <span className="block text-[10px] text-slate-400 truncate max-w-[140px] mt-0.5">{log.ad_title}</span>}
+                          </td>
+                          <td className="p-3.5 font-mono text-indigo-300">{log.user_ip}</td>
+                          <td className="p-3.5">{log.user_location_name || "Unknown"}</td>
+                          <td className="p-3.5 font-mono text-[11px] text-slate-400 max-w-xs truncate" title={log.user_agent}>
+                            {log.user_agent}
+                          </td>
+                          <td className="p-3.5 text-slate-400 font-mono text-[11px]">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-slate-500 font-semibold">
+                          No traffic logs recorded yet. Visit the public page to see real-time hits!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

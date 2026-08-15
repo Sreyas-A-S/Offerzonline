@@ -192,7 +192,7 @@ export default function PublicDiscoveryPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Fetch dynamic brand logo and hide preloader smoothly after 1.5s
+  // Fetch dynamic brand logo, track page view, and hide preloader smoothly after 1.5s
   useEffect(() => {
     async function loadBrandLogo() {
       try {
@@ -206,6 +206,24 @@ export default function PublicDiscoveryPage() {
       }
     }
     loadBrandLogo();
+
+    // Persistent visitorId generation
+    let visitorId = localStorage.getItem("offerz_visitor_id");
+    if (!visitorId) {
+      visitorId = "vid_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("offerz_visitor_id", visitorId);
+    }
+
+    // Log public pageview asynchronously
+    fetch("/api/track/pageview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventType: "page_view",
+        pagePath: window.location.pathname,
+        visitorId,
+      }),
+    }).catch((e) => console.error("Pageview log error:", e));
 
     const timer = setTimeout(() => {
       setShowPreloader(false);

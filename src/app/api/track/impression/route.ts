@@ -6,7 +6,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { adId, adIds, referrer, userLocation } = body;
 
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
+    const userAgent = req.headers.get("user-agent") || "";
+    const visitorId = body.visitorId || null;
     const idsToLog: number[] = adIds ? adIds : (adId ? [adId] : []);
 
     if (idsToLog.length === 0) {
@@ -18,11 +20,11 @@ export async function POST(req: NextRequest) {
       try {
         // Bulk verify and insert analytics logs in a single query
         await client.query(
-          `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip, user_location_name)
-           SELECT id, 'impression', $2, $3, $4
+          `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip, user_agent, visitor_id, user_location_name)
+           SELECT id, 'impression', $2, $3, $4, $5, $6
            FROM ads
            WHERE id = ANY($1::int[])`,
-          [idsToLog, referrer || "direct", ip, userLocation || "Unknown"]
+          [idsToLog, referrer || "direct", ip, userAgent, visitorId, userLocation || "Unknown"]
         );
       } finally {
         client.release();

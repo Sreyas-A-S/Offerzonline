@@ -29,11 +29,13 @@ export async function GET(req: NextRequest) {
 
       // Log click event asynchronously
       const referrer = req.headers.get("referer") || "direct";
-      const ip = req.headers.get("x-forwarded-for") || "unknown";
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
+      const userAgent = req.headers.get("user-agent") || "";
+      const visitorId = searchParams.get("visitor_id") || null;
 
       client.query(
-        `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip) VALUES ($1, 'click', $2, $3)`,
-        [adId, referrer, ip]
+        `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip, user_agent, visitor_id) VALUES ($1, 'click', $2, $3, $4, $5)`,
+        [adId, referrer, ip, userAgent, visitorId]
       ).catch((e) => console.error("Click log error:", e));
 
       // 302 Redirect to target URL
