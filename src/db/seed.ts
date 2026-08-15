@@ -25,7 +25,7 @@ async function seed() {
   const allCategories = await db.select().from(categories);
   const catMap = new Map(allCategories.map((c) => [c.slug, c.id]));
 
-  // 2. High-Quality Ads Seed Data
+  // 2. High-Quality Ads Seed Data with Multi-City Coordinates & Wide Coverage
   const sampleAds = [
     {
       title: "🍕 50% OFF Artisanal Woodfired Pizza & Craft Pasta",
@@ -36,11 +36,11 @@ async function seed() {
       targetUrl: "https://offerzonline.com/deals/gourmet-pizza",
       latitude: "28.6139000",
       longitude: "77.2090000",
-      radiusKm: 50,
+      radiusKm: 5000, // 5000 km radius ensures deals show up worldwide/nationwide for testing
       weightPriority: 10,
       isActive: true,
       description: "Enjoy handcrafted sourdough Neapolitan pizzas baked fresh in woodfired stone ovens. Comes with complimentary garlic knots and craft soda for orders above $25. Valid for dine-in and takeaway!",
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
     {
       title: "🏋️ Buy 1 Year, Get 6 Months FREE Premium Gym Membership",
@@ -49,9 +49,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/fitzone-premium",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "19.0760000", // Mumbai coordinates
+      longitude: "72.8777000",
+      radiusKm: 5000,
       weightPriority: 9,
       isActive: true,
       description: "Transform your fitness journey with 24/7 access to state-of-the-art strength gear, sauna, Olympic swimming pool, and free personal trainer consultations for all new signups!",
@@ -64,9 +64,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/audiopro-headphones",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "12.9716000", // Bengaluru coordinates
+      longitude: "77.5946000",
+      radiusKm: 5000,
       weightPriority: 8,
       isActive: true,
       description: "Immerse in pure acoustics with active noise cancellation, 40-hour continuous battery life, ultra-plush memory foam earcups, and dual multi-device Bluetooth pairing.",
@@ -79,9 +79,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/luxury-spa",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "9.9312000", // Kochi coordinates
+      longitude: "76.2673000",
+      radiusKm: 5000,
       weightPriority: 7,
       isActive: true,
       description: "Revitalize your body & soul with Swedish full-body massages, organic hot stone therapy, herbal steam baths, and rejuvenating facial treatments.",
@@ -94,9 +94,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/summer-fashion",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "28.4595000", // Gurugram NCR
+      longitude: "77.0266000",
+      radiusKm: 5000,
       weightPriority: 6,
       isActive: true,
       description: "Upgrade your wardrobe with premium sustainable cotton apparel, luxury accessories, footwear, and designer streetwear collections.",
@@ -109,9 +109,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/artisan-coffee",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "19.0596000", // Bandra Mumbai
+      longitude: "72.8295000",
+      radiusKm: 5000,
       weightPriority: 9,
       isActive: true,
       description: "Kickstart your day with single-origin nitro cold brews paired with freshly baked butter croissants and artisan pastries at local boutique cafes.",
@@ -124,9 +124,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/vip-cinema",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "12.9352000", // Koramangala Bengaluru
+      longitude: "77.6245000",
+      radiusKm: 5000,
       weightPriority: 8,
       isActive: true,
       description: "Watch the latest blockbuster movies in recliner luxury with Dolby Atmos immersive sound. Includes complimentary double butter popcorn & soft drinks!",
@@ -139,9 +139,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/auto-detail",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "28.5708000", // Noida NCR
+      longitude: "77.3261000",
+      radiusKm: 5000,
       weightPriority: 7,
       isActive: true,
       description: "Give your car a showroom shine with hydrophobic ceramic paint protection, deep interior steam sanitization, wheel alignment, and engine bay wash.",
@@ -154,9 +154,9 @@ async function seed() {
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/home-theater",
-      latitude: "28.6139000",
-      longitude: "77.2090000",
-      radiusKm: 50,
+      latitude: "9.9816000", // Ernakulam Kochi
+      longitude: "76.2999000",
+      radiusKm: 5000,
       weightPriority: 6,
       isActive: true,
       description: "Upgrade your living room entertainment with 65-inch OLED HDR display, 120Hz gaming refresh rate, wireless subwoofer, and free wall-mount installation.",
