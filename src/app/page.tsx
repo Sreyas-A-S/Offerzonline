@@ -389,30 +389,34 @@ export default function PublicDiscoveryPage() {
     }
   }, [ads, hasAutoOpened]);
 
-  // GSAP Entrance Animations
+  // GSAP Entrance Animations (runs safely once preloader unmounts)
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Header Animation
-      gsap.from(".animate-header", {
-        y: -25,
-        opacity: 0,
-        duration: 0.6,
-        ease: "power3.out",
-        stagger: 0.1,
-      });
+    if (showPreloader) return;
 
-      // Hero Card Spring Animation
-      gsap.from(".animate-hero-card", {
-        scale: 0.94,
-        opacity: 0,
-        duration: 0.7,
-        delay: 0.4,
-        ease: "power3.out",
-      });
+    const ctx = gsap.context(() => {
+      if (document.querySelector(".animate-header")) {
+        gsap.from(".animate-header", {
+          y: -25,
+          opacity: 0,
+          duration: 0.6,
+          ease: "power3.out",
+          stagger: 0.1,
+        });
+      }
+
+      if (document.querySelector(".animate-hero-card")) {
+        gsap.from(".animate-hero-card", {
+          scale: 0.94,
+          opacity: 0,
+          duration: 0.7,
+          delay: 0.4,
+          ease: "power3.out",
+        });
+      }
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [showPreloader]);
 
   const toggleSaveAd = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
