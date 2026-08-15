@@ -9,6 +9,16 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Offerzonline - Location-Based Ad Server & Local Discovery",
   description: "Discover verified local business offers, deals, and targeted advertisements near you.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/logo.png",
+    apple: "/icon-192.png",
+  },
+  manifest: "/manifest.webmanifest",
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
