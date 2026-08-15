@@ -101,6 +101,7 @@ async function seed() {
       isActive: true,
       description: "Upgrade your wardrobe with premium sustainable cotton apparel, luxury accessories, footwear, and designer streetwear collections.",
       expiresAt: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+    },
     {
       title: "☕ Buy 1 Get 1 Free Specialty Cold Brew & Fresh Croissants",
       categoryId: catMap.get("food-dining"),
