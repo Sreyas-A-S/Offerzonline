@@ -102,31 +102,31 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   return (
     <div
       onClick={handleBackdropClick}
-      className={`fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md overflow-y-auto scroll-smooth transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md overflow-y-auto p-4 sm:p-6 md:p-10 flex items-center justify-center transition-opacity duration-300 ${
         isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
       <div
         ref={modalContentRef}
-        className={`bg-white min-h-screen w-full overflow-y-auto scroll-smooth relative scrollbar-none transition-all duration-300 flex flex-col justify-between ${
-          isClosing ? "translate-y-8 opacity-0" : "translate-y-0 opacity-100"
+        className={`bg-white w-full max-w-2xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-y-auto scrollbar-none relative border border-slate-100 transition-all duration-300 flex flex-col justify-between ${
+          isClosing ? "scale-95 translate-y-4 opacity-0" : "scale-100 translate-y-0 opacity-100"
         }`}
       >
         {/* Floating Share & Close Buttons */}
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
           <button
             onClick={handleShare}
-            className="p-2.5 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white backdrop-blur-md transition shadow-md border border-white/10 cursor-pointer"
+            className="p-2 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white backdrop-blur-md transition shadow-md border border-white/10 cursor-pointer"
             title="Share Offer"
           >
-            <Share2 size={20} />
+            <Share2 size={16} />
           </button>
           <button
             onClick={handleClose}
-            className="p-2.5 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white backdrop-blur-md transition shadow-md border border-white/10 cursor-pointer"
+            className="p-2 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white backdrop-blur-md transition shadow-md border border-white/10 cursor-pointer"
             title="Close Modal"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 
