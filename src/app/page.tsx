@@ -404,7 +404,7 @@ export default function PublicDiscoveryPage() {
               </h1>
             </div>
 
-            {/* Mobile Location & Bell */}
+            {/* Mobile Location */}
             <div className="flex items-center gap-2 md:hidden">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
@@ -413,10 +413,6 @@ export default function PublicDiscoveryPage() {
                 <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition" />
                 <span className="max-w-[70px] truncate text-slate-900">{locationName}</span>
                 <ChevronDown size={11} className="text-slate-400" />
-              </button>
-
-              <button className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition shrink-0">
-                <Bell size={14} />
               </button>
             </div>
           </div>
@@ -438,7 +434,7 @@ export default function PublicDiscoveryPage() {
             </button>
           </div>
 
-          {/* Desktop Location Selector & Bell */}
+          {/* Desktop Location Selector */}
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => setIsLocationModalOpen(true)}
@@ -447,10 +443,6 @@ export default function PublicDiscoveryPage() {
               <MapPin size={13} className="text-indigo-650 group-hover:scale-105 transition" />
               <span className="max-w-[120px] truncate text-slate-900 font-extrabold">{locationName}</span>
               <ChevronDown size={12} className="text-slate-400 group-hover:text-slate-655 transition" />
-            </button>
-
-            <button className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-650 hover:text-slate-900 hover:bg-slate-100 transition shrink-0 shadow-2xs">
-              <Bell size={15} />
             </button>
 
             <button
