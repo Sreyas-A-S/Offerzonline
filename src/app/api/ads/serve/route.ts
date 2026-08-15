@@ -132,6 +132,8 @@ export async function GET(req: NextRequest) {
             a.longitude,
             a.radius_km,
             a.weight_priority,
+            a.description,
+            a.expires_at,
             ROUND(
               (ST_Distance(
                 a.location,
@@ -179,6 +181,8 @@ export async function GET(req: NextRequest) {
             a.longitude,
             a.radius_km,
             a.weight_priority,
+            a.description,
+            a.expires_at,
             ROUND(
               (6371 * acos(
                 LEAST(1.0, GREATEST(-1.0,
