@@ -1,5 +1,5 @@
-import { db } from "./src/db";
-import { categories, ads } from "./src/db/schema";
+import { db } from "./index";
+import { categories, ads } from "./schema";
 import { eq } from "drizzle-orm";
 
 async function seed() {
