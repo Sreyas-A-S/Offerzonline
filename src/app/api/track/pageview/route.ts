@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
           user_location_name VARCHAR(255),
           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        ALTER TABLE analytics_logs ALTER COLUMN ad_id DROP NOT NULL;
+        ALTER TABLE analytics_logs ADD COLUMN IF NOT EXISTS page_path VARCHAR(255);
+        ALTER TABLE analytics_logs ADD COLUMN IF NOT EXISTS visitor_id VARCHAR(100);
+        ALTER TABLE analytics_logs ADD COLUMN IF NOT EXISTS user_agent TEXT;
       `);
 
       await client.query(
