@@ -217,9 +217,10 @@ export default function PublicDiscoveryPage() {
   const [locationName, setLocationName] = useState("Detecting location...");
   const [geoError, setLocationError] = useState<string | null>(null);
 
-  // Location Auto-Detection with Reverse Geocoding
+  // Location Auto-Detection with High Accuracy & Fallback
   const detectLocation = () => {
     if ("geolocation" in navigator) {
+      setLocationName("Detecting location...");
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -227,7 +228,6 @@ export default function PublicDiscoveryPage() {
           setLocationError(null);
 
           try {
-            // Reverse geocode lat/lng to human readable location name
             const res = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}`
             );
@@ -246,10 +246,25 @@ export default function PublicDiscoveryPage() {
             setLocationName("Current Location");
           }
         },
-        () => {
+        async (err) => {
+          console.warn("GPS error, falling back to IP Geolocation:", err);
+          // Fallback to free IP geolocation API if GPS is blocked or times out
+          try {
+            const res = await fetch("https://ipapi.co/json/");
+            const data = await res.json();
+            if (data.latitude && data.longitude) {
+              setLocation({ lat: data.latitude, lng: data.longitude });
+              setLocationName(data.city || data.region || "Nearby Deals");
+              setLocationError(null);
+              return;
+            }
+          } catch (ipErr) {
+            console.error("IP geocode error:", ipErr);
+          }
           setLocationError("Geolocation access denied. Showing default location.");
           setLocationName("Nearby Deals");
-        }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     } else {
       setLocationName("Nearby Deals");
