@@ -228,6 +228,23 @@ export default function PublicDiscoveryPage() {
           setLocationError(null);
 
           try {
+            // Primary reverse geocoder (BigDataCloud free client API)
+            const bdcRes = await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coords.lat}&longitude=${coords.lng}&localityLanguage=en`
+            );
+            const bdcData = await bdcRes.json();
+            const primaryName =
+              bdcData.locality ||
+              bdcData.city ||
+              bdcData.principalSubdivision ||
+              bdcData.localityInfo?.administrative?.[2]?.name;
+
+            if (primaryName) {
+              setLocationName(primaryName);
+              return;
+            }
+
+            // Fallback reverse geocoder (OpenStreetMap Nominatim)
             const res = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}`
             );
@@ -236,8 +253,10 @@ export default function PublicDiscoveryPage() {
             const cityOrArea =
               address.suburb ||
               address.neighbourhood ||
+              address.residential ||
               address.city ||
               address.town ||
+              address.village ||
               address.district ||
               address.county ||
               "Current Location";
