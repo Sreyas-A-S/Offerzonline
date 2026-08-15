@@ -298,28 +298,30 @@ export default function PublicDiscoveryPage() {
     fetchCategories();
   }, []);
 
-  // Auto-open shared ad from URL query parameter
+  // Track whether auto-popup on initial load has triggered
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
+
+  // Auto-open top prioritized ad as a popup modal on page load
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !hasAutoOpened && ads.length > 0) {
       const params = new URLSearchParams(window.location.search);
       const shareAdId = params.get("ad");
+      
+      // If a specific ad ID is in the URL, prioritize that, otherwise auto-open top ad
       if (shareAdId) {
         const found = ads.find((a) => a.id.toString() === shareAdId);
         if (found) {
           setSelectedAd(found);
-        } else {
-          fetch(`/api/ads/serve?id=${shareAdId}`)
-            .then((res) => res.json())
-            .then((data) => {
-              if (data.ads && data.ads.length > 0) {
-                setSelectedAd(data.ads[0]);
-              }
-            })
-            .catch((err) => console.error("Error fetching shared ad:", err));
+          setHasAutoOpened(true);
+          return;
         }
       }
+
+      // Automatically popup the top priority ad
+      setSelectedAd(ads[0]);
+      setHasAutoOpened(true);
     }
-  }, [ads]);
+  }, [ads, hasAutoOpened]);
 
   // GSAP Entrance Animations
   useEffect(() => {
