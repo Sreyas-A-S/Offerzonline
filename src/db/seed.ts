@@ -30,7 +30,7 @@ async function seed() {
     {
       title: "🍕 50% OFF Artisanal Woodfired Pizza & Craft Pasta",
       categoryId: catMap.get("food-dining"),
-      mediaUrl: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=85",
+      mediaUrl: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=85,https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1200&q=85,https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=85",
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/gourmet-pizza",
@@ -45,7 +45,7 @@ async function seed() {
     {
       title: "🏋️ Buy 1 Year, Get 6 Months FREE Premium Gym Membership",
       categoryId: catMap.get("health-fitness"),
-      mediaUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=85",
+      mediaUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=85,https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=85",
       mediaType: "image",
       adFormat: "responsive",
       targetUrl: "https://offerzonline.com/deals/fitzone-premium",
