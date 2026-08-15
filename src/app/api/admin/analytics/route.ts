@@ -3,6 +3,9 @@ import { pool } from "@/db";
 
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const adIdFilter = searchParams.get("ad_id");
+
     const client = await pool.connect();
     try {
       // 1. Total Public Page Views
@@ -28,23 +31,62 @@ export async function GET(req: NextRequest) {
       );
       const totalAdClicks = adClicksRes.rows[0]?.count || 0;
 
-      // 4. Recent Detailed Activity Logs (IP, Location, User Agent, Event Type, Timestamp)
+      // 4. Ad-Level Detailed Reports Query
+      const adReportsQuery = adIdFilter
+        ? `SELECT 
+             l.id,
+             l.ad_id,
+             l.event_type,
+             l.user_ip,
+             l.user_agent,
+             l.user_location_name,
+             l.referrer_domain,
+             l.timestamp,
+             a.title as ad_title
+           FROM analytics_logs l
+           JOIN ads a ON l.ad_id = a.id
+           WHERE l.ad_id = $1
+           ORDER BY l.timestamp DESC
+           LIMIT 100`
+        : `SELECT 
+             l.id,
+             l.ad_id,
+             l.event_type,
+             l.user_ip,
+             l.user_agent,
+             l.user_location_name,
+             l.referrer_domain,
+             l.timestamp,
+             a.title as ad_title
+           FROM analytics_logs l
+           LEFT JOIN ads a ON l.ad_id = a.id
+           ORDER BY l.timestamp DESC
+           LIMIT 50`;
+
       const recentLogsRes = await client.query(
-        `SELECT 
-           l.id,
-           l.event_type,
-           l.page_path,
-           l.user_ip,
-           l.user_agent,
-           l.user_location_name,
-           l.referrer_domain,
-           l.timestamp,
-           a.title as ad_title
-         FROM analytics_logs l
-         LEFT JOIN ads a ON l.ad_id = a.id
-         ORDER BY l.timestamp DESC
-         LIMIT 50`
+        adReportsQuery,
+        adIdFilter ? [parseInt(adIdFilter, 10)] : []
       );
+
+      // 5. Per Ad Analytics Breakdown Table
+      const adBreakdownRes = await client.query(`
+        SELECT 
+          a.id as ad_id,
+          a.title,
+          a.is_active,
+          c.name as category_name,
+          (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression') as impressions,
+          (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'click') as clicks,
+          (SELECT COUNT(DISTINCT COALESCE(visitor_id, user_ip))::int FROM analytics_logs WHERE ad_id = a.id) as unique_users,
+          CASE 
+            WHEN (SELECT COUNT(*) FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression') > 0 
+            THEN ROUND(((SELECT COUNT(*) FROM analytics_logs WHERE ad_id = a.id AND event_type = 'click')::numeric / (SELECT COUNT(*) FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression')::numeric) * 100, 2)
+            ELSE 0 
+          END as ctr
+        FROM ads a
+        LEFT JOIN categories c ON a.category_id = c.id
+        ORDER BY impressions DESC
+      `);
 
       return NextResponse.json({
         summary: {
@@ -54,6 +96,7 @@ export async function GET(req: NextRequest) {
           totalAdClicks,
         },
         recentLogs: recentLogsRes.rows,
+        adBreakdowns: adBreakdownRes.rows,
       });
     } finally {
       client.release();

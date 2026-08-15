@@ -172,6 +172,10 @@ export default function AdminDashboard() {
     totalAdClicks: 0,
   });
   const [recentAuditLogs, setRecentAuditLogs] = useState<any[]>([]);
+  const [adBreakdowns, setAdBreakdowns] = useState<any[]>([]);
+  const [selectedAdReport, setSelectedAdReport] = useState<any | null>(null);
+  const [adReportLogs, setAdReportLogs] = useState<any[]>([]);
+  const [adReportLoading, setAdReportLoading] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -195,10 +199,27 @@ export default function AdminDashboard() {
       if (analyticsData.recentLogs) {
         setRecentAuditLogs(analyticsData.recentLogs);
       }
+      if (analyticsData.adBreakdowns) {
+        setAdBreakdowns(analyticsData.adBreakdowns);
+      }
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openAdReportModal = async (ad: any) => {
+    setSelectedAdReport(ad);
+    setAdReportLoading(true);
+    try {
+      const res = await fetch(`/api/admin/analytics?ad_id=${ad.id || ad.ad_id}`);
+      const data = await res.json();
+      setAdReportLogs(data.recentLogs || []);
+    } catch (err) {
+      console.error("Failed to load ad report:", err);
+    } finally {
+      setAdReportLoading(false);
     }
   };
 
@@ -750,6 +771,67 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Campaign / Ad-Level Performance Report Table */}
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-lg text-white tracking-tight">Ad-Level Performance Report</h3>
+                  <p className="text-xs text-slate-400">Detailed metric breakdown per individual offer campaign</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-[#1e293b] bg-[#0b0f19]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#131b2e] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#1e293b]">
+                    <tr>
+                      <th className="p-3.5">Campaign Name</th>
+                      <th className="p-3.5">Category</th>
+                      <th className="p-3.5 text-center">Impressions</th>
+                      <th className="p-3.5 text-center">Clicks</th>
+                      <th className="p-3.5 text-center">Unique Users</th>
+                      <th className="p-3.5 text-center">CTR %</th>
+                      <th className="p-3.5 text-right">Detailed Log Report</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
+                    {adBreakdowns.length > 0 ? (
+                      adBreakdowns.map((report) => (
+                        <tr key={report.ad_id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="p-3.5">
+                            <span className="font-extrabold text-white block">{report.title}</span>
+                            <span className="text-[10px] text-slate-500 font-mono">ID: #{report.ad_id}</span>
+                          </td>
+                          <td className="p-3.5">
+                            <span className="bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold">
+                              {report.category_name || "General"}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-center font-bold text-indigo-300">{report.impressions}</td>
+                          <td className="p-3.5 text-center font-bold text-purple-300">{report.clicks}</td>
+                          <td className="p-3.5 text-center font-bold text-emerald-300">{report.unique_users}</td>
+                          <td className="p-3.5 text-center font-black text-amber-400">{report.ctr}%</td>
+                          <td className="p-3.5 text-right">
+                            <button
+                              onClick={() => openAdReportModal(report)}
+                              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition cursor-pointer shadow-sm"
+                            >
+                              View Full Log
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-slate-500 font-semibold">
+                          No ad campaign breakdown data available yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             {/* Detailed Visitors Audit Log */}
             <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
               <div className="flex items-center justify-between">
@@ -1118,6 +1200,13 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openAdReportModal(ad)}
+                              className="bg-purple-950/60 hover:bg-purple-900 text-purple-300 px-2.5 py-1.5 rounded-xl transition border border-purple-800/60 flex items-center gap-1 text-xs font-bold cursor-pointer"
+                              title="View Ad Performance Report"
+                            >
+                              <BarChart2 size={13} /> Report
+                            </button>
                             <button
                               onClick={() => setEmbedAd(ad)}
                               className="text-indigo-400 hover:text-indigo-300 p-2.5 rounded-xl hover:bg-indigo-950/20 transition border border-transparent hover:border-indigo-900/40 cursor-pointer"
@@ -1616,6 +1705,107 @@ export default function AdminDashboard() {
           </div>
         );
       })()}
+
+      {/* Ad-Level Detailed Analytics Modal */}
+      {selectedAdReport && (
+        <div
+          onClick={() => setSelectedAdReport(null)}
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#131b2e] border border-[#1e293b] w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] p-6 sm:p-8 overflow-y-auto space-y-6 shadow-2xl relative animate-in zoom-in-95"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest block">Ad Performance Audit Report</span>
+                <h3 className="text-xl font-extrabold text-white tracking-tight">{selectedAdReport.title}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedAdReport(null)}
+                className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white border border-slate-800 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Impressions</span>
+                <span className="text-2xl font-black text-white">{selectedAdReport.impressions || selectedAdReport.views || 0}</span>
+              </div>
+              <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Clicks</span>
+                <span className="text-2xl font-black text-white">{selectedAdReport.clicks || 0}</span>
+              </div>
+              <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Unique Users</span>
+                <span className="text-2xl font-black text-emerald-400">{selectedAdReport.unique_users || 0}</span>
+              </div>
+              <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">CTR %</span>
+                <span className="text-2xl font-black text-amber-400">{selectedAdReport.ctr}%</span>
+              </div>
+            </div>
+
+            {/* Ad Event Activity Log Table */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ad Interaction Log (IP, Location, User Agent)</h4>
+              <div className="overflow-x-auto rounded-2xl border border-[#1e293b] bg-[#0b0f19]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#131b2e] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#1e293b]">
+                    <tr>
+                      <th className="p-3">Event Type</th>
+                      <th className="p-3">IP Address</th>
+                      <th className="p-3">Location</th>
+                      <th className="p-3">User Agent / Device</th>
+                      <th className="p-3">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
+                    {adReportLoading ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-slate-400">Loading ad activity records...</td>
+                      </tr>
+                    ) : adReportLogs.length > 0 ? (
+                      adReportLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-slate-900/40">
+                          <td className="p-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                                log.event_type === "click"
+                                  ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                                  : "bg-indigo-950 text-indigo-300 border border-indigo-800"
+                              }`}
+                            >
+                              {log.event_type}
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono text-indigo-300">{log.user_ip}</td>
+                          <td className="p-3">{log.user_location_name || "Unknown"}</td>
+                          <td className="p-3 font-mono text-[10px] text-slate-400 max-w-xs truncate" title={log.user_agent}>
+                            {log.user_agent}
+                          </td>
+                          <td className="p-3 text-slate-400 font-mono text-[10px]">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-slate-500 font-semibold">
+                          No direct interaction logs recorded for this campaign yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
