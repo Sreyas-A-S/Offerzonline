@@ -176,7 +176,8 @@ const INITIAL_CATEGORIES = [
 ];
 
 export default function PublicDiscoveryPage() {
-  const [showPreloader, setShowPreloader] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
+  const [siteLogo, setSiteLogo] = useState<string>("/logo.png");
   const [ads, setAds] = useState<any[]>(DEFAULT_INITIAL_ADS);
   const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
   const [loading, setLoading] = useState(false);
@@ -191,11 +192,24 @@ export default function PublicDiscoveryPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Preloader Timer
+  // Fetch dynamic brand logo and hide preloader smoothly after 1.5s
   useEffect(() => {
+    async function loadBrandLogo() {
+      try {
+        const res = await fetch("/api/admin/settings");
+        const data = await res.json();
+        if (data.settings?.logo) {
+          setSiteLogo(data.settings.logo);
+        }
+      } catch (err) {
+        console.error("Logo fetch error:", err);
+      }
+    }
+    loadBrandLogo();
+
     const timer = setTimeout(() => {
       setShowPreloader(false);
-    }, 1200);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -398,16 +412,18 @@ export default function PublicDiscoveryPage() {
 
   if (showPreloader) {
     return (
-      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center animate-in fade-in duration-300">
+      <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center animate-in fade-in duration-300">
         <div className="flex flex-col items-center space-y-4">
-          <img
-            src="/logo.png"
-            alt="Offerzonline Logo"
-            className="w-20 h-20 object-contain rounded-full shadow-lg p-1 border border-slate-100 bg-white animate-bounce"
-          />
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Offerzonline</h2>
-          <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-slate-900 rounded-full animate-[pulse_1s_infinite] w-full" />
+          <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 p-2 shadow-2xl flex items-center justify-center animate-pulse">
+            <img
+              src={siteLogo}
+              alt="Offerzonline Logo"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <h2 className="text-2xl font-black text-white tracking-tight">Offerzonline</h2>
+          <div className="w-28 h-1 bg-slate-900 rounded-full overflow-hidden">
+            <div className="h-full bg-indigo-500 rounded-full animate-[pulse_1s_infinite] w-full" />
           </div>
         </div>
       </div>
@@ -429,7 +445,7 @@ export default function PublicDiscoveryPage() {
             {/* Logo */}
             <div className="flex items-center gap-2.5">
               <img
-                src="/logo.png"
+                src={siteLogo}
                 alt="Offerzonline Logo"
                 className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full shadow-md shrink-0 bg-white p-0.5 border border-slate-100"
               />

@@ -66,7 +66,9 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "ads" | "categories">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "ads" | "categories" | "settings">("overview");
+  const [siteLogo, setSiteLogo] = useState<string>("/logo.png");
+  const [logoUploading, setLogoUploading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: string } | null>(null);
@@ -170,10 +172,52 @@ export default function AdminDashboard() {
       const data = await res.json();
       setAds(data.ads || []);
       setCategories(data.categories || []);
+
+      const settingsRes = await fetch("/api/admin/settings");
+      const settingsData = await settingsRes.json();
+      if (settingsData.settings?.logo) {
+        setSiteLogo(settingsData.settings.logo);
+      }
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoUploading(true);
+    const data = new FormData();
+    data.append("file", file);
+
+    try {
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: data });
+      const uploadResult = await uploadRes.json();
+
+      if (uploadResult.success) {
+        const logoUrl = uploadResult.url;
+        const setRes = await fetch("/api/admin/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "logo", value: logoUrl }),
+        });
+        const setResult = await setRes.json();
+        if (setResult.success) {
+          setSiteLogo(logoUrl);
+          setMessage({ type: "success", text: "Brand logo updated successfully!" });
+        } else {
+          setMessage({ type: "error", text: "Failed to save logo setting" });
+        }
+      } else {
+        setMessage({ type: "error", text: uploadResult.error || "Logo upload failed" });
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Logo upload error" });
+    } finally {
+      setLogoUploading(false);
     }
   };
 
@@ -508,6 +552,21 @@ export default function AdminDashboard() {
               <Layers size={16} />
               <span>Categories ({categories.length})</span>
             </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("settings");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
+                activeTab === "settings"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
+                  : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+              }`}
+            >
+              <Upload size={16} />
+              <span>Site Logo & Branding</span>
+            </button>
           </nav>
         </div>
 
@@ -574,6 +633,42 @@ export default function AdminDashboard() {
             <button onClick={() => setMessage(null)} className="font-bold hover:underline">
               Dismiss
             </button>
+          </div>
+        )}
+
+        {activeTab === "settings" && (
+          <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] p-8 max-w-2xl mx-auto shadow-sm space-y-6">
+            <div>
+              <h3 className="font-bold text-xl text-white tracking-tight">Site Logo & Preloader Branding</h3>
+              <p className="text-xs text-slate-400 mt-1">Upload a custom logo to dynamically update the preloader, navbar, and PWA brand iconography across all public pages.</p>
+            </div>
+
+            <div className="p-6 bg-[#0b0f19] border border-[#1e293b] rounded-2xl flex flex-col items-center justify-center space-y-4">
+              <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-700 p-2 shadow-lg flex items-center justify-center overflow-hidden">
+                <img src={siteLogo} alt="Current Brand Logo" className="w-full h-full object-contain" />
+              </div>
+              <div className="text-center">
+                <span className="text-xs font-bold text-white block">Active Brand Logo</span>
+                <span className="text-[11px] font-mono text-indigo-400 block truncate max-w-xs">{siteLogo}</span>
+              </div>
+
+              <div className="pt-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  id="logo-upload-input"
+                />
+                <label
+                  htmlFor="logo-upload-input"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-3 rounded-2xl text-xs flex items-center gap-2 transition cursor-pointer shadow-md"
+                >
+                  <Upload size={14} />
+                  <span>{logoUploading ? "Uploading & Saving Logo..." : "Upload New Brand Logo"}</span>
+                </label>
+              </div>
+            </div>
           </div>
         )}
 
