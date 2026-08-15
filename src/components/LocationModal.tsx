@@ -13,6 +13,7 @@ interface LocationModalProps {
 }
 
 const POPULAR_LOCATIONS = [
+  { name: "All Locations (Show All Deals)", lat: 0, lng: 0 },
   { name: "Connaught Place, New Delhi", lat: 28.6315, lng: 77.2167 },
   { name: "South Delhi, New Delhi", lat: 28.5494, lng: 77.2001 },
   { name: "Gurugram, NCR", lat: 28.4595, lng: 77.0266 },
