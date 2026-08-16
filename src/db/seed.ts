@@ -162,6 +162,27 @@ async function seed() {
       description: "Upgrade your living room entertainment with 65-inch OLED HDR display, 120Hz gaming refresh rate, wireless subwoofer, and free wall-mount installation.",
       expiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
     },
+    {
+      title: "👟 Onam Special: Up to ₹250 OFF Deep Cleaning & 20% OFF Restoration",
+      categoryId: catMap.get("services-repair"),
+      mediaUrl: "/uploads/ads/WhatsApp Image 2026-08-15 at 6.54.04 PM.jpeg",
+      mediaType: "image",
+      adFormat: "responsive",
+      targetUrl: "https://instagram.com/theshoeclinic2024",
+      latitude: "8.5680160",
+      longitude: "76.8737370",
+      radiusKm: 5000,
+      weightPriority: 10,
+      isActive: true,
+      description: "Special Onam Offer at The Shoe Clinic Kazhakkottam! Get up to ₹250 OFF on deep shoe cleaning (3 pairs - ₹100 off, 4 pairs - ₹150 off, 5+ pairs - ₹250 off) and flat 20% OFF on all restoration and recoloring services. Free pickup & delivery within 10 km radius!",
+      expiresAt: new Date("2026-08-22T23:59:59Z"),
+      storeName: "The Shoe Clinic",
+      storePhone: "73569 29855",
+      storeAddress: "Kazhakkottam, Kerala",
+      promoPrice: "Flat 20% OFF",
+      discountValue: "Up to ₹250 OFF",
+      terms: "1. 3 Pairs - Get ₹100 OFF\n2. 4 Pairs - Get ₹150 OFF\n3. 5 Pairs or More - Get ₹250 OFF\n4. Flat 20% OFF on all Restoration & Recoloring Services.\n5. Limited Period Offer valid from Aug 3rd to 22nd.\n6. Free pickup and delivery within 10 KM radius.",
+    },
   ];
 
   for (const adData of sampleAds) {
