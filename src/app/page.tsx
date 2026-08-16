@@ -756,20 +756,22 @@ export default function PublicDiscoveryPage() {
               onClick={() => setSelectedAd(featuredAd)}
               className="group relative bg-white border border-slate-200/90 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden inline-block w-fit max-w-full mx-auto"
             >
-              <div className="flex items-center justify-between mb-3 z-10 relative">
+              {/* Media Container - Shrink-wrapping natural image width */}
+              <div className="relative inline-flex items-center justify-center max-w-full rounded-2xl overflow-hidden mb-4 bg-slate-50 border border-slate-100/60 shadow-inner">
+                {/* Save Heart Button (Top Left Overlay) */}
                 <button 
                   onClick={(e) => toggleSaveAd(featuredAd.id, e)}
-                  className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:text-pink-500 transition"
+                  className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-md flex items-center justify-center text-slate-700 hover:text-pink-500 transition cursor-pointer"
+                  title="Save Offer"
                 >
                   <Heart size={16} className={savedAdIds.includes(featuredAd.id) ? "fill-pink-500 text-pink-500" : ""} />
                 </button>
-                <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+
+                {/* Arrow Expand Icon (Top Right Overlay) */}
+                <div className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-slate-900/90 backdrop-blur-md text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                   <ArrowUpRight size={16} />
                 </div>
-              </div>
 
-              {/* Media Container - Shrink-wrapping natural image width */}
-              <div className="relative inline-flex items-center justify-center max-w-full rounded-2xl overflow-hidden mb-4 bg-slate-50 border border-slate-100/60 shadow-inner">
                 {featuredAd.media_type === "video" ? (
                   <video 
                     src={featuredAd.media_url} 

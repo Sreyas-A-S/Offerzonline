@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
           FROM ads a
         ) a
         LEFT JOIN categories c ON a.category_id = c.id
-        ORDER BY a.created_at DESC
+        ORDER BY a.weight_priority DESC, a.created_at DESC
       `);
 
       const categoriesRes = await client.query(`SELECT * FROM categories ORDER BY name ASC`);

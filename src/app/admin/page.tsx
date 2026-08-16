@@ -1549,6 +1549,7 @@ export default function AdminDashboard() {
                       <th className="px-6 py-4">Ad Title</th>
                       <th className="px-6 py-4">Category</th>
                       <th className="px-6 py-4">Format</th>
+                      <th className="px-6 py-4">Priority</th>
                       <th className="px-6 py-4">Radius (km)</th>
                       <th className="px-6 py-4">Impressions</th>
                       <th className="px-6 py-4">Clicks</th>
@@ -1590,6 +1591,68 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 font-mono text-xs text-slate-400">{ad.ad_format}</td>
+                        <td className="px-6 py-4">
+                          <select
+                            value={ad.weight_priority || 1}
+                            onChange={async (e) => {
+                              const newPriority = parseInt(e.target.value, 10);
+                              try {
+                                const res = await fetch("/api/admin/ads", {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    id: ad.id,
+                                    title: ad.title,
+                                    categoryId: parseInt(ad.category_id || ad.categoryId, 10),
+                                    mediaUrl: ad.media_url || ad.mediaUrl,
+                                    mediaType: ad.media_type || ad.mediaType,
+                                    adFormat: ad.ad_format || ad.adFormat,
+                                    targetUrl: ad.target_url || ad.targetUrl,
+                                    latitude: parseFloat(ad.latitude),
+                                    longitude: parseFloat(ad.longitude),
+                                    radiusKm: parseInt((ad.radius_km || ad.radiusKm || 10).toString(), 10),
+                                    weightPriority: newPriority,
+                                    description: ad.description || null,
+                                    expiresAt: ad.expires_at || null,
+                                    isActive: ad.is_active !== undefined ? ad.is_active : true,
+                                    storeName: ad.store_name || ad.storeName || null,
+                                    storeLogo: ad.store_logo || ad.storeLogo || null,
+                                    storePhone: ad.store_phone || ad.storePhone || null,
+                                    storeAddress: ad.store_address || ad.storeAddress || null,
+                                    originalPrice: ad.original_price || ad.originalPrice || null,
+                                    promoPrice: ad.promo_price || ad.promoPrice || null,
+                                    discountValue: ad.discount_value || ad.discountValue || null,
+                                    terms: ad.terms || null,
+                                    isOnloadPopup: ad.is_onload_popup || false,
+                                    isRecommended: ad.is_recommended || false,
+                                  }),
+                                });
+                                const result = await res.json();
+                                if (result.success) {
+                                  setMessage({ type: "success", text: `Priority updated to ${newPriority} for "${ad.title}"` });
+                                  fetchDashboardData();
+                                } else {
+                                  setMessage({ type: "error", text: result.error || "Failed to update priority" });
+                                }
+                              } catch (err: any) {
+                                setMessage({ type: "error", text: err.message || "Update error" });
+                              }
+                            }}
+                            className="bg-[#0b0f19] border border-[#1e293b] text-indigo-400 font-extrabold text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                            title="Set Ad Serving Weight Priority"
+                          >
+                            <option value={10}>P10 (Highest)</option>
+                            <option value={9}>P9</option>
+                            <option value={8}>P8</option>
+                            <option value={7}>P7</option>
+                            <option value={6}>P6</option>
+                            <option value={5}>P5 (Medium)</option>
+                            <option value={4}>P4</option>
+                            <option value={3}>P3</option>
+                            <option value={2}>P2</option>
+                            <option value={1}>P1 (Lowest)</option>
+                          </select>
+                        </td>
                         <td className="px-6 py-4 text-slate-200 font-semibold">{ad.radius_km} km</td>
                         <td className="px-6 py-4 text-slate-300">{ad.views}</td>
                         <td className="px-6 py-4 text-slate-300">{ad.clicks}</td>
