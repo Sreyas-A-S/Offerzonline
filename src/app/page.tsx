@@ -599,8 +599,8 @@ export default function PublicDiscoveryPage() {
 
           {categoriesCollapsed ? (
             /* Collapsed Pills Mode with small images */
-            <div className="flex flex-row overflow-x-auto scrollbar-none gap-2 pt-1 pb-1 overflow-y-visible">
-              {categories.map((cat) => {
+            <div className="flex flex-row overflow-x-auto scrollbar-none gap-2 pt-1 pb-1 overflow-y-visible animate-collapse-pills">
+              {categories.map((cat, idx) => {
                 const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
                 const isSelected = selectedCategory === cat.id.toString();
 
@@ -608,17 +608,18 @@ export default function PublicDiscoveryPage() {
                   <button
                     key={cat.id}
                     type="button"
+                    style={{ animationDelay: `${idx * 40}ms` }}
                     onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer border ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-300 shrink-0 cursor-pointer border ${
                       isSelected 
                         ? "bg-slate-900 text-white border-slate-900 shadow-md scale-102" 
-                        : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200/85"
+                        : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200/85 hover:scale-102"
                     }`}
                   >
                     <img
                       src={visual.image}
                       alt={cat.name}
-                      className="w-5 h-5 object-contain"
+                      className="w-5 h-5 object-contain transition-transform group-hover:scale-110"
                     />
                     <span>{cat.name}</span>
                   </button>
@@ -626,7 +627,7 @@ export default function PublicDiscoveryPage() {
               })}
             </div>
           ) : (
-            <>
+            <div className="animate-expand-cards space-y-4">
               {/* Mobile-Style Category Row - Horizontal Scroll */}
               <div className={`${selectedCategory !== "all" ? "flex md:justify-center animate-switch-mode" : "md:hidden flex"} flex-row overflow-x-auto scrollbar-none gap-3 md:gap-6 pt-1.5 pb-2 overflow-y-visible`}>
                 {categories.map((cat) => {
@@ -738,7 +739,7 @@ export default function PublicDiscoveryPage() {
                   );
                 })}
               </div>
-            </>
+            </div>
           )}
         </section>
 
