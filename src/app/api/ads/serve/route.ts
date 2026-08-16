@@ -30,6 +30,15 @@ const MOCK_ADS = [
     clicks: 18,
     ctr: 12.68,
     is_active: true,
+    description: "Enjoy our signature wood-fired gourmet pizza with fresh mozzarella, premium basil, and house sauce, served with a choice of hand-rolled pasta.",
+    store_name: "Luigi's Gourmet Pizzeria",
+    store_logo: "https://images.unsplash.com/photo-1579758629938-03607ccdbaba?w=100&auto=format&fit=crop&q=80",
+    store_phone: "+1 (555) 123-4567",
+    store_address: "456 Pizza Plaza, Food District",
+    original_price: "$30.00",
+    promo_price: "$15.00",
+    discount_value: "50% OFF",
+    terms: "Valid for dine-in and takeaway only. Cannot be combined with other offers. One coupon per table."
   },
   {
     id: 2,
@@ -49,6 +58,15 @@ const MOCK_ADS = [
     clicks: 11,
     ctr: 11.22,
     is_active: true,
+    description: "Unlock unlimited access to our state-of-the-art strength training zone, cardio deck, group classes, and sauna facilities.",
+    store_name: "Iron Temple Fitness",
+    store_logo: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=100&auto=format&fit=crop&q=80",
+    store_phone: "+1 (555) 987-6543",
+    store_address: "789 Power Ave, Muscle Beach",
+    original_price: "$99/mo",
+    promo_price: "$49/mo",
+    discount_value: "Buy 1 Get 1 Free",
+    terms: "New members only. Minimum 3-month commitment required. Bring a friend to redeem the second membership."
   },
   {
     id: 3,
@@ -68,6 +86,15 @@ const MOCK_ADS = [
     clicks: 29,
     ctr: 13.81,
     is_active: true,
+    description: "Upgrade your workstation with the latest Intel Core i7 and AMD Ryzen laptops. High-speed SSDs and dual-channel memory included.",
+    store_name: "TechVantage Computers",
+    store_logo: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100&auto=format&fit=crop&q=80",
+    store_phone: "+1 (555) 456-7890",
+    store_address: "101 Silicon Valley St, Tech Hub",
+    original_price: "$1,299",
+    promo_price: "$779",
+    discount_value: "Up to 40% OFF",
+    terms: "Available while stocks last. Warranty included. Excludes custom configurations."
   }
 ];
 
@@ -99,7 +126,15 @@ export async function GET(req: NextRequest) {
             a.radius_km,
             a.weight_priority,
             a.description,
-            a.expires_at
+            a.expires_at,
+            a.store_name,
+            a.store_logo,
+            a.store_phone,
+            a.store_address,
+            a.original_price,
+            a.promo_price,
+            a.discount_value,
+            a.terms
           FROM ads a
           LEFT JOIN categories c ON a.category_id = c.id
           WHERE a.id = $1
@@ -134,6 +169,14 @@ export async function GET(req: NextRequest) {
             a.weight_priority,
             a.description,
             a.expires_at,
+            a.store_name,
+            a.store_logo,
+            a.store_phone,
+            a.store_address,
+            a.original_price,
+            a.promo_price,
+            a.discount_value,
+            a.terms,
             ROUND(
               (ST_Distance(
                 a.location,
@@ -183,6 +226,14 @@ export async function GET(req: NextRequest) {
             a.weight_priority,
             a.description,
             a.expires_at,
+            a.store_name,
+            a.store_logo,
+            a.store_phone,
+            a.store_address,
+            a.original_price,
+            a.promo_price,
+            a.discount_value,
+            a.terms,
             ROUND(
               (6371 * acos(
                 LEAST(1.0, GREATEST(-1.0,

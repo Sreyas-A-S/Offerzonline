@@ -77,13 +77,46 @@ export default function OffersListingPage() {
   // Auto-Detect Location
   const detectLocation = () => {
     if ("geolocation" in navigator) {
+      setLocationName("Detecting location...");
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setLocation(coords);
-          setLocationName(`${coords.lat.toFixed(3)}°, ${coords.lng.toFixed(3)}°`);
+          try {
+            const bdcRes = await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coords.lat}&longitude=${coords.lng}&localityLanguage=en`
+            );
+            const bdcData = await bdcRes.json();
+            const primaryName =
+              bdcData.locality ||
+              bdcData.city ||
+              bdcData.principalSubdivision;
+            if (primaryName) {
+              setLocationName(primaryName);
+              localStorage.setItem("offerz_user_location", JSON.stringify({ name: primaryName, lat: coords.lat, lng: coords.lng }));
+              return;
+            }
+          } catch {
+            // fallback
+          }
+          const name = `${coords.lat.toFixed(3)}°, ${coords.lng.toFixed(3)}°`;
+          setLocationName(name);
+          localStorage.setItem("offerz_user_location", JSON.stringify({ name, lat: coords.lat, lng: coords.lng }));
         },
-        () => {
+        async () => {
+          try {
+            const res = await fetch("https://ipapi.co/json/");
+            const data = await res.json();
+            if (data.latitude && data.longitude) {
+              setLocation({ lat: data.latitude, lng: data.longitude });
+              const name = data.city || data.region || "Nearby Deals";
+              setLocationName(name);
+              localStorage.setItem("offerz_user_location", JSON.stringify({ name, lat: data.latitude, lng: data.longitude }));
+              return;
+            }
+          } catch (ipErr) {
+            console.error("IP geocode error:", ipErr);
+          }
           setLocationName("New Delhi (Default)");
         }
       );
@@ -93,6 +126,19 @@ export default function OffersListingPage() {
   };
 
   useEffect(() => {
+    const saved = localStorage.getItem("offerz_user_location");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.lat !== undefined && parsed.lng !== undefined && parsed.name) {
+          setLocation({ lat: parsed.lat, lng: parsed.lng });
+          setLocationName(parsed.name);
+          return;
+        }
+      } catch (e) {
+        console.error("Error loading saved location:", e);
+      }
+    }
     detectLocation();
   }, []);
 
@@ -320,6 +366,7 @@ export default function OffersListingPage() {
         onSelectLocation={(name, lat, lng) => {
           setLocationName(name);
           setLocation({ lat, lng });
+          localStorage.setItem("offerz_user_location", JSON.stringify({ name, lat, lng }));
         }}
         onDetectGPS={detectLocation}
       />

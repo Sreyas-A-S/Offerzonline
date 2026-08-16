@@ -40,6 +40,16 @@ export async function initializeDatabase() {
           location GEOGRAPHY(Point, 4326),
           weight_priority INTEGER NOT NULL DEFAULT 1,
           is_active BOOLEAN NOT NULL DEFAULT TRUE,
+          description TEXT,
+          expires_at TIMESTAMP,
+          store_name TEXT,
+          store_logo TEXT,
+          store_phone VARCHAR(50),
+          store_address TEXT,
+          original_price VARCHAR(50),
+          promo_price VARCHAR(50),
+          discount_value VARCHAR(100),
+          terms TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -64,6 +74,16 @@ export async function initializeDatabase() {
           radius_km INTEGER NOT NULL DEFAULT 5,
           weight_priority INTEGER NOT NULL DEFAULT 1,
           is_active BOOLEAN NOT NULL DEFAULT TRUE,
+          description TEXT,
+          expires_at TIMESTAMP,
+          store_name TEXT,
+          store_logo TEXT,
+          store_phone VARCHAR(50),
+          store_address TEXT,
+          original_price VARCHAR(50),
+          promo_price VARCHAR(50),
+          discount_value VARCHAR(100),
+          terms TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

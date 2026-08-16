@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MapPin, ExternalLink, X, Share2, Check } from "lucide-react";
+import { MapPin, ExternalLink, X, Share2, Check, Phone, Map, ChevronDown, ChevronUp, Store } from "lucide-react";
+import { ReadOnlyMap } from "./ReadOnlyMap";
 
 interface OfferModalProps {
   ad: any;
@@ -13,6 +14,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   const [isClosing, setIsClosing] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [showTerms, setShowTerms] = useState(false);
 
   const mediaUrls = ad && ad.media_url ? ad.media_url.split(",") : [];
 
@@ -108,7 +110,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
     >
       <div
         ref={modalContentRef}
-        className={`bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden relative border border-slate-100 transition-all duration-300 flex flex-col justify-between ${
+        className={`bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden relative border border-slate-100 transition-all duration-300 flex flex-col justify-between ${
           isClosing ? "scale-95 translate-y-4 opacity-0" : "scale-100 translate-y-0 opacity-100"
         }`}
       >
@@ -138,118 +140,232 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
           </div>
         )}
 
-        {/* Modal Inner Scroll Area */}
-        <div className="max-h-[82vh] overflow-y-auto scrollbar-none">
-          {/* Hero Banner Container */}
-          <div className="relative w-full aspect-[4/3] bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 overflow-hidden group">
-            {mediaUrls.length > 0 && (() => {
-              const currentUrl = mediaUrls[activeMediaIndex];
-              const isVideo = currentUrl.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || (ad.media_type === "video" && !currentUrl.includes("."));
-              return isVideo ? (
-                <video
-                  key={currentUrl}
-                  controls
-                  autoPlay
-                  muted
-                  playsInline
-                  preload="auto"
-                  className="w-full h-full object-cover"
-                >
-                  <source src={currentUrl} type="video/mp4" />
-                </video>
-              ) : (
-                <img
-                  key={currentUrl}
-                  src={getOptimizedUrl(currentUrl)}
-                  alt={ad.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-              );
-            })()}
+        {/* Two Column Layout Grid Container */}
+        <div className="grid grid-cols-1 md:grid-cols-2 max-h-[82vh] overflow-y-auto scrollbar-none">
+          {/* Left Column: Visuals & Map */}
+          <div className="flex flex-col border-r border-slate-100 md:max-h-[82vh] md:overflow-y-auto scrollbar-none">
+            {/* Hero Banner Container */}
+            <div className="relative w-full aspect-[4/3] bg-gradient-to-br from-slate-955 via-slate-900 to-indigo-950 overflow-hidden group">
+              {mediaUrls.length > 0 && (() => {
+                const currentUrl = mediaUrls[activeMediaIndex];
+                const isVideo = currentUrl.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || (ad.media_type === "video" && !currentUrl.includes("."));
+                return isVideo ? (
+                  <video
+                    key={currentUrl}
+                    controls
+                    autoPlay
+                    muted
+                    playsInline
+                    preload="auto"
+                    className="w-full h-full object-cover"
+                  >
+                    <source src={currentUrl} type="video/mp4" />
+                  </video>
+                ) : (
+                  <img
+                    key={currentUrl}
+                    src={getOptimizedUrl(currentUrl)}
+                    alt={ad.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                );
+              })()}
 
-            {/* Subtle Gradient Overlay for Title Contrast */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none" />
+              {/* Subtle Gradient Overlay for Title Contrast */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none" />
 
-            {/* Category / Badge Pills */}
-            <div className="absolute bottom-4 left-4 z-20 flex flex-wrap gap-2">
-              <span className="bg-indigo-600/90 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-md">
-                {ad.category_name || "Featured Offer"}
-              </span>
-              {ad.distance_km !== undefined && (
-                <span className="bg-slate-900/80 text-white text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full backdrop-blur-md border border-white/20 flex items-center gap-1 shadow-md">
-                  <MapPin size={11} className="text-indigo-400" />
-                  {ad.distance_km} km away
-                </span>
+              {/* Navigation Arrows for Multiple Media Items */}
+              {mediaUrls.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevMedia}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center text-lg font-black shadow-md cursor-pointer transition select-none backdrop-blur-md border border-white/10"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={handleNextMedia}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center text-lg font-black shadow-md cursor-pointer transition select-none backdrop-blur-md border border-white/10"
+                  >
+                    ›
+                  </button>
+                  {/* Dots indicator */}
+                  <div className="absolute bottom-4 right-4 z-20 flex gap-1.5 bg-slate-950/50 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
+                    {mediaUrls.map((_: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className={`h-1.5 rounded-full transition-all ${
+                          idx === activeMediaIndex ? "bg-white w-4" : "bg-white/40 w-1.5"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
-            {/* Navigation Arrows for Multiple Media Items */}
-            {mediaUrls.length > 1 && (
-              <>
-                <button
-                  onClick={handlePrevMedia}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center text-lg font-black shadow-md cursor-pointer transition select-none backdrop-blur-md border border-white/10"
-                >
-                  ‹
-                </button>
-                <button
-                  onClick={handleNextMedia}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center text-lg font-black shadow-md cursor-pointer transition select-none backdrop-blur-md border border-white/10"
-                >
-                  ›
-                </button>
-                {/* Dots indicator */}
-                <div className="absolute bottom-4 right-4 z-20 flex gap-1.5 bg-slate-950/50 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
-                  {mediaUrls.map((_: string, idx: number) => (
-                    <div
-                      key={idx}
-                      className={`h-1.5 rounded-full transition-all ${
-                        idx === activeMediaIndex ? "bg-white w-4" : "bg-white/40 w-1.5"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Modal Body Content */}
-          <div className="p-6 sm:p-8 space-y-5">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug tracking-tight">
-              {ad.title}
-            </h2>
-
-            {/* Description & Expiry Details */}
-            {ad.description && (
-              <div className="space-y-2 pt-1">
-                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Offer Details</h4>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                  {ad.description}
-                </p>
-              </div>
-            )}
-
-            {ad.expires_at && (
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 flex items-center gap-2.5">
-                <span className="text-xs font-black text-amber-900 flex items-center gap-1.5">
-                  ⏳ Valid Until: {new Date(ad.expires_at).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+            {/* Readonly Leaflet Map */}
+            <div className="p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Map size={12} className="text-indigo-500" /> Offer Location Range
+                </h4>
+                <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                  {ad.radius_km || ad.radiusKm || 5} km radius
                 </span>
               </div>
-            )}
+              <div className="h-48 w-full rounded-2xl overflow-hidden shadow-inner border border-slate-150 relative z-0">
+                <ReadOnlyMap 
+                  lat={parseFloat(ad.latitude)} 
+                  lng={parseFloat(ad.longitude)} 
+                  radiusKm={ad.radius_km || ad.radiusKm || 5} 
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Action Sticky Bottom Bar */}
-        <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100">
-          <a
-            href={`/api/track/click?ad_id=${ad.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.98] cursor-pointer"
-          >
-            <span>Claim & View Offer</span>
-            <ExternalLink size={14} />
-          </a>
+          {/* Right Column: Details & Action */}
+          <div className="p-6 sm:p-8 space-y-6 flex flex-col justify-between md:max-h-[82vh] md:overflow-y-auto scrollbar-none bg-[#fafbfe]/30">
+            <div className="space-y-6">
+              {/* Category / Badge Pills */}
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-indigo-100">
+                  {ad.category_name || "Featured Offer"}
+                </span>
+                {ad.distance_km !== undefined && (
+                  <span className="bg-slate-900 text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                    <MapPin size={10} className="text-indigo-400" />
+                    {ad.distance_km} km away
+                  </span>
+                )}
+              </div>
+
+              {/* Title */}
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug tracking-tight">
+                {ad.title}
+              </h2>
+
+              {/* Pricing & Discounts callout */}
+              {(ad.original_price || ad.originalPrice || ad.promo_price || ad.promoPrice || ad.discount_value || ad.discountValue) && (
+                <div className="bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 rounded-3xl p-4 flex items-center justify-between shadow-xs">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-indigo-455 uppercase tracking-wider block">Special Promo Offer</span>
+                    <div className="flex items-baseline gap-2">
+                      {(ad.promo_price || ad.promoPrice) && (
+                        <span className="text-2xl font-black text-indigo-650">
+                          {ad.promo_price || ad.promoPrice}
+                        </span>
+                      )}
+                      {(ad.original_price || ad.originalPrice) && (
+                        <span className="text-xs sm:text-sm font-bold text-slate-400 line-through">
+                          {ad.original_price || ad.originalPrice}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {(ad.discount_value || ad.discountValue) && (
+                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[11px] font-black uppercase px-3 py-2 rounded-2xl shadow-md border border-white/10 animate-pulse-subtle">
+                      {ad.discount_value || ad.discountValue}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Description Details */}
+              {ad.description && (
+                <div className="space-y-2 pt-1">
+                  <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Offer Details</h4>
+                  <p className="text-xs sm:text-sm text-slate-650 leading-relaxed font-medium">
+                    {ad.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Merchant Details */}
+              {(ad.store_name || ad.storeName || ad.store_address || ad.storeAddress || ad.store_phone || ad.storePhone) && (
+                <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100 space-y-3.5 shadow-xs">
+                  <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">About the Merchant</h4>
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                      {(ad.store_logo || ad.storeLogo) ? (
+                        <img src={ad.store_logo || ad.storeLogo} alt={ad.store_name || ad.storeName} className="w-full h-full object-cover" />
+                      ) : (
+                        <Store size={20} className="text-indigo-500" />
+                      )}
+                    </div>
+                    <div className="space-y-1.5 min-w-0 flex-1">
+                      <span className="font-extrabold text-slate-900 text-sm block truncate">
+                        {ad.store_name || ad.storeName || "Partner Store"}
+                      </span>
+                      
+                      {(ad.store_address || ad.storeAddress) && (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ad.store_address || ad.storeAddress)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-650 hover:text-indigo-750 hover:underline flex items-start gap-1 font-semibold"
+                        >
+                          <MapPin size={13} className="shrink-0 mt-0.5 text-indigo-500" />
+                          <span className="leading-tight">{ad.store_address || ad.storeAddress}</span>
+                        </a>
+                      )}
+
+                      {(ad.store_phone || ad.storePhone) && (
+                        <a
+                          href={`tel:${ad.store_phone || ad.storePhone}`}
+                          className="text-xs text-slate-600 hover:text-indigo-655 flex items-center gap-1 font-semibold"
+                        >
+                          <Phone size={13} className="text-indigo-400 shrink-0" />
+                          <span>{ad.store_phone || ad.storePhone}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Expiration Details */}
+              {ad.expires_at && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 flex items-center gap-2.5">
+                  <span className="text-xs font-black text-amber-900 flex items-center gap-1.5">
+                    ⏳ Valid Until: {new Date(ad.expires_at).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+              )}
+
+              {/* Terms & Conditions Accordion */}
+              {(ad.terms || ad.terms) && (
+                <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowTerms(!showTerms)}
+                    className="w-full px-4 py-3.5 flex items-center justify-between text-left text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition cursor-pointer select-none"
+                  >
+                    <span>Offer Terms & Fine Print</span>
+                    {showTerms ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                  </button>
+                  {showTerms && (
+                    <div className="px-4 pb-4 pt-1.5 text-xs text-slate-500 leading-relaxed font-medium border-t border-slate-50 bg-slate-50/50">
+                      {ad.terms || ad.terms}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Action Sticky Bottom Bar */}
+            <div className="pt-4 border-t border-slate-100 bg-white md:bg-transparent">
+              <a
+                href={`/api/track/click?ad_id=${ad.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.98] cursor-pointer"
+              >
+                <span>Claim & View Offer</span>
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

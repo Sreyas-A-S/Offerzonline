@@ -273,6 +273,7 @@ export default function PublicDiscoveryPage() {
 
             if (primaryName) {
               setLocationName(primaryName);
+              localStorage.setItem("offerz_user_location", JSON.stringify({ name: primaryName, lat: coords.lat, lng: coords.lng }));
               return;
             }
 
@@ -293,8 +294,10 @@ export default function PublicDiscoveryPage() {
               address.county ||
               "Current Location";
             setLocationName(cityOrArea);
+            localStorage.setItem("offerz_user_location", JSON.stringify({ name: cityOrArea, lat: coords.lat, lng: coords.lng }));
           } catch {
             setLocationName("Current Location");
+            localStorage.setItem("offerz_user_location", JSON.stringify({ name: "Current Location", lat: coords.lat, lng: coords.lng }));
           }
         },
         async (err) => {
@@ -305,8 +308,10 @@ export default function PublicDiscoveryPage() {
             const data = await res.json();
             if (data.latitude && data.longitude) {
               setLocation({ lat: data.latitude, lng: data.longitude });
-              setLocationName(data.city || data.region || "Nearby Deals");
+              const name = data.city || data.region || "Nearby Deals";
+              setLocationName(name);
               setLocationError(null);
+              localStorage.setItem("offerz_user_location", JSON.stringify({ name, lat: data.latitude, lng: data.longitude }));
               return;
             }
           } catch (ipErr) {
@@ -323,6 +328,19 @@ export default function PublicDiscoveryPage() {
   };
 
   useEffect(() => {
+    const saved = localStorage.getItem("offerz_user_location");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.lat !== undefined && parsed.lng !== undefined && parsed.name) {
+          setLocation({ lat: parsed.lat, lng: parsed.lng });
+          setLocationName(parsed.name);
+          return;
+        }
+      } catch (e) {
+        console.error("Error loading saved location:", e);
+      }
+    }
     detectLocation();
   }, []);
 
@@ -813,6 +831,7 @@ export default function PublicDiscoveryPage() {
         onSelectLocation={(name, lat, lng) => {
           setLocationName(name);
           setLocation({ lat, lng });
+          localStorage.setItem("offerz_user_location", JSON.stringify({ name, lat, lng }));
         }}
         onDetectGPS={detectLocation}
       />

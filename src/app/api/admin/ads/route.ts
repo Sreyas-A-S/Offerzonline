@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt } = body;
+    const { title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms } = body;
 
     try {
       const client = await pool.connect();
@@ -101,12 +101,34 @@ export async function POST(req: NextRequest) {
           INSERT INTO ads (
             title, category_id, media_url, media_type, ad_format, target_url, 
             latitude, longitude, radius_km, location, weight_priority, is_active,
-            description, expires_at
+            description, expires_at, store_name, store_logo, store_phone, store_address,
+            original_price, promo_price, discount_value, terms
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE, $11, $12)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
           RETURNING *
           `,
-          [title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority || 1, description || null, expiresAt || null]
+          [
+            title,
+            categoryId,
+            mediaUrl,
+            mediaType,
+            adFormat,
+            targetUrl,
+            latitude,
+            longitude,
+            radiusKm,
+            weightPriority || 1,
+            description || null,
+            expiresAt || null,
+            storeName || null,
+            storeLogo || null,
+            storePhone || null,
+            storeAddress || null,
+            originalPrice || null,
+            promoPrice || null,
+            discountValue || null,
+            terms || null
+          ]
         );
 
         return NextResponse.json({ success: true, ad: result.rows[0] });
@@ -131,6 +153,14 @@ export async function POST(req: NextRequest) {
         weight_priority: weightPriority || 1,
         description: description || null,
         expires_at: expiresAt || null,
+        store_name: storeName || null,
+        store_logo: storeLogo || null,
+        store_phone: storePhone || null,
+        store_address: storeAddress || null,
+        original_price: originalPrice || null,
+        promo_price: promoPrice || null,
+        discount_value: discountValue || null,
+        terms: terms || null,
         distance_km: 0.5,
         views: 0,
         clicks: 0,
@@ -148,7 +178,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, isActive } = body;
+    const { id, title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, isActive, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Ad ID required for update" }, { status: 400 });
@@ -175,8 +205,16 @@ export async function PUT(req: NextRequest) {
             is_active = $11, 
             description = $12, 
             expires_at = $13,
+            store_name = $14,
+            store_logo = $15,
+            store_phone = $16,
+            store_address = $17,
+            original_price = $18,
+            promo_price = $19,
+            discount_value = $20,
+            terms = $21,
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $14
+          WHERE id = $22
           RETURNING *
           `,
           [
@@ -193,6 +231,14 @@ export async function PUT(req: NextRequest) {
             isActive !== undefined ? isActive : true,
             description || null,
             expiresAt || null,
+            storeName || null,
+            storeLogo || null,
+            storePhone || null,
+            storeAddress || null,
+            originalPrice || null,
+            promoPrice || null,
+            discountValue || null,
+            terms || null,
             id,
           ]
         );
@@ -218,6 +264,14 @@ export async function PUT(req: NextRequest) {
               weight_priority: weightPriority,
               description,
               expires_at: expiresAt,
+              store_name: storeName || null,
+              store_logo: storeLogo || null,
+              store_phone: storePhone || null,
+              store_address: storeAddress || null,
+              original_price: originalPrice || null,
+              promo_price: promoPrice || null,
+              discount_value: discountValue || null,
+              terms: terms || null,
               is_active: isActive !== undefined ? isActive : a.is_active,
             }
           : a

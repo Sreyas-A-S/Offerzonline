@@ -90,6 +90,14 @@ export default function AdminDashboard() {
     weightPriority: 5,
     description: "",
     expiresAt: "",
+    storeName: "",
+    storeLogo: "",
+    storePhone: "",
+    storeAddress: "",
+    originalPrice: "",
+    promoPrice: "",
+    discountValue: "",
+    terms: "",
   });
 
   // Cropper states
@@ -403,6 +411,14 @@ export default function AdminDashboard() {
           weightPriority: 5,
           description: "",
           expiresAt: "",
+          storeName: "",
+          storeLogo: "",
+          storePhone: "",
+          storeAddress: "",
+          originalPrice: "",
+          promoPrice: "",
+          discountValue: "",
+          terms: "",
         });
         fetchDashboardData();
         setShowCreateForm(false);
@@ -429,6 +445,14 @@ export default function AdminDashboard() {
       weightPriority: parseInt((ad.weight_priority || ad.weightPriority || 5).toString(), 10),
       description: ad.description || "",
       expiresAt: ad.expires_at ? new Date(ad.expires_at).toISOString().split("T")[0] : "",
+      storeName: ad.store_name || ad.storeName || "",
+      storeLogo: ad.store_logo || ad.storeLogo || "",
+      storePhone: ad.store_phone || ad.storePhone || "",
+      storeAddress: ad.store_address || ad.storeAddress || "",
+      originalPrice: ad.original_price || ad.originalPrice || "",
+      promoPrice: ad.promo_price || ad.promoPrice || "",
+      discountValue: ad.discount_value || ad.discountValue || "",
+      terms: ad.terms || ad.terms || "",
     });
     setShowCreateForm(true);
   };
@@ -1121,6 +1145,102 @@ export default function AdminDashboard() {
                         onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
                         style={{ colorScheme: "dark" }}
                         className="w-full bg-[#0b0f19] border border-[#1e293b] rounded-2xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] focus:ring-2 focus:ring-indigo-950 transition-all duration-300 font-medium"
+                      />
+                    </div>
+
+                    {/* Merchant & Store Profile */}
+                    <div className="bg-[#0b0f19] p-5 border border-[#1e293b] rounded-2xl space-y-4">
+                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Merchant Profile</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Store Name</label>
+                          <input
+                            type="text"
+                            value={formData.storeName}
+                            onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                            placeholder="e.g. Luigi's Pizza"
+                            className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Store Logo URL</label>
+                          <input
+                            type="url"
+                            value={formData.storeLogo}
+                            onChange={(e) => setFormData({ ...formData, storeLogo: e.target.value })}
+                            placeholder="e.g. https://.../logo.png"
+                            className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Store Phone</label>
+                          <input
+                            type="text"
+                            value={formData.storePhone}
+                            onChange={(e) => setFormData({ ...formData, storePhone: e.target.value })}
+                            placeholder="e.g. +1 (555) 000-0000"
+                            className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Store Address</label>
+                          <input
+                            type="text"
+                            value={formData.storeAddress}
+                            onChange={(e) => setFormData({ ...formData, storeAddress: e.target.value })}
+                            placeholder="e.g. 123 Main St"
+                            className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pricing & Discounts */}
+                    <div className="bg-[#0b0f19] p-5 border border-[#1e293b] rounded-2xl space-y-4">
+                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Pricing & Discounts</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Original Price</label>
+                          <input
+                            type="text"
+                            value={formData.originalPrice}
+                            onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                            placeholder="e.g. $49.99"
+                            className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Promo Price</label>
+                          <input
+                            type="text"
+                            value={formData.promoPrice}
+                            onChange={(e) => setFormData({ ...formData, promoPrice: e.target.value })}
+                            placeholder="e.g. $19.99"
+                            className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Discount Value</label>
+                          <input
+                            type="text"
+                            value={formData.discountValue}
+                            onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
+                            placeholder="e.g. 60% OFF"
+                            className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Terms and Conditions */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Terms & Conditions</label>
+                      <textarea
+                        value={formData.terms}
+                        onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+                        placeholder="e.g. Valid for dine-in only. One coupon per table..."
+                        rows={2}
+                        className="w-full bg-[#0b0f19] border border-[#1e293b] rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] focus:ring-2 focus:ring-indigo-950 transition-all duration-300 resize-none font-medium"
                       />
                     </div>
                   </div>
