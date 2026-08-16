@@ -109,6 +109,7 @@ export default function AdminDashboard() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [cropAspect, setCropAspect] = useState<number | undefined>(300/250);
+  const [originalAspect, setOriginalAspect] = useState<number | undefined>(undefined);
   const [cropResName, setCropResName] = useState<string>("300x250");
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -164,8 +165,8 @@ export default function AdminDashboard() {
       } else {
         setAuthError(data.error || "Invalid Admin Username or Password");
       }
-    } catch (err) {
-      setAuthError("Failed to authenticate with server. Please try again.");
+    } catch (err: any) {
+      setAuthError(err.message || "Authentication error");
     }
   };
 
@@ -192,10 +193,17 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/ads");
-      const data = await res.json();
-      setAds(data.ads || []);
-      setCategories(data.categories || []);
+      const adsRes = await fetch("/api/admin/ads");
+      const adsData = await adsRes.json();
+      if (adsData.ads) {
+        setAds(adsData.ads);
+      }
+
+      const catsRes = await fetch("/api/admin/categories");
+      const catsData = await catsRes.json();
+      if (catsData.categories) {
+        setCategories(catsData.categories);
+      }
 
       const settingsRes = await fetch("/api/admin/settings");
       const settingsData = await settingsRes.json();
@@ -318,7 +326,17 @@ export default function AdminDashboard() {
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onload = () => {
-        setCropperImage(reader.result as string);
+        const resultSrc = reader.result as string;
+        setCropperImage(resultSrc);
+        
+        // Calculate original aspect ratio for "Free Crop / Original Ratio"
+        const img = new Image();
+        img.src = resultSrc;
+        img.onload = () => {
+          const aspect = img.width / img.height;
+          setOriginalAspect(aspect);
+        };
+
         setCropModalOpen(true);
       };
       reader.readAsDataURL(file);
@@ -360,13 +378,51 @@ export default function AdminDashboard() {
             adFormat: cropResName,
           };
         });
-        setMessage({ type: "success", text: "Media cropped, compressed & uploaded successfully!" });
+        setMessage({ type: "success", text: "Image cropped and uploaded successfully!" });
       } else {
         setMessage({ type: "error", text: result.error || "Upload failed" });
       }
     } catch (err: any) {
-      console.error(err);
-      setMessage({ type: "error", text: err.message || "Error cropping or uploading image" });
+      setMessage({ type: "error", text: err.message || "Crop & upload error" });
+    } finally {
+      setUploading(false);
+      setCropperImage(null);
+      setSelectedFile(null);
+    }
+  };
+
+  const handleUploadOriginal = async () => {
+    if (!selectedFile) return;
+
+    setUploading(true);
+    setCropModalOpen(false);
+
+    try {
+      const data = new FormData();
+      data.append("file", selectedFile);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: data,
+      });
+      const result = await res.json();
+      if (result.success) {
+        setFormData((prev) => {
+          const currentUrls = prev.mediaUrl ? prev.mediaUrl.split(",") : [];
+          currentUrls.push(result.url);
+          return {
+            ...prev,
+            mediaUrl: currentUrls.join(","),
+            mediaType: "image",
+            adFormat: "responsive",
+          };
+        });
+        setMessage({ type: "success", text: "Original image uploaded successfully!" });
+      } else {
+        setMessage({ type: "error", text: result.error || "Upload failed" });
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Upload error" });
     } finally {
       setUploading(false);
       setCropperImage(null);
@@ -1885,7 +1941,7 @@ export default function AdminDashboard() {
                     key={res.name}
                     type="button"
                     onClick={() => {
-                      setCropAspect(res.aspect);
+                      setCropAspect(res.name === "responsive" ? originalAspect : res.aspect);
                       setCropResName(res.name);
                     }}
                     className={`px-4 py-3.5 rounded-2xl text-xs font-bold transition border flex items-center gap-3 ${
@@ -1945,6 +2001,14 @@ export default function AdminDashboard() {
                 className="px-4 py-2.5 rounded-xl border border-[#1e293b] bg-slate-900 text-xs font-bold text-slate-300 hover:text-white transition"
               >
                 Cancel
+              </button>
+               <button
+                type="button"
+                onClick={handleUploadOriginal}
+                disabled={uploading}
+                className="px-5 py-2.5 rounded-xl bg-emerald-650 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+              >
+                Use Original (No Crop)
               </button>
               <button
                 type="button"
