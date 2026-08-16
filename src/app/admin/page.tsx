@@ -1640,6 +1640,11 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-semibold text-white">{ad.title}</div>
+                          {ad.uuid && (
+                            <div className="text-[10px] text-indigo-400/80 font-mono tracking-wider mt-0.5" title="Ad UUID">
+                              UUID: {ad.uuid}
+                            </div>
+                          )}
                           {ad.description && (
                             <div className="text-[11px] text-slate-400 mt-1 max-w-xs truncate" title={ad.description}>
                               {ad.description}

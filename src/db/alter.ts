@@ -30,6 +30,7 @@ async function runAlterations() {
     console.log("Checking columns in ads table...");
 
     const columnsToAdd = [
+      { name: "uuid", type: "VARCHAR(36) DEFAULT gen_random_uuid()" },
       { name: "description", type: "TEXT" },
       { name: "expires_at", type: "TIMESTAMP" },
       { name: "store_name", type: "TEXT" },
@@ -57,6 +58,12 @@ async function runAlterations() {
         console.log(`Column ${col.name} already exists.`);
       }
     }
+
+    // Backfill missing UUIDs for existing rows
+    await client.query(`
+      CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+      UPDATE ads SET uuid = gen_random_uuid()::text WHERE uuid IS NULL OR uuid = '';
+    `);
 
     console.log("Database alteration complete!");
   } catch (error) {

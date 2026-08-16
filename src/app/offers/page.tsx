@@ -171,7 +171,7 @@ export default function OffersListingPage() {
       const params = new URLSearchParams(window.location.search);
       const shareAdId = params.get("ad");
       if (shareAdId) {
-        const found = ads.find((a) => a.id.toString() === shareAdId);
+        const found = ads.find((a) => a.uuid === shareAdId || a.id.toString() === shareAdId);
         if (found) {
           setSelectedAd(found);
         } else {

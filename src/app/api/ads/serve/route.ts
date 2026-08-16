@@ -110,10 +110,13 @@ export async function GET(req: NextRequest) {
   try {
     const client = await pool.connect();
     try {
+      // Direct ad fetch by ID or UUID for shared link opening
       if (adId) {
+        const isNumeric = /^\d+$/.test(adId);
         const result = await client.query(`
           SELECT 
             a.id,
+            a.uuid,
             a.title,
             a.category_id,
             c.name as category_name,
@@ -137,8 +140,8 @@ export async function GET(req: NextRequest) {
             a.terms
           FROM ads a
           LEFT JOIN categories c ON a.category_id = c.id
-          WHERE a.id = $1
-        `, [parseInt(adId, 10)]);
+          WHERE ${isNumeric ? "a.id = $1" : "a.uuid = $1"}
+        `, [isNumeric ? parseInt(adId, 10) : adId]);
         return NextResponse.json({ ads: result.rows });
       }
 
@@ -156,6 +159,7 @@ export async function GET(req: NextRequest) {
         query = `
           SELECT 
             a.id,
+            a.uuid,
             a.title,
             a.category_id,
             c.name as category_name,
@@ -213,6 +217,7 @@ export async function GET(req: NextRequest) {
         query = `
           SELECT 
             a.id,
+            a.uuid,
             a.title,
             a.category_id,
             c.name as category_name,

@@ -24,6 +24,7 @@ export const categories = pgTable("categories", {
 
 export const ads = pgTable("ads", {
   id: serial("id").primaryKey(),
+  uuid: varchar("uuid", { length: 36 }).notNull().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   categoryId: integer("category_id").references(() => categories.id),
   mediaUrl: text("media_url").notNull(),
