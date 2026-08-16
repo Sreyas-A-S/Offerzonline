@@ -204,6 +204,27 @@ async function seed() {
       discountValue: "Exclusive Collections",
       terms: "1. Offers valid on ladies wear, jewells, and gift items.\n2. Store located near Jyothis Kindergarten, Kazhakuttom.\n3. Photostat copying services available in-store.\n4. Call +91 94955 28933 for custom sizes and booking.",
     },
+    {
+      title: "🌺 Sumam Clothing For Her: Celebrate Onam in Style & Tradition",
+      categoryId: catMap.get("retail-shopping"),
+      mediaUrl: "/uploads/ads/sumam.png",
+      mediaType: "image",
+      adFormat: "responsive",
+      targetUrl: "mailto:info.sumam@gmail.com",
+      latitude: "8.5680160",
+      longitude: "76.8737370",
+      radiusKm: 5000,
+      weightPriority: 10,
+      isActive: true,
+      description: "Celebrate Onam in Style & Tradition with Sumam - Clothing For Her. Grace. Tradition. New Beginnings. Explore our premium Office Wear and Casual Wear women's ethnic kurtis. Premium Quality, Comfort Meets Style, Versatile Everyday Fashion & Pan-India Shipping!",
+      expiresAt: new Date("2026-09-30T23:59:59Z"),
+      storeName: "Sumam - Clothing For Her",
+      storePhone: "info.sumam@gmail.com",
+      storeAddress: "Kazhakkottam, Kerala / Pan-India Delivery",
+      promoPrice: "Onam Festive Special",
+      discountValue: "Pan-India Shipping",
+      terms: "1. Premium Quality & Comfort Meets Style.\n2. Collections include Smart Office Wear & Everyday Casual Wear.\n3. Pan-India Shipping available.\n4. Contact info.sumam@gmail.com for orders & inquiries.",
+    },
   ];
 
   for (const adData of sampleAds) {
