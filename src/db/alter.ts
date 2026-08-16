@@ -2,19 +2,24 @@ import fs from "fs";
 import path from "path";
 import { Pool } from "pg";
 
-let connectionString = "postgresql://postgres:postgres@localhost:5432/offerzonline";
-try {
-  const envPath = path.resolve(process.cwd(), ".env.local");
-  if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, "utf-8");
-    const match = envContent.match(/DATABASE_URL=["']?([^"\n\r]+)["']?/);
-    if (match && match[1]) {
-      connectionString = match[1];
-      console.log("Loaded DATABASE_URL from .env.local");
+let connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  try {
+    const envPath = path.resolve(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, "utf-8");
+      const match = envContent.match(/DATABASE_URL=["']?([^"\n\r]+)["']?/);
+      if (match && match[1]) {
+        connectionString = match[1];
+        console.log("Loaded DATABASE_URL from .env.local");
+      }
     }
+  } catch (e) {
+    console.warn("Could not read .env.local, using fallback");
   }
-} catch (e) {
-  console.warn("Could not read .env.local, using fallback");
+}
+if (!connectionString) {
+  connectionString = "postgresql://postgres:postgres@localhost:5432/offerzonline";
 }
 
 const localPool = new Pool({ connectionString });
