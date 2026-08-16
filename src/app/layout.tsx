@@ -15,11 +15,11 @@ export const metadata: Metadata = {
   description: "Discover verified local business offers, deals, and targeted advertisements near you.",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/logo.png", type: "image/png" },
+      { url: "/api/logo" },
+      { url: "/api/logo", type: "image/png" },
     ],
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    shortcut: "/api/logo",
+    apple: "/api/logo",
   },
   manifest: "/manifest.webmanifest",
 };

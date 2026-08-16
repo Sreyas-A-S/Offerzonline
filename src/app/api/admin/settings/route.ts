@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     try {
       const result = await client.query("SELECT key, value FROM site_settings");
       const settingsMap: Record<string, string> = {
-        logo: "/logo.png",
+        logo: "/api/logo",
       };
       result.rows.forEach((row) => {
         settingsMap[row.key] = row.value;
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       client.release();
     }
   } catch (error: any) {
-    return NextResponse.json({ settings: { logo: "/logo.png" } });
+    return NextResponse.json({ settings: { logo: "/api/logo" } });
   }
 }
 

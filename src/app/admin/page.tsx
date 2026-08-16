@@ -664,7 +664,7 @@ export default function AdminDashboard() {
       <header className="md:hidden flex items-center justify-between bg-[#020617] text-white px-5 py-4 border-b border-[#1e293b] sticky top-0 z-40">
         <div className="flex items-center gap-2.5">
           <img
-            src="/logo.png"
+            src={siteLogo}
             alt="Offerzonline Logo"
             className="w-8 h-8 object-contain rounded-lg bg-slate-900 p-0.5 border border-slate-800"
           />
@@ -688,7 +688,7 @@ export default function AdminDashboard() {
           {/* Sidebar Header */}
           <div className="px-6 py-6 border-b border-[#1e293b] flex items-center gap-3">
             <img
-              src="/logo.png"
+              src={siteLogo}
               alt="Offerzonline Logo"
               className="w-9 h-9 object-contain rounded-xl bg-slate-900 p-0.5 border border-slate-850"
             />
@@ -1929,7 +1929,7 @@ export default function AdminDashboard() {
         <footer className="py-5 px-6 sm:px-8 border-t border-[#1e293b] bg-[#020617] text-slate-400 text-[11px] font-medium flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <img
-              src="/logo.png"
+              src={siteLogo}
               alt="Offerzonline Logo"
               className="w-6 h-6 object-contain rounded-md bg-slate-900 p-0.5 border border-slate-800"
             />

@@ -509,7 +509,7 @@ export default function PublicDiscoveryPage() {
               <img
                 src={siteLogo}
                 alt="Offerzonline Logo"
-                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full shadow-md shrink-0 bg-white p-0.5 border border-slate-100"
+                className="w-11 h-11 sm:w-14 sm:h-14 object-contain rounded-2xl shadow-md shrink-0 bg-white p-1 border border-slate-100/80 transition-all"
               />
               <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight hidden sm:block">
                 Offerzonline
