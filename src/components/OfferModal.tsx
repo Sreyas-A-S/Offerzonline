@@ -16,6 +16,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   const [showTerms, setShowTerms] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [fullscreenMediaOpen, setFullscreenMediaOpen] = useState(false);
+  const [mapLoading, setMapLoading] = useState(true);
 
   const mediaUrls = ad && ad.media_url ? ad.media_url.split(",") : [];
 
@@ -39,6 +40,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   // Load user coordinates from localStorage on mount
   useEffect(() => {
     if (!ad) return;
+    setMapLoading(true);
     const saved = localStorage.getItem("offerz_user_location");
     if (saved) {
       try {
@@ -248,13 +250,19 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                 </span>
               </div>
               <div className="h-48 w-full rounded-xl overflow-hidden shadow-md border border-slate-150 relative z-0">
+                {mapLoading && (
+                  <div className="absolute inset-0 bg-slate-50 flex flex-col items-center justify-center gap-2 z-10">
+                    <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest animate-pulse">Loading Map Route...</span>
+                  </div>
+                )}
                 <iframe
                   title="Google Maps Route"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
-                  loading="lazy"
                   allowFullScreen
+                  onLoad={() => setMapLoading(false)}
                   src={getMapEmbedUrl()}
                 />
               </div>

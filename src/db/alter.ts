@@ -39,7 +39,9 @@ async function runAlterations() {
       { name: "original_price", type: "VARCHAR(50)" },
       { name: "promo_price", type: "VARCHAR(50)" },
       { name: "discount_value", type: "VARCHAR(100)" },
-      { name: "terms", type: "TEXT" }
+      { name: "terms", type: "TEXT" },
+      { name: "is_onload_popup", type: "BOOLEAN DEFAULT FALSE" },
+      { name: "is_recommended", type: "BOOLEAN DEFAULT FALSE" }
     ];
 
     for (const col of columnsToAdd) {

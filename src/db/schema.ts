@@ -35,6 +35,8 @@ export const ads = pgTable("ads", {
   radiusKm: integer("radius_km").notNull().default(5),
   weightPriority: integer("weight_priority").notNull().default(1),
   isActive: boolean("is_active").notNull().default(true),
+  isOnloadPopup: boolean("is_onload_popup").default(false),
+  isRecommended: boolean("is_recommended").default(false),
   description: text("description"),
   expiresAt: timestamp("expires_at"),
   storeName: text("store_name"),

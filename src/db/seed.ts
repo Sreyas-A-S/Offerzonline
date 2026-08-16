@@ -183,6 +183,27 @@ async function seed() {
       discountValue: "Up to ₹250 OFF",
       terms: "1. 3 Pairs - Get ₹100 OFF\n2. 4 Pairs - Get ₹150 OFF\n3. 5 Pairs or More - Get ₹250 OFF\n4. Flat 20% OFF on all Restoration & Recoloring Services.\n5. Limited Period Offer valid from Aug 3rd to 22nd.\n6. Free pickup and delivery within 10 KM radius.",
     },
+    {
+      title: "🌸 Vastra Boutique Onam Special: Ladies Wear, Jewells, Gifts & Photostat",
+      categoryId: catMap.get("retail-shopping"),
+      mediaUrl: "/uploads/ads/vasthra.jpeg",
+      mediaType: "image",
+      adFormat: "responsive",
+      targetUrl: "tel:+919495528933",
+      latitude: "8.5680160",
+      longitude: "76.8737370",
+      radiusKm: 5000,
+      weightPriority: 9,
+      isActive: true,
+      description: "ഈ ഓണം വസ്ത്രയോടൊപ്പം! Celebrate Onam in Style with Vastra Boutique Kazhakuttom near Jyothis Kindergarten. Explore our exclusive festive collections in Ladies Wear, beautiful Jewelry, and curated Gifts. We also provide photostat and copying services on-site.",
+      expiresAt: new Date("2026-09-15T23:59:59Z"),
+      storeName: "Vastra Boutique",
+      storePhone: "+91 94955 28933",
+      storeAddress: "Near Jyothis Kindergarten, Kazhakuttom, Kerala",
+      promoPrice: "Onam Special",
+      discountValue: "Exclusive Collections",
+      terms: "1. Offers valid on ladies wear, jewells, and gift items.\n2. Store located near Jyothis Kindergarten, Kazhakuttom.\n3. Photostat copying services available in-store.\n4. Call +91 94955 28933 for custom sizes and booking.",
+    },
   ];
 
   for (const adData of sampleAds) {

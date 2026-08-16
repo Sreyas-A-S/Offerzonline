@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms } = body;
+    const { title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms, isOnloadPopup, isRecommended } = body;
 
     try {
       const client = await pool.connect();
@@ -105,9 +105,9 @@ export async function POST(req: NextRequest) {
               title, category_id, media_url, media_type, ad_format, target_url, 
               latitude, longitude, radius_km, location, weight_priority, is_active,
               description, expires_at, store_name, store_logo, store_phone, store_address,
-              original_price, promo_price, discount_value, terms
+              original_price, promo_price, discount_value, terms, is_onload_popup, is_recommended
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
             RETURNING *
             `,
             [
@@ -130,7 +130,9 @@ export async function POST(req: NextRequest) {
               originalPrice || null,
               promoPrice || null,
               discountValue || null,
-              terms || null
+              terms || null,
+              isOnloadPopup === true,
+              isRecommended === true
             ]
           );
         } catch (postgisErr: any) {
@@ -142,9 +144,9 @@ export async function POST(req: NextRequest) {
               title, category_id, media_url, media_type, ad_format, target_url, 
               latitude, longitude, radius_km, weight_priority, is_active,
               description, expires_at, store_name, store_logo, store_phone, store_address,
-              original_price, promo_price, discount_value, terms
+              original_price, promo_price, discount_value, terms, is_onload_popup, is_recommended
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
             RETURNING *
             `,
             [
@@ -167,7 +169,9 @@ export async function POST(req: NextRequest) {
               originalPrice || null,
               promoPrice || null,
               discountValue || null,
-              terms || null
+              terms || null,
+              isOnloadPopup === true,
+              isRecommended === true
             ]
           );
         }
@@ -220,7 +224,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, isActive, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms } = body;
+    const { id, title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, isActive, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms, isOnloadPopup, isRecommended } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Ad ID required for update" }, { status: 400 });
@@ -258,8 +262,10 @@ export async function PUT(req: NextRequest) {
               promo_price = $19,
               discount_value = $20,
               terms = $21,
+              is_onload_popup = $22,
+              is_recommended = $23,
               updated_at = CURRENT_TIMESTAMP
-            WHERE id = $22
+            WHERE id = $24
             RETURNING *
             `,
             [
@@ -284,6 +290,8 @@ export async function PUT(req: NextRequest) {
               promoPrice || null,
               discountValue || null,
               terms || null,
+              isOnloadPopup === true,
+              isRecommended === true,
               id,
             ]
           );
@@ -315,8 +323,10 @@ export async function PUT(req: NextRequest) {
               promo_price = $19,
               discount_value = $20,
               terms = $21,
+              is_onload_popup = $22,
+              is_recommended = $23,
               updated_at = CURRENT_TIMESTAMP
-            WHERE id = $22
+            WHERE id = $24
             RETURNING *
             `,
             [
@@ -341,6 +351,8 @@ export async function PUT(req: NextRequest) {
               promoPrice || null,
               discountValue || null,
               terms || null,
+              isOnloadPopup === true,
+              isRecommended === true,
               id,
             ]
           );

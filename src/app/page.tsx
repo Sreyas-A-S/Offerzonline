@@ -421,8 +421,9 @@ export default function PublicDiscoveryPage() {
         }
       }
 
-      // Automatically popup the top priority ad
-      setSelectedAd(ads[0]);
+      // Automatically popup the designated onload popup ad, fallback to top weight priority
+      const popupAd = ads.find((a) => a.is_onload_popup || a.isOnloadPopup) || ads[0];
+      setSelectedAd(popupAd);
       setIsAutoPopup(true);
       setHasAutoOpened(true);
     }
@@ -469,7 +470,7 @@ export default function PublicDiscoveryPage() {
     ad.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const featuredAd = filteredAds.length > 0 ? filteredAds[0] : null;
+  const featuredAd = filteredAds.find((a) => a.is_recommended || a.isRecommended) || (filteredAds.length > 0 ? filteredAds[0] : null);
 
   if (showPreloader) {
     return (

@@ -102,6 +102,8 @@ export default function AdminDashboard() {
     promoPrice: "",
     discountValue: "",
     terms: "",
+    isOnloadPopup: false,
+    isRecommended: false,
   });
 
   // Cropper states
@@ -479,6 +481,8 @@ export default function AdminDashboard() {
           promoPrice: "",
           discountValue: "",
           terms: "",
+          isOnloadPopup: false,
+          isRecommended: false,
         });
         fetchDashboardData();
         setShowCreateForm(false);
@@ -513,6 +517,8 @@ export default function AdminDashboard() {
       promoPrice: ad.promo_price || ad.promoPrice || "",
       discountValue: ad.discount_value || ad.discountValue || "",
       terms: ad.terms || ad.terms || "",
+      isOnloadPopup: ad.is_onload_popup || ad.isOnloadPopup || false,
+      isRecommended: ad.is_recommended || ad.isRecommended || false,
     });
     setShowCreateForm(true);
   };
@@ -1452,6 +1458,31 @@ export default function AdminDashboard() {
                             className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 focus:bg-[#070a10] transition-all"
                           />
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Pinning & Display Toggles */}
+                    <div className="bg-[#0b0f19] p-5 border border-[#1e293b] rounded-2xl space-y-4">
+                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Pinning Options</h4>
+                      <div className="flex flex-col sm:flex-row gap-6">
+                        <label className="flex items-center gap-2.5 cursor-pointer text-slate-350 text-xs font-bold select-none">
+                          <input
+                            type="checkbox"
+                            checked={formData.isOnloadPopup}
+                            onChange={(e) => setFormData({ ...formData, isOnloadPopup: e.target.checked })}
+                            className="w-4 h-4 rounded bg-[#131b2e] border-[#1e293b] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                          <span>Pin as Load-Time Popup</span>
+                        </label>
+                        <label className="flex items-center gap-2.5 cursor-pointer text-slate-350 text-xs font-bold select-none">
+                          <input
+                            type="checkbox"
+                            checked={formData.isRecommended}
+                            onChange={(e) => setFormData({ ...formData, isRecommended: e.target.checked })}
+                            className="w-4 h-4 rounded bg-[#131b2e] border-[#1e293b] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                          <span>Pin as Recommended Offer</span>
+                        </label>
                       </div>
                     </div>
 

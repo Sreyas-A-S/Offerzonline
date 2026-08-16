@@ -50,6 +50,8 @@ export async function initializeDatabase() {
           promo_price VARCHAR(50),
           discount_value VARCHAR(100),
           terms TEXT,
+          is_onload_popup BOOLEAN DEFAULT FALSE,
+          is_recommended BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -84,6 +86,8 @@ export async function initializeDatabase() {
           promo_price VARCHAR(50),
           discount_value VARCHAR(100),
           terms TEXT,
+          is_onload_popup BOOLEAN DEFAULT FALSE,
+          is_recommended BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
