@@ -14,6 +14,9 @@ interface LocationModalProps {
 
 const POPULAR_LOCATIONS = [
   { name: "All Locations (Show All Deals)", lat: 0, lng: 0 },
+  { name: "Kazhakkoottam, Thiruvananthapuram", lat: 8.568016, lng: 76.873737 },
+  { name: "Kochi, Kerala", lat: 9.9312, lng: 76.2673 },
+  { name: "Ernakulam, Kochi", lat: 9.9816, lng: 76.2999 },
   { name: "Connaught Place, New Delhi", lat: 28.6315, lng: 77.2167 },
   { name: "South Delhi, New Delhi", lat: 28.5494, lng: 77.2001 },
   { name: "Gurugram, NCR", lat: 28.4595, lng: 77.0266 },
@@ -34,15 +37,24 @@ export function LocationModal({
   const [search, setSearch] = useState("");
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll when modal opens
+  // Lock body scroll and listen for Escape key when modal opens
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    }
+    if (!isOpen) return;
+    
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = "unset";
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
