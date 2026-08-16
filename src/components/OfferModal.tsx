@@ -240,34 +240,36 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
               )}
             </div>
 
-            {/* Google Maps Embed Route Map */}
-            <div className="p-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Map size={12} className="text-indigo-500" /> Route & Location Pin
-                </h4>
-                <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                  Google Maps
-                </span>
+            {/* Google Maps Embed Route Map (Rendered ONLY if ad has valid GPS coordinates) */}
+            {ad.latitude !== null && ad.longitude !== null && ad.latitude !== undefined && ad.longitude !== undefined && !isNaN(parseFloat(ad.latitude)) && !isNaN(parseFloat(ad.longitude)) && parseFloat(ad.latitude) !== 0 && (
+              <div className="p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <Map size={12} className="text-indigo-500" /> Route & Location Pin
+                  </h4>
+                  <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                    Google Maps
+                  </span>
+                </div>
+                <div className="h-48 w-full rounded-xl overflow-hidden shadow-md border border-slate-150 relative z-0">
+                  {mapLoading && (
+                    <div className="absolute inset-0 bg-slate-50 flex flex-col items-center justify-center gap-2 z-10">
+                      <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest animate-pulse">Loading Map Route...</span>
+                    </div>
+                  )}
+                  <iframe
+                    title="Google Maps Route"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    onLoad={() => setMapLoading(false)}
+                    src={getMapEmbedUrl()}
+                  />
+                </div>
               </div>
-              <div className="h-48 w-full rounded-xl overflow-hidden shadow-md border border-slate-150 relative z-0">
-                {mapLoading && (
-                  <div className="absolute inset-0 bg-slate-50 flex flex-col items-center justify-center gap-2 z-10">
-                    <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest animate-pulse">Loading Map Route...</span>
-                  </div>
-                )}
-                <iframe
-                  title="Google Maps Route"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  onLoad={() => setMapLoading(false)}
-                  src={getMapEmbedUrl()}
-                />
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Right Column: Details & Action */}
@@ -278,7 +280,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                 <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-indigo-100">
                   {ad.category_name || "Featured Offer"}
                 </span>
-                {ad.distance_km !== undefined && (
+                {ad.distance_km !== undefined && ad.latitude !== null && ad.longitude !== null && ad.latitude !== undefined && ad.longitude !== undefined && parseFloat(ad.latitude) !== 0 && (
                   <span className="bg-slate-900 text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                     <MapPin size={10} className="text-indigo-400" />
                     {ad.distance_km} km away
