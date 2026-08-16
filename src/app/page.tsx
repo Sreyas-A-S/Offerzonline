@@ -762,8 +762,8 @@ export default function PublicDiscoveryPage() {
               {/* Top Accent Gradient Line */}
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#47a01b] via-[#4ca824] to-[#52b32c]" />
 
-              {/* Media Container - Perfectly centered natural aspect ratio wrapper */}
-              <div className="relative flex items-center justify-center w-full max-w-full rounded-2xl overflow-hidden mb-4 bg-slate-50/80 border border-slate-100/80 shadow-inner mx-auto">
+              {/* Media Container - Shrink-wrapping around image width for perfect symmetry */}
+              <div className="relative inline-flex items-center justify-center max-w-full rounded-2xl overflow-hidden mb-4 bg-transparent border border-slate-100/80 shadow-inner">
                 {/* Save Heart Button (Top Left Overlay) */}
                 <button 
                   onClick={(e) => toggleSaveAd(featuredAd.id, e)}
@@ -781,7 +781,7 @@ export default function PublicDiscoveryPage() {
                 {featuredAd.media_type === "video" ? (
                   <video 
                     src={featuredAd.media_url} 
-                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500 block mx-auto" 
+                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500 shrink-0" 
                     controls 
                     autoPlay 
                     muted 
@@ -792,7 +792,7 @@ export default function PublicDiscoveryPage() {
                   <img 
                     src={featuredAd.media_url} 
                     alt={featuredAd.title}
-                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500 block mx-auto" 
+                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500 shrink-0" 
                   />
                 )}
                 {featuredAd.distance_km !== undefined && (
