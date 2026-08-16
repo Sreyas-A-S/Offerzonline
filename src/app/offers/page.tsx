@@ -220,7 +220,7 @@ export default function OffersListingPage() {
               <img
                 src="/api/logo"
                 alt="Offerzonline Logo"
-                className="w-11 h-11 sm:w-14 sm:h-14 object-contain rounded-2xl shadow-md shrink-0 bg-white p-1 border border-slate-100/80 transition-all"
+                className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
               />
               <div>
                 <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
@@ -231,14 +231,14 @@ export default function OffersListingPage() {
             </div>
 
             {/* Mobile Location Selector */}
-            <div className="md:hidden">
+            <div className="md:hidden flex-1 justify-end flex">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
-                className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer group"
+                className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer group max-w-[150px] sm:max-w-[200px]"
               >
-                <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition" />
-                <span className="max-w-[70px] truncate text-slate-900">{locationName}</span>
-                <ChevronDown size={11} className="text-slate-400" />
+                <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition shrink-0" />
+                <span className="truncate text-slate-900 flex-1 text-left">{locationName}</span>
+                <ChevronDown size={11} className="text-slate-400 shrink-0" />
               </button>
             </div>
           </div>

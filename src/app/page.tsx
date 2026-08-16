@@ -474,18 +474,18 @@ export default function PublicDiscoveryPage() {
 
   if (showPreloader) {
     return (
-      <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center animate-in fade-in duration-300">
+      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center animate-in fade-in duration-300">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 p-2 shadow-2xl flex items-center justify-center animate-pulse">
+          <div className="w-24 h-24 rounded-3xl bg-white border border-slate-100 p-3 shadow-xl flex items-center justify-center animate-pulse">
             <img
               src={siteLogo}
               alt="Offerzonline Logo"
               className="w-full h-full object-contain"
             />
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Offerzonline</h2>
-          <div className="w-28 h-1 bg-slate-900 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-500 rounded-full animate-[pulse_1s_infinite] w-full" />
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Offerzonline</h2>
+          <div className="w-28 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-indigo-600 rounded-full animate-[pulse_1s_infinite] w-full" />
           </div>
         </div>
       </div>
@@ -509,7 +509,7 @@ export default function PublicDiscoveryPage() {
               <img
                 src={siteLogo}
                 alt="Offerzonline Logo"
-                className="w-11 h-11 sm:w-14 sm:h-14 object-contain rounded-2xl shadow-md shrink-0 bg-white p-1 border border-slate-100/80 transition-all"
+                className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
               />
               <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight hidden sm:block">
                 Offerzonline
@@ -517,14 +517,14 @@ export default function PublicDiscoveryPage() {
             </div>
 
             {/* Mobile Location */}
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="flex items-center gap-2 md:hidden flex-1 justify-end">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
-                className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer group"
+                className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer group max-w-[150px] sm:max-w-[200px]"
               >
-                <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition" />
-                <span className="max-w-[70px] truncate text-slate-900">{locationName}</span>
-                <ChevronDown size={11} className="text-slate-400" />
+                <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition shrink-0" />
+                <span className="truncate text-slate-900 flex-1 text-left">{locationName}</span>
+                <ChevronDown size={11} className="text-slate-400 shrink-0" />
               </button>
             </div>
           </div>
@@ -744,8 +744,8 @@ export default function PublicDiscoveryPage() {
 
         {/* Featured Hero Card ("Recommended for You") */}
         {featuredAd && selectedCategory === "all" && (
-          <section ref={heroRef} className="space-y-3 animate-hero-card">
-            <div className="flex items-center justify-between">
+          <section ref={heroRef} className="space-y-3 animate-hero-card flex flex-col items-center">
+            <div className="flex items-center justify-between w-full max-w-full">
               <h2 className="text-sm sm:text-base font-bold text-slate-900">Recommended for You</h2>
               <Link href="/offers" className="text-xs font-bold text-indigo-600 hover:underline">
                 View All
@@ -754,7 +754,7 @@ export default function PublicDiscoveryPage() {
 
             <div 
               onClick={() => setSelectedAd(featuredAd)}
-              className="group relative bg-white border border-slate-200/90 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
+              className="group relative bg-white border border-slate-200/90 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden inline-block w-fit max-w-full mx-auto"
             >
               <div className="flex items-center justify-between mb-3 z-10 relative">
                 <button 
@@ -768,13 +768,25 @@ export default function PublicDiscoveryPage() {
                 </div>
               </div>
 
-              {/* Media Container - Retaining natural actual aspect ratio */}
-              <div className="relative w-full rounded-2xl overflow-hidden mb-4 bg-slate-100 shadow-inner flex items-center justify-center">
-                <img 
-                  src={featuredAd.media_url} 
-                  alt={featuredAd.title}
-                  className="w-full h-auto max-h-[480px] object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-550" 
-                />
+              {/* Media Container - Shrink-wrapping natural image width */}
+              <div className="relative inline-flex items-center justify-center max-w-full rounded-2xl overflow-hidden mb-4 bg-slate-50 border border-slate-100/60 shadow-inner">
+                {featuredAd.media_type === "video" ? (
+                  <video 
+                    src={featuredAd.media_url} 
+                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500" 
+                    controls 
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline 
+                  />
+                ) : (
+                  <img 
+                    src={featuredAd.media_url} 
+                    alt={featuredAd.title}
+                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500" 
+                  />
+                )}
                 {featuredAd.distance_km !== undefined && (
                   <div className="absolute bottom-3 left-3 bg-white/95 text-slate-900 font-bold text-[11px] sm:text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow-md border border-slate-200">
                     <MapPin size={12} className="text-indigo-600" />
@@ -784,8 +796,8 @@ export default function PublicDiscoveryPage() {
               </div>
 
               {/* Title & Tags */}
-              <div className="text-center space-y-2">
-                <h3 className="text-base sm:text-lg font-semibold text-slate-800 line-clamp-1 group-hover:text-slate-900 transition-colors">
+              <div className="text-center space-y-2 max-w-md mx-auto">
+                <h3 className="text-base sm:text-lg font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-900 transition-colors">
                   {featuredAd.title}
                 </h3>
                 <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
