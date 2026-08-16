@@ -12,12 +12,12 @@ import Link from "next/link";
 
 const CATEGORIES = [
   { id: "all", name: "All Categories" },
-  { id: "1", name: "Retail & Shopping" },
-  { id: "2", name: "Food & Dining" },
-  { id: "3", name: "Services & Repair" },
-  { id: "4", name: "Entertainment & Events" },
-  { id: "5", name: "Health & Fitness" },
-  { id: "6", name: "Electronics & Tech" }
+  { id: "1", name: "Food & Dining" },
+  { id: "2", name: "Retail & Shopping" },
+  { id: "3", name: "Electronics & Tech" },
+  { id: "4", name: "Health & Fitness" },
+  { id: "5", name: "Services & Repair" },
+  { id: "6", name: "Entertainment & Events" }
 ];
 
 const DEFAULT_INITIAL_ADS = [

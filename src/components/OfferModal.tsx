@@ -15,6 +15,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [showTerms, setShowTerms] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [fullscreenMediaOpen, setFullscreenMediaOpen] = useState(false);
 
   const mediaUrls = ad && ad.media_url ? ad.media_url.split(",") : [];
 
@@ -78,7 +79,11 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        handleClose();
+        if (fullscreenMediaOpen) {
+          setFullscreenMediaOpen(false);
+        } else {
+          handleClose();
+        }
       }
     };
 
@@ -86,7 +91,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [ad]);
+  }, [ad, fullscreenMediaOpen]);
 
   if (!ad) return null;
 
@@ -130,13 +135,13 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   return (
     <div
       onClick={handleBackdropClick}
-      className={`fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md overflow-y-auto p-4 sm:p-6 md:p-10 flex items-center justify-center transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 bg-slate-955/75 backdrop-blur-md overflow-y-auto p-4 sm:p-6 md:p-10 flex items-center justify-center transition-opacity duration-300 ${
         isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
       <div
         ref={modalContentRef}
-        className={`bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden relative border border-slate-100 transition-all duration-300 flex flex-col justify-between ${
+        className={`bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden relative border border-slate-100 transition-all duration-300 flex flex-col justify-between ${
           isClosing ? "scale-95 translate-y-4 opacity-0" : "scale-100 translate-y-0 opacity-100"
         }`}
       >
@@ -183,7 +188,8 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                     muted
                     playsInline
                     preload="auto"
-                    className="w-full h-full object-cover"
+                    onClick={() => setFullscreenMediaOpen(true)}
+                    className="w-full h-full object-cover cursor-pointer"
                   >
                     <source src={currentUrl} type="video/mp4" />
                   </video>
@@ -192,7 +198,8 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                     key={currentUrl}
                     src={getOptimizedUrl(currentUrl)}
                     alt={ad.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    onClick={() => setFullscreenMediaOpen(true)}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 cursor-pointer"
                   />
                 );
               })()}
@@ -240,7 +247,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                   Google Maps
                 </span>
               </div>
-              <div className="h-48 w-full rounded-2xl overflow-hidden shadow-md border border-slate-150 relative z-0">
+              <div className="h-48 w-full rounded-xl overflow-hidden shadow-md border border-slate-150 relative z-0">
                 <iframe
                   title="Google Maps Route"
                   width="100%"
@@ -277,7 +284,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
               {/* Pricing & Discounts callout */}
               {(ad.original_price || ad.originalPrice || ad.promo_price || ad.promoPrice || ad.discount_value || ad.discountValue) && (
-                <div className="bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 rounded-3xl p-4 flex items-center justify-between shadow-xs">
+                <div className="bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 rounded-2xl p-4 flex items-center justify-between shadow-xs">
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-indigo-455 uppercase tracking-wider block">Special Promo Offer</span>
                     <div className="flex items-baseline gap-2">
@@ -313,10 +320,10 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
               {/* Merchant Details */}
               {(ad.store_name || ad.storeName || ad.store_address || ad.storeAddress || ad.store_phone || ad.storePhone) && (
-                <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100 space-y-3.5 shadow-xs">
+                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3.5 shadow-xs">
                   <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">About the Merchant</h4>
                   <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                    <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                       {(ad.store_logo || ad.storeLogo) ? (
                         <img src={ad.store_logo || ad.storeLogo} alt={ad.store_name || ad.storeName} className="w-full h-full object-cover" />
                       ) : (
@@ -356,7 +363,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
               {/* Expiration Details */}
               {ad.expires_at && (
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 flex items-center gap-2.5">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 flex items-center gap-2.5">
                   <span className="text-xs font-black text-amber-900 flex items-center gap-1.5">
                     ⏳ Valid Until: {new Date(ad.expires_at).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                   </span>
@@ -365,7 +372,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
               {/* Terms & Conditions Accordion */}
               {(ad.terms || ad.terms) && (
-                <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white shadow-xs">
+                <div className="border border-slate-100 rounded-xl overflow-hidden bg-white shadow-xs">
                   <button
                     type="button"
                     onClick={() => setShowTerms(!showTerms)}
@@ -389,7 +396,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                 href={`/api/track/click?ad_id=${ad.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.98] cursor-pointer"
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.98] cursor-pointer"
               >
                 <span>Claim & View Offer</span>
                 <ExternalLink size={14} />
@@ -398,6 +405,80 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Media Lightbox Modal */}
+      {fullscreenMediaOpen && (
+        <div
+          onClick={() => setFullscreenMediaOpen(false)}
+          className="fixed inset-0 z-55 bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          <button
+            onClick={() => setFullscreenMediaOpen(false)}
+            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition shadow-md border border-white/10 cursor-pointer"
+          >
+            <X size={20} />
+          </button>
+
+          <div 
+            className="relative max-w-5xl w-full h-[80vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {mediaUrls.length > 0 && (() => {
+              const currentUrl = mediaUrls[activeMediaIndex];
+              const isVideo = currentUrl.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || (ad.media_type === "video" && !currentUrl.includes("."));
+              return isVideo ? (
+                <video
+                  key={currentUrl}
+                  controls
+                  autoPlay
+                  muted
+                  playsInline
+                  className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                >
+                  <source src={currentUrl} type="video/mp4" />
+                </video>
+              ) : (
+                <img
+                  key={currentUrl}
+                  src={getOptimizedUrl(currentUrl)}
+                  alt={ad.title}
+                  className="max-w-full max-h-full rounded-xl object-contain shadow-2xl animate-in zoom-in-95 duration-200"
+                />
+              );
+            })()}
+
+            {/* Lightbox Navigation Arrows */}
+            {mediaUrls.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevMedia}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl font-black shadow-lg cursor-pointer transition select-none backdrop-blur-md border border-white/10"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={handleNextMedia}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl font-black shadow-lg cursor-pointer transition select-none backdrop-blur-md border border-white/10"
+                >
+                  ›
+                </button>
+                {/* Dots indicator */}
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                  {mediaUrls.map((_: string, idx: number) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveMediaIndex(idx)}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === activeMediaIndex ? "bg-white w-6" : "bg-white/40 w-2"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
