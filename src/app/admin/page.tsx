@@ -1463,8 +1463,31 @@ export default function AdminDashboard() {
 
                     {/* Pinning & Display Toggles */}
                     <div className="bg-[#0b0f19] p-5 border border-[#1e293b] rounded-2xl space-y-4">
-                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Pinning Options</h4>
-                      <div className="flex flex-col sm:flex-row gap-6">
+                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Pinning & Priority Options</h4>
+                      
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                          Ad Serving Priority (Weight)
+                        </label>
+                        <select
+                          value={formData.weightPriority}
+                          onChange={(e) => setFormData({ ...formData, weightPriority: parseInt(e.target.value, 10) })}
+                          className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2.5 text-white text-xs focus:outline-none focus:border-indigo-500 font-bold"
+                        >
+                          <option value={10}>P10 (Highest Priority - Super Sponsor)</option>
+                          <option value={9}>P9 (Very High Priority)</option>
+                          <option value={8}>P8 (High Priority)</option>
+                          <option value={7}>P7 (Above Average)</option>
+                          <option value={6}>P6 (Standard High)</option>
+                          <option value={5}>P5 (Medium Standard Priority)</option>
+                          <option value={4}>P4 (Below Average)</option>
+                          <option value={3}>P3 (Low Priority)</option>
+                          <option value={2}>P2 (Very Low Priority)</option>
+                          <option value={1}>P1 (Lowest Priority)</option>
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-6 pt-2 border-t border-[#1e293b]/60">
                         <label className="flex items-center gap-2.5 cursor-pointer text-slate-350 text-xs font-bold select-none">
                           <input
                             type="checkbox"
