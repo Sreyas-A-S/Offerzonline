@@ -130,11 +130,11 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
     <div
       ref={cardRef}
       onClick={() => onSelect(ad)}
-      className="group relative transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
+      className="group relative transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between break-inside-avoid mb-4 sm:mb-5"
     >
       <div>
         {/* Card Header Media */}
-        <div className="relative aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden mb-3 shadow-inner group/media">
+        <div className="relative bg-slate-100 rounded-2xl overflow-hidden mb-3 shadow-inner group/media w-full">
           {mediaUrls.length > 0 && (() => {
             const currentUrl = mediaUrls[activeMediaIndex];
             const isVideo = currentUrl.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || ad.media_type === "video" && !currentUrl.includes(".");
@@ -146,20 +146,16 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
                 muted
                 playsInline
                 preload="none"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
               >
                 <source src={currentUrl} type="video/mp4" />
               </video>
             ) : (
-              <Image
+              <img
                 key={currentUrl}
                 src={getOptimizedUrl(currentUrl)}
                 alt={ad.title}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                unoptimized={true}
-                priority={priority}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
               />
             );
           })()}

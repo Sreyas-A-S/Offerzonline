@@ -305,7 +305,7 @@ export default function OffersListingPage() {
               ))}
             </div>
           ) : filteredAds.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-5 [column-fill:balance] overflow-visible">
               {filteredAds.map((ad, idx) => (
                 <AdCard
                   key={ad.id}
