@@ -11,6 +11,8 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://postgres:postgrespassword@postgres_db:5432/offerzonline
+    volumes:
+      - uploads_data:/app/public/uploads
     depends_on:
       postgres_db:
         condition: service_healthy
@@ -35,3 +37,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:

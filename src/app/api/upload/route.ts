@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // 3. Save locally in public/uploads if R2 is not connected, or upload to R2 directly
     const publicUrl = await uploadToR2(finalBuffer, finalFileName, finalContentType);
 
-    // If local path returned, ensure uploads folder exists
+    // If local path returned, ensure uploads folder exists and write file
     if (publicUrl.startsWith("/uploads/")) {
       const uploadDir = path.join(process.cwd(), "public", "uploads", "ads");
       await fs.mkdir(uploadDir, { recursive: true });
@@ -59,9 +59,14 @@ export async function POST(req: NextRequest) {
       await fs.writeFile(localFilePath, finalBuffer);
     }
 
+    // Convert /uploads/ paths to /api/uploads/ for dynamic serving in production
+    const servedUrl = publicUrl.startsWith("/uploads/") 
+      ? `/api${publicUrl}` 
+      : publicUrl;
+
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: servedUrl,
       mediaType,
       size: finalBuffer.length,
     });
