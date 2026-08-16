@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Plus, Trash2, Eye, MousePointerClick, TrendingUp, Upload, 
+  Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
   Menu, X, Layers, BarChart2, Code, Copy, Check
 } from "lucide-react";
@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   const [categoriesPage, setCategoriesPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
   const [logsPage, setLogsPage] = useState(1);
+  const [showOnlyActiveAds, setShowOnlyActiveAds] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: string } | null>(null);
   const [embedAd, setEmbedAd] = useState<any>(null);
@@ -518,17 +519,59 @@ export default function AdminDashboard() {
 
   // Soft Delete Ad (Triggers Cloudflare purge)
   const handleDeleteAd = async (id: number) => {
-    if (!confirm("Are you sure you want to deactivate and soft-delete this campaign?")) return;
+    if (!confirm("Are you sure you want to deactivate and hide this campaign?")) return;
 
     try {
       const res = await fetch(`/api/admin/ads?id=${id}`, { method: "DELETE" });
       const result = await res.json();
       if (result.success) {
-        setMessage({ type: "success", text: "Ad deactivated & Cloudflare cache purged!" });
+        setMessage({ type: "success", text: "Campaign deactivated and hidden!" });
         fetchDashboardData();
       }
     } catch (err: any) {
-      setMessage({ type: "error", text: "Delete failed" });
+      setMessage({ type: "error", text: "Deactivate failed" });
+    }
+  };
+
+  const handleReactivateAd = async (ad: any) => {
+    try {
+      const res = await fetch("/api/admin/ads", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: ad.id,
+          title: ad.title,
+          categoryId: parseInt(ad.category_id || ad.categoryId, 10),
+          mediaUrl: ad.media_url || ad.mediaUrl,
+          mediaType: ad.media_type || ad.mediaType,
+          adFormat: ad.ad_format || ad.adFormat,
+          targetUrl: ad.target_url || ad.targetUrl,
+          latitude: parseFloat(ad.latitude),
+          longitude: parseFloat(ad.longitude),
+          radiusKm: parseInt((ad.radius_km || ad.radiusKm || 10).toString(), 10),
+          weightPriority: parseInt((ad.weight_priority || ad.weightPriority || 5).toString(), 10),
+          description: ad.description || null,
+          expiresAt: ad.expires_at || null,
+          isActive: true,
+          storeName: ad.store_name || ad.storeName || null,
+          storeLogo: ad.store_logo || ad.storeLogo || null,
+          storePhone: ad.store_phone || ad.storePhone || null,
+          storeAddress: ad.store_address || ad.storeAddress || null,
+          originalPrice: ad.original_price || ad.originalPrice || null,
+          promoPrice: ad.promo_price || ad.promoPrice || null,
+          discountValue: ad.discount_value || ad.discountValue || null,
+          terms: ad.terms || null,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setMessage({ type: "success", text: "Campaign reactivated successfully!" });
+        fetchDashboardData();
+      } else {
+        setMessage({ type: "error", text: result.error || "Failed to reactivate campaign" });
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Reactivate failed" });
     }
   };
 
@@ -1128,10 +1171,11 @@ export default function AdminDashboard() {
 
         {activeTab === "ads" && (() => {
           const adsPerPage = 5;
+          const filteredAdsList = showOnlyActiveAds ? ads.filter(ad => ad.is_active) : ads;
           const indexOfLastAd = adsPage * adsPerPage;
           const indexOfFirstAd = indexOfLastAd - adsPerPage;
-          const currentAds = ads.slice(indexOfFirstAd, indexOfLastAd);
-          const totalPages = Math.ceil(ads.length / adsPerPage);
+          const currentAds = filteredAdsList.slice(indexOfFirstAd, indexOfLastAd);
+          const totalPages = Math.ceil(filteredAdsList.length / adsPerPage);
 
           return showCreateForm ? (
             <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] p-8 max-w-5xl mx-auto shadow-sm">
@@ -1436,9 +1480,21 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-[#1e293b] flex items-center justify-between">
+              <div className="p-6 border-b border-[#1e293b] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <h3 className="font-bold text-lg text-white tracking-tight">All Ads</h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={showOnlyActiveAds}
+                      onChange={(e) => {
+                        setShowOnlyActiveAds(e.target.checked);
+                        setAdsPage(1);
+                      }}
+                      className="rounded bg-[#0b0f19] border-[#1e293b] text-indigo-600 focus:ring-0 cursor-pointer"
+                    />
+                    Hide Deactivated Ads
+                  </label>
                   <button
                     onClick={() => {
                       setShowCreateForm(true);
@@ -1548,13 +1604,21 @@ export default function AdminDashboard() {
                             >
                               <Code size={14} />
                             </button>
-                            {ad.is_active && (
+                            {ad.is_active ? (
                               <button
                                 onClick={() => handleDeleteAd(ad.id)}
-                                className="text-rose-455 hover:text-rose-355 p-2.5 rounded-xl hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40 cursor-pointer"
-                                title="Soft delete & Purge Cloudflare Cache"
+                                className="text-rose-455 hover:text-rose-355 p-2.5 rounded-xl hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40 cursor-pointer flex items-center gap-1"
+                                title="Hide / Deactivate Campaign"
                               >
-                                <Trash2 size={14} />
+                                <EyeOff size={14} /> Hide
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleReactivateAd(ad)}
+                                className="text-emerald-400 hover:text-emerald-300 p-2.5 rounded-xl hover:bg-emerald-955/20 transition border border-transparent hover:border-emerald-900/40 cursor-pointer flex items-center gap-1"
+                                title="Show / Reactivate Campaign"
+                              >
+                                <Eye size={14} /> Show
                               </button>
                             )}
                           </div>
@@ -1568,7 +1632,7 @@ export default function AdminDashboard() {
               {/* Pagination Controls */}
               {(() => {
                 const adsPerPage = 5;
-                const totalPages = Math.ceil(ads.length / adsPerPage);
+                const totalPages = Math.ceil(filteredAdsList.length / adsPerPage);
                 const indexOfLastAd = adsPage * adsPerPage;
                 const indexOfFirstAd = indexOfLastAd - adsPerPage;
                 
@@ -1902,7 +1966,7 @@ export default function AdminDashboard() {
           }}
         >
           <div 
-            className="relative max-w-2xl w-full bg-[#131b2e] border border-[#1e293b] rounded-[2rem] overflow-hidden shadow-2xl p-6 flex flex-col h-[85vh]"
+            className="relative max-w-2xl w-full bg-[#131b2e] border border-[#1e293b] rounded-[2rem] shadow-2xl p-6 flex flex-col max-h-[90vh] overflow-y-auto scrollbar-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -1916,7 +1980,7 @@ export default function AdminDashboard() {
                   setCropperImage(null);
                   setSelectedFile(null);
                 }}
-                className="p-2 rounded-full hover:bg-slate-900 border border-transparent hover:border-[#1e293b] text-slate-350 hover:text-white transition"
+                className="p-2 rounded-full hover:bg-slate-900 border border-transparent hover:border-[#1e293b] text-slate-355 hover:text-white transition"
               >
                 <X size={16} />
               </button>
@@ -1963,7 +2027,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Cropper Container */}
-            <div className="flex-1 relative w-full rounded-2xl overflow-hidden bg-slate-950 min-h-[300px]">
+            <div className="relative w-full rounded-2xl overflow-hidden bg-slate-950 h-64 sm:h-72">
               <Cropper
                 image={cropperImage}
                 crop={crop}
