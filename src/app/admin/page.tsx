@@ -69,7 +69,10 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "ads" | "categories" | "settings">("overview");
   const [siteLogo, setSiteLogo] = useState<string>("/logo.png");
   const [logoUploading, setLogoUploading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [adsPage, setAdsPage] = useState(1);
+  const [categoriesPage, setCategoriesPage] = useState(1);
+  const [reportsPage, setReportsPage] = useState(1);
+  const [logsPage, setLogsPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: string } | null>(null);
   const [embedAd, setEmbedAd] = useState<any>(null);
@@ -816,9 +819,7 @@ export default function AdminDashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-
-            {/* Campaign / Ad-Level Performance Report Table */}
+                {/* Campaign / Ad-Level Performance Report Table */}
             <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -841,42 +842,103 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
-                    {adBreakdowns.length > 0 ? (
-                      adBreakdowns.map((report) => (
-                        <tr key={report.ad_id} className="hover:bg-slate-900/40 transition-colors">
-                          <td className="p-3.5">
-                            <span className="font-extrabold text-white block">{report.title}</span>
-                            <span className="text-[10px] text-slate-500 font-mono">ID: #{report.ad_id}</span>
-                          </td>
-                          <td className="p-3.5">
-                            <span className="bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold">
-                              {report.category_name || "General"}
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-center font-bold text-indigo-300">{report.impressions}</td>
-                          <td className="p-3.5 text-center font-bold text-purple-300">{report.clicks}</td>
-                          <td className="p-3.5 text-center font-bold text-emerald-300">{report.unique_users}</td>
-                          <td className="p-3.5 text-center font-black text-amber-400">{report.ctr}%</td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => openAdReportModal(report)}
-                              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition cursor-pointer shadow-sm"
-                            >
-                              View Full Log
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="p-8 text-center text-slate-500 font-semibold">
-                          No ad campaign breakdown data available yet.
-                        </td>
-                      </tr>
-                    )}
+                    {(() => {
+                      const reportsPerPage = 5;
+                      const indexOfLastReport = reportsPage * reportsPerPage;
+                      const indexOfFirstReport = indexOfLastReport - reportsPerPage;
+                      const currentReports = adBreakdowns.slice(indexOfFirstReport, indexOfLastReport);
+
+                      if (currentReports.length > 0) {
+                        return (
+                          <>
+                            {currentReports.map((report) => (
+                              <tr key={report.ad_id} className="hover:bg-slate-900/40 transition-colors">
+                                <td className="p-3.5">
+                                  <span className="font-extrabold text-white block">{report.title}</span>
+                                  <span className="text-[10px] text-slate-500 font-mono">ID: #{report.ad_id}</span>
+                                </td>
+                                <td className="p-3.5">
+                                  <span className="bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold">
+                                    {report.category_name || "General"}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 text-center font-bold text-indigo-300">{report.impressions}</td>
+                                <td className="p-3.5 text-center font-bold text-purple-300">{report.clicks}</td>
+                                <td className="p-3.5 text-center font-bold text-emerald-300">{report.unique_users}</td>
+                                <td className="p-3.5 text-center font-black text-amber-400">{report.ctr}%</td>
+                                <td className="p-3.5 text-right">
+                                  <button
+                                    onClick={() => openAdReportModal(report)}
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition cursor-pointer shadow-sm"
+                                  >
+                                    View Full Log
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </>
+                        );
+                      } else {
+                        return (
+                          <tr>
+                            <td colSpan={7} className="p-8 text-center text-slate-500 font-semibold">
+                              No ad campaign breakdown data available yet.
+                            </td>
+                          </tr>
+                        );
+                      }
+                    })()}
                   </tbody>
                 </table>
               </div>
+
+              {/* Performance Report Pagination Controls */}
+              {(() => {
+                const reportsPerPage = 5;
+                const totalReportsPages = Math.ceil(adBreakdowns.length / reportsPerPage);
+                const indexOfLastReport = reportsPage * reportsPerPage;
+                const indexOfFirstReport = indexOfLastReport - reportsPerPage;
+
+                if (totalReportsPages > 1) {
+                  return (
+                    <div className="p-4 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0f172a]/20 rounded-2xl">
+                      <span className="text-xs text-slate-400 font-medium">
+                        Showing <span className="text-white font-bold">{indexOfFirstReport + 1}</span> to <span className="text-white font-bold">{Math.min(indexOfLastReport, adBreakdowns.length)}</span> of <span className="text-white font-bold">{adBreakdowns.length}</span> Campaigns
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          disabled={reportsPage === 1}
+                          onClick={() => setReportsPage((prev) => Math.max(prev - 1, 1))}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          Prev
+                        </button>
+                        {Array.from({ length: totalReportsPages }, (_, i) => i + 1).map((pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => setReportsPage(pageNum)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${
+                              reportsPage === pageNum
+                                ? "bg-indigo-600 border-indigo-500 text-white shadow-sm"
+                                : "bg-[#0b0f19] border-[#1e293b] text-slate-300 hover:text-white"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ))}
+                        <button
+                          disabled={reportsPage === totalReportsPages}
+                          onClick={() => setReportsPage((prev) => Math.min(prev + 1, totalReportsPages))}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Detailed Visitors Audit Log */}
@@ -906,50 +968,111 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
-                    {recentAuditLogs.length > 0 ? (
-                      recentAuditLogs.map((log) => (
-                        <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
-                          <td className="p-3.5">
-                            <span
-                              className={`px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase ${
-                                log.event_type === "click"
-                                  ? "bg-emerald-950 border border-emerald-800 text-emerald-300"
-                                  : log.event_type === "page_view"
-                                  ? "bg-sky-950 border border-sky-800 text-sky-300"
-                                  : "bg-indigo-950 border border-indigo-800 text-indigo-300"
-                              }`}
-                            >
-                              {log.event_type}
-                            </span>
-                            {log.ad_title && <span className="block text-[10px] text-slate-400 truncate max-w-[140px] mt-0.5">{log.ad_title}</span>}
-                          </td>
-                          <td className="p-3.5 font-mono text-indigo-300">{log.user_ip}</td>
-                          <td className="p-3.5">{log.user_location_name || "Unknown"}</td>
-                          <td className="p-3.5 font-mono text-[11px] text-slate-400 max-w-xs truncate" title={log.user_agent}>
-                            {log.user_agent}
-                          </td>
-                          <td className="p-3.5 text-slate-400 font-mono text-[11px]">
-                            {new Date(log.timestamp).toLocaleString()}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="p-8 text-center text-slate-500 font-semibold">
-                          No traffic logs recorded yet. Visit the public page to see real-time hits!
-                        </td>
-                      </tr>
-                    )}
+                    {(() => {
+                      const logsPerPage = 10;
+                      const indexOfLastLog = logsPage * logsPerPage;
+                      const indexOfFirstLog = indexOfLastLog - logsPerPage;
+                      const currentLogs = recentAuditLogs.slice(indexOfFirstLog, indexOfLastLog);
+
+                      if (currentLogs.length > 0) {
+                        return (
+                          <>
+                            {currentLogs.map((log) => (
+                              <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
+                                <td className="p-3.5">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase ${
+                                      log.event_type === "click"
+                                        ? "bg-emerald-950 border border-emerald-800 text-emerald-300"
+                                        : log.event_type === "page_view"
+                                        ? "bg-sky-950 border border-sky-800 text-sky-300"
+                                        : "bg-indigo-950 border border-indigo-800 text-indigo-300"
+                                    }`}
+                                  >
+                                    {log.event_type}
+                                  </span>
+                                  {log.ad_title && <span className="block text-[10px] text-slate-400 truncate max-w-[140px] mt-0.5">{log.ad_title}</span>}
+                                </td>
+                                <td className="p-3.5 font-mono text-indigo-300">{log.user_ip}</td>
+                                <td className="p-3.5">{log.user_location_name || "Unknown"}</td>
+                                <td className="p-3.5 font-mono text-[11px] text-slate-400 max-w-xs truncate" title={log.user_agent}>
+                                  {log.user_agent}
+                                </td>
+                                <td className="p-3.5 text-slate-400 font-mono text-[11px]">
+                                  {new Date(log.timestamp).toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </>
+                        );
+                      } else {
+                        return (
+                          <tr>
+                            <td colSpan={5} className="p-8 text-center text-slate-500 font-semibold">
+                              No traffic logs recorded yet. Visit the public page to see real-time hits!
+                            </td>
+                          </tr>
+                        );
+                      }
+                    })()}
                   </tbody>
                 </table>
               </div>
-            </div>
+
+              {/* Traffic Audit Log Pagination Controls */}
+              {(() => {
+                const logsPerPage = 10;
+                const totalLogsPages = Math.ceil(recentAuditLogs.length / logsPerPage);
+                const indexOfLastLog = logsPage * logsPerPage;
+                const indexOfFirstLog = indexOfLastLog - logsPerPage;
+
+                if (totalLogsPages > 1) {
+                  return (
+                    <div className="p-4 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0f172a]/20 rounded-2xl">
+                      <span className="text-xs text-slate-400 font-medium">
+                        Showing <span className="text-white font-bold">{indexOfFirstLog + 1}</span> to <span className="text-white font-bold">{Math.min(indexOfLastLog, recentAuditLogs.length)}</span> of <span className="text-white font-bold">{recentAuditLogs.length}</span> Records
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          disabled={logsPage === 1}
+                          onClick={() => setLogsPage((prev) => Math.max(prev - 1, 1))}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          Prev
+                        </button>
+                        {Array.from({ length: totalLogsPages }, (_, i) => i + 1).map((pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => setLogsPage(pageNum)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${
+                              logsPage === pageNum
+                                ? "bg-indigo-600 border-indigo-500 text-white shadow-sm"
+                                : "bg-[#0b0f19] border-[#1e293b] text-slate-300 hover:text-white"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ))}
+                        <button
+                          disabled={logsPage === totalLogsPages}
+                          onClick={() => setLogsPage((prev) => Math.min(prev + 1, totalLogsPages))}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>          </div>
           </div>
         )}
 
         {activeTab === "ads" && (() => {
           const adsPerPage = 5;
-          const indexOfLastAd = currentPage * adsPerPage;
+          const indexOfLastAd = adsPage * adsPerPage;
           const indexOfFirstAd = indexOfLastAd - adsPerPage;
           const currentAds = ads.slice(indexOfFirstAd, indexOfLastAd);
           const totalPages = Math.ceil(ads.length / adsPerPage);
@@ -1263,7 +1386,7 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => {
                       setShowCreateForm(true);
-                      setCurrentPage(1);
+                      setAdsPage(1);
                     }}
                     className="bg-indigo-600 hover:bg-indigo-750 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
                   >
@@ -1387,44 +1510,51 @@ export default function AdminDashboard() {
               </div>
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="p-6 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0f172a]/20">
-                  <span className="text-xs text-slate-400 font-medium">
-                    Showing <span className="text-white font-bold">{indexOfFirstAd + 1}</span> to <span className="text-white font-bold">{Math.min(indexOfLastAd, ads.length)}</span> of <span className="text-white font-bold">{ads.length}</span> Ads
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
-                    >
-                      Prev
-                    </button>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              {(() => {
+                const adsPerPage = 5;
+                const totalPages = Math.ceil(ads.length / adsPerPage);
+                const indexOfLastAd = adsPage * adsPerPage;
+                const indexOfFirstAd = indexOfLastAd - adsPerPage;
+                
+                return totalPages > 1 && (
+                  <div className="p-6 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0f172a]/20 rounded-2xl">
+                    <span className="text-xs text-slate-400 font-medium">
+                      Showing <span className="text-white font-bold">{indexOfFirstAd + 1}</span> to <span className="text-white font-bold">{Math.min(indexOfLastAd, ads.length)}</span> of <span className="text-white font-bold">{ads.length}</span> Ads
+                    </span>
+                    <div className="flex items-center gap-1.5">
                       <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${
-                          currentPage === pageNum
-                            ? "bg-indigo-600 border-indigo-500 text-white shadow-sm"
-                            : "bg-[#0b0f19] border-[#1e293b] text-slate-300 hover:text-white"
-                        }`}
+                        disabled={adsPage === 1}
+                        onClick={() => setAdsPage((prev) => Math.max(prev - 1, 1))}
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
                       >
-                        {pageNum}
+                        Prev
                       </button>
-                    ))}
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => setAdsPage(pageNum)}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${
+                            adsPage === pageNum
+                              ? "bg-indigo-600 border-indigo-500 text-white shadow-sm"
+                              : "bg-[#0b0f19] border-[#1e293b] text-slate-300 hover:text-white"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
 
-                    <button
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
-                    >
-                      Next
-                    </button>
+                      <button
+                        disabled={adsPage === totalPages}
+                        onClick={() => setAdsPage((prev) => Math.min(prev + 1, totalPages))}
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           );
         })()}
@@ -1533,57 +1663,112 @@ export default function AdminDashboard() {
             </div>
 
             {/* Existing Categories Table */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm">
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
               <h3 className="font-bold text-lg text-white mb-6 tracking-tight">All Active Backend Categories</h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {categories.map((cat) => (
-                  <div key={cat.id} className="p-4 bg-slate-900/40 border border-[#1e293b] rounded-2xl flex items-center justify-between font-medium hover:border-slate-800 transition">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#1e293b] bg-[#0b0f19] flex items-center justify-center shrink-0">
-                        {cat.icon ? (
-                          <img src={cat.icon} alt={cat.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <Store size={18} className="text-slate-500" />
-                        )}
+                {(() => {
+                  const categoriesPerPage = 6;
+                  const indexOfLastCategory = categoriesPage * categoriesPerPage;
+                  const indexOfFirstCategory = indexOfLastCategory - categoriesPerPage;
+                  const currentCategories = categories.slice(indexOfFirstCategory, indexOfLastCategory);
+
+                  return currentCategories.map((cat) => (
+                    <div key={cat.id} className="p-4 bg-slate-900/40 border border-[#1e293b] rounded-2xl flex items-center justify-between font-medium hover:border-slate-800 transition">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#1e293b] bg-[#0b0f19] flex items-center justify-center shrink-0">
+                          {cat.icon ? (
+                            <img src={cat.icon} alt={cat.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Store size={18} className="text-slate-500" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-white text-sm">{cat.name}</h4>
+                          <p className="text-[10px] text-slate-400 font-mono">slug: {cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-white text-sm">{cat.name}</h4>
-                        <p className="text-[10px] text-slate-400 font-mono">slug: {cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/20">
-                        ID #{cat.id}
-                      </span>
                       
-                      <button
-                        onClick={async () => {
-                          if (confirm(`Are you sure you want to delete the category "${cat.name}"?`)) {
-                            try {
-                              const res = await fetch(`/api/admin/categories?id=${cat.id}`, { method: "DELETE" });
-                              const result = await res.json();
-                              if (result.success) {
-                                setMessage({ type: "success", text: `Category "${cat.name}" deleted successfully!` });
-                                fetchDashboardData();
-                              } else {
-                                setMessage({ type: "error", text: result.error || "Failed to delete category" });
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/20">
+                          ID #{cat.id}
+                        </span>
+                        
+                        <button
+                          onClick={async () => {
+                            if (confirm(`Are you sure you want to delete the category "${cat.name}"?`)) {
+                              try {
+                                const res = await fetch(`/api/admin/categories?id=${cat.id}`, { method: "DELETE" });
+                                const result = await res.json();
+                                if (result.success) {
+                                  setMessage({ type: "success", text: `Category "${cat.name}" deleted successfully!` });
+                                  fetchDashboardData();
+                                } else {
+                                  setMessage({ type: "error", text: result.error || "Failed to delete category" });
+                                }
+                              } catch (err: any) {
+                                setMessage({ type: "error", text: err.message });
                               }
-                            } catch (err: any) {
-                              setMessage({ type: "error", text: err.message });
                             }
-                          }
-                        }}
-                        className="text-rose-455 hover:text-rose-355 p-2 rounded-lg hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40"
-                        title="Delete Category"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                          }}
+                          className="text-rose-455 hover:text-rose-355 p-2 rounded-lg hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40"
+                          title="Delete Category"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
+
+              {/* Categories Pagination Controls */}
+              {(() => {
+                const categoriesPerPage = 6;
+                const totalCategoriesPages = Math.ceil(categories.length / categoriesPerPage);
+                const indexOfLastCategory = categoriesPage * categoriesPerPage;
+                const indexOfFirstCategory = indexOfLastCategory - categoriesPerPage;
+
+                if (totalCategoriesPages > 1) {
+                  return (
+                    <div className="p-4 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0f172a]/20 rounded-2xl mt-4">
+                      <span className="text-xs text-slate-400 font-medium">
+                        Showing <span className="text-white font-bold">{indexOfFirstCategory + 1}</span> to <span className="text-white font-bold">{Math.min(indexOfLastCategory, categories.length)}</span> of <span className="text-white font-bold">{categories.length}</span> Categories
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          disabled={categoriesPage === 1}
+                          onClick={() => setCategoriesPage((prev) => Math.max(prev - 1, 1))}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          Prev
+                        </button>
+                        {Array.from({ length: totalCategoriesPages }, (_, i) => i + 1).map((pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCategoriesPage(pageNum)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${
+                              categoriesPage === pageNum
+                                ? "bg-indigo-600 border-indigo-500 text-white shadow-sm"
+                                : "bg-[#0b0f19] border-[#1e293b] text-slate-300 hover:text-white"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ))}
+                        <button
+                          disabled={categoriesPage === totalCategoriesPages}
+                          onClick={() => setCategoriesPage((prev) => Math.min(prev + 1, totalCategoriesPages))}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
         )}

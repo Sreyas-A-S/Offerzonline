@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapPin, ExternalLink, X, Share2, Check, Phone, Map, ChevronDown, ChevronUp, Store } from "lucide-react";
-import { ReadOnlyMap } from "./ReadOnlyMap";
 
 interface OfferModalProps {
   ad: any;
@@ -15,6 +14,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [showTerms, setShowTerms] = useState(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const mediaUrls = ad && ad.media_url ? ad.media_url.split(",") : [];
 
@@ -33,6 +33,32 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
       return `${url}${url.includes("?") ? "&" : "?"}auto=format&fit=crop&w=1200&q=85`;
     }
     return url;
+  };
+
+  // Load user coordinates from localStorage on mount
+  useEffect(() => {
+    if (!ad) return;
+    const saved = localStorage.getItem("offerz_user_location");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.lat !== undefined && parsed.lng !== undefined) {
+          setUserCoords({ lat: parsed.lat, lng: parsed.lng });
+        }
+      } catch (e) {
+        console.error("Error reading location for route:", e);
+      }
+    }
+  }, [ad]);
+
+  const getMapEmbedUrl = () => {
+    if (!ad) return "";
+    const adLat = parseFloat(ad.latitude);
+    const adLng = parseFloat(ad.longitude);
+    if (userCoords && userCoords.lat && userCoords.lng) {
+      return `https://maps.google.com/maps?saddr=${userCoords.lat},${userCoords.lng}&daddr=${adLat},${adLng}&output=embed`;
+    }
+    return `https://maps.google.com/maps?q=${adLat},${adLng}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
   };
 
   // Lock/unlock body scroll when modal status changes
@@ -204,21 +230,25 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
               )}
             </div>
 
-            {/* Readonly Leaflet Map */}
+            {/* Google Maps Embed Route Map */}
             <div className="p-6 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Map size={12} className="text-indigo-500" /> Offer Location Range
+                  <Map size={12} className="text-indigo-500" /> Route & Location Pin
                 </h4>
                 <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                  {ad.radius_km || ad.radiusKm || 5} km radius
+                  Google Maps
                 </span>
               </div>
-              <div className="h-48 w-full rounded-2xl overflow-hidden shadow-inner border border-slate-150 relative z-0">
-                <ReadOnlyMap 
-                  lat={parseFloat(ad.latitude)} 
-                  lng={parseFloat(ad.longitude)} 
-                  radiusKm={ad.radius_km || ad.radiusKm || 5} 
+              <div className="h-48 w-full rounded-2xl overflow-hidden shadow-md border border-slate-150 relative z-0">
+                <iframe
+                  title="Google Maps Route"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  allowFullScreen
+                  src={getMapEmbedUrl()}
                 />
               </div>
             </div>
