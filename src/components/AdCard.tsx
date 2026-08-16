@@ -14,6 +14,7 @@ interface AdCardProps {
     ad_format: string;
     target_url: string;
     distance_km?: number;
+    expires_at?: string | Date;
   };
   userLocationName?: string;
   onSelect: (ad: any) => void;
@@ -214,6 +215,13 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
             <div className="absolute bottom-2.5 left-2.5 bg-white/95 text-slate-900 font-bold text-[10px] sm:text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm border border-slate-100">
               <MapPin size={10} className="text-indigo-600" />
               {ad.distance_km} km away
+            </div>
+          )}
+
+          {/* Expiry Date Badge */}
+          {ad.expires_at && (
+            <div className="absolute bottom-2.5 right-2.5 bg-amber-500/95 text-white font-extrabold text-[9px] sm:text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm border border-amber-600/10">
+              ⏳ {new Date(ad.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             </div>
           )}
         </div>

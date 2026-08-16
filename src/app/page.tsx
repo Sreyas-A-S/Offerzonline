@@ -180,6 +180,15 @@ export default function PublicDiscoveryPage() {
   const [siteLogo, setSiteLogo] = useState<string>("/logo.png");
   const [ads, setAds] = useState<any[]>(DEFAULT_INITIAL_ADS);
   const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
+  const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
+
+  useEffect(() => {
+    const collapseTimer = setTimeout(() => {
+      setCategoriesCollapsed(true);
+    }, 4500);
+    return () => clearTimeout(collapseTimer);
+  }, []);
+
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -384,6 +393,7 @@ export default function PublicDiscoveryPage() {
 
   // Track whether auto-popup on initial load has triggered
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
+  const [isAutoPopup, setIsAutoPopup] = useState(false);
 
   // Auto-open top prioritized ad as a popup modal on page load
   useEffect(() => {
@@ -391,7 +401,7 @@ export default function PublicDiscoveryPage() {
       const params = new URLSearchParams(window.location.search);
       const shareAdId = params.get("ad");
       
-      // If a specific ad ID is in the URL, prioritize that, otherwise auto-open top ad
+      // If a specific ad ID is in the URL, prioritize that (bypasses snooze)
       if (shareAdId) {
         const found = ads.find((a) => a.id.toString() === shareAdId);
         if (found) {
@@ -401,8 +411,19 @@ export default function PublicDiscoveryPage() {
         }
       }
 
+      // Check if auto-popup snooze is active
+      const snoozeStr = localStorage.getItem("offerz_auto_popup_snooze");
+      if (snoozeStr) {
+        const snoozeTime = parseInt(snoozeStr, 10);
+        if (Date.now() < snoozeTime) {
+          setHasAutoOpened(true);
+          return;
+        }
+      }
+
       // Automatically popup the top priority ad
       setSelectedAd(ads[0]);
+      setIsAutoPopup(true);
       setHasAutoOpened(true);
     }
   }, [ads, hasAutoOpened]);
@@ -489,7 +510,7 @@ export default function PublicDiscoveryPage() {
                 alt="Offerzonline Logo"
                 className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full shadow-md shrink-0 bg-white p-0.5 border border-slate-100"
               />
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight hidden sm:block">
                 Offerzonline
               </h1>
             </div>
@@ -552,130 +573,172 @@ export default function PublicDiscoveryPage() {
         </header>
 
         {/* Explore Categories Section - Cutout 3D Card Style matching Reference Screenshot */}
-        <section className="space-y-4">
+        <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">Shop By Category</h2>
-            {selectedCategory !== "all" && (
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Shop By Category</h2>
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => setSelectedCategory("all")}
-                className="text-xs font-bold text-indigo-600 hover:underline"
+                type="button"
+                onClick={() => setCategoriesCollapsed(!categoriesCollapsed)}
+                className="text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-850 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 transition shadow-2xs cursor-pointer select-none"
               >
-                Reset Filter ↺
+                {categoriesCollapsed ? "Expand Categories ⤢" : "Collapse View ⤡"}
               </button>
-            )}
+              {selectedCategory !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory("all")}
+                  className="text-xs font-bold text-slate-500 hover:underline"
+                >
+                  Reset Filter ↺
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Mobile-Style Category Row - Horizontal Scroll, shown on Desktop too when active filter is chosen */}
-          <div className={`${selectedCategory !== "all" ? "flex md:justify-center animate-switch-mode" : "md:hidden flex"} flex-row overflow-x-auto scrollbar-none gap-3 md:gap-6 pt-3 pb-4 overflow-y-visible`}>
-            {categories.map((cat) => {
-              const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
-              const isSelected = selectedCategory === cat.id.toString();
+          {categoriesCollapsed ? (
+            /* Collapsed Pills Mode with small images */
+            <div className="flex flex-row overflow-x-auto scrollbar-none gap-2 pt-1 pb-1 overflow-y-visible">
+              {categories.map((cat) => {
+                const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
+                const isSelected = selectedCategory === cat.id.toString();
 
-              return (
-                <div
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                  className="w-[22%] md:w-28 shrink-0 cursor-pointer group relative pt-2"
-                >
-                  {/* Category Pastel Base Tile */}
-                  <div
-                    className={`aspect-square w-full md:w-28 md:h-28 ${visual.bg} rounded-[1.6rem] relative shadow-md border ${
-                      isSelected ? "border-indigo-600 ring-3 ring-indigo-400/50 scale-105" : "border-white/70"
-                    } transition-all group-hover:scale-105 flex items-center justify-center p-0 overflow-visible`}
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer border ${
+                      isSelected 
+                        ? "bg-slate-900 text-white border-slate-900 shadow-md scale-102" 
+                        : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200/85"
+                    }`}
                   >
-                    {/* 3D Cutout filling and bursting 125% past tile edges */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <Image
-                        src={visual.image}
-                        alt={cat.name}
-                        width={96}
-                        height={96}
-                        priority={true}
-                        unoptimized={true}
-                        className="w-[125%] h-[125%] max-w-none object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.25)] transition-transform group-hover:scale-110 -translate-y-1"
-                      />
-                    </div>
-
-                    {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 border border-white z-20" />
-                    )}
-                  </div>
-
-                  {/* Category Name & Arrow underneath */}
-                  <div className="mt-2 text-center">
-                    <span className="text-[11px] font-extrabold text-slate-900 leading-tight block truncate">
-                      {cat.name.split(" ")[0]} <span className="text-slate-400 font-normal">›</span>
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Desktop Banner Grid (md:grid) - Hidden when active filter is chosen */}
-          <div className={`${selectedCategory !== "all" ? "hidden" : "hidden md:grid animate-switch-mode"} md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6`}>
-            {categories.map((cat) => {
-              const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
-              const isSelected = selectedCategory === cat.id.toString();
-
-              return (
-                <div
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                  className={`group relative ${visual.bg} rounded-[2.2rem] p-5 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-visible min-h-[175px] sm:min-h-[190px] flex flex-col justify-between border ${
-                    isSelected ? "border-indigo-600 ring-4 ring-indigo-400/50 scale-[1.02]" : "border-white/60"
-                  }`}
-                >
-                  {/* Left Column Content */}
-                  <div className={`z-10 space-y-3 ${visual.align === "left" ? "pl-32 sm:pl-36" : "pr-32 sm:pr-36"}`}>
-                    <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${visual.titleColor} drop-shadow-2xs`}>
-                      {cat.name}
-                    </h3>
-
-                    {/* Sub-Tag Pills matching reference design */}
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {visual.subTags.map((sub, idx) => {
-                        const Icon = sub.icon;
-                        return (
-                          <div
-                            key={idx}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-extrabold ${visual.subPillBg} ${visual.subPillText} shadow-xs hover:scale-105 transition-transform`}
-                          >
-                            <Icon size={12} />
-                            <span>{sub.label}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 3D Cutout Image - OVERFLOWING OUT OF CARD BOUNDARIES */}
-                  <div
-                    className={`absolute -bottom-3 sm:-bottom-5 ${
-                      visual.align === "left" ? "-left-5 sm:-left-8" : "-right-5 sm:-right-8"
-                    } w-44 sm:w-52 h-44 sm:h-52 transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-2 pointer-events-none z-20`}
-                  >
-                    <Image
+                    <img
                       src={visual.image}
                       alt={cat.name}
-                      width={208}
-                      height={208}
-                      priority={true}
-                      unoptimized={true}
-                      className="w-full h-full object-contain filter drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]"
+                      className="w-5 h-5 object-contain"
                     />
-                  </div>
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <>
+              {/* Mobile-Style Category Row - Horizontal Scroll */}
+              <div className={`${selectedCategory !== "all" ? "flex md:justify-center animate-switch-mode" : "md:hidden flex"} flex-row overflow-x-auto scrollbar-none gap-3 md:gap-6 pt-1.5 pb-2 overflow-y-visible`}>
+                {categories.map((cat) => {
+                  const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
+                  const isSelected = selectedCategory === cat.id.toString();
 
-                  {/* Selected Indicator Badge */}
-                  {isSelected && (
-                    <div className="absolute top-3 right-3 z-20 bg-indigo-600 text-white font-black text-[10px] uppercase px-3 py-1 rounded-full shadow-md animate-pulse">
-                      Active Filter
+                  return (
+                    <div
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
+                      className="w-[22%] md:w-28 shrink-0 cursor-pointer group relative pt-2"
+                    >
+                      {/* Category Pastel Base Tile */}
+                      <div
+                        className={`aspect-square w-full md:w-28 md:h-28 ${visual.bg} rounded-[1.6rem] relative shadow-md border ${
+                          isSelected ? "border-indigo-600 ring-3 ring-indigo-400/50 scale-105" : "border-white/70"
+                        } transition-all group-hover:scale-105 flex items-center justify-center p-0 overflow-visible`}
+                      >
+                        {/* 3D Cutout filling and bursting 125% past tile edges */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                          <Image
+                            src={visual.image}
+                            alt={cat.name}
+                            width={96}
+                            height={96}
+                            priority={true}
+                            unoptimized={true}
+                            className="w-[125%] h-[125%] max-w-none object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.25)] transition-transform group-hover:scale-110 -translate-y-1"
+                          />
+                        </div>
+
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 border border-white z-20" />
+                        )}
+                      </div>
+
+                      {/* Category Name & Arrow underneath */}
+                      <div className="mt-2 text-center">
+                        <span className="text-[11px] font-extrabold text-slate-900 leading-tight block truncate">
+                          {cat.name.split(" ")[0]} <span className="text-slate-400 font-normal">›</span>
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Banner Grid (md:grid) */}
+              <div className={`${selectedCategory !== "all" ? "hidden" : "hidden md:grid animate-switch-mode"} md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6`}>
+                {categories.map((cat) => {
+                  const visual = CATEGORY_CUTOUT_CARDS[cat.name] || DEFAULT_CUTOUT_CARD;
+                  const isSelected = selectedCategory === cat.id.toString();
+
+                  return (
+                    <div
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
+                      className={`group relative ${visual.bg} rounded-[2.2rem] p-5 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-visible min-h-[175px] sm:min-h-[190px] flex flex-col justify-between border ${
+                        isSelected ? "border-indigo-600 ring-4 ring-indigo-400/50 scale-[1.02]" : "border-white/60"
+                      }`}
+                    >
+                      {/* Left Column Content */}
+                      <div className={`z-10 space-y-3 ${visual.align === "left" ? "pl-32 sm:pl-36" : "pr-32 sm:pr-36"}`}>
+                        <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${visual.titleColor} drop-shadow-2xs`}>
+                          {cat.name}
+                        </h3>
+
+                        {/* Sub-Tag Pills matching reference design */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {visual.subTags.map((sub, idx) => {
+                            const Icon = sub.icon;
+                            return (
+                              <div
+                                key={idx}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-extrabold ${visual.subPillBg} ${visual.subPillText} shadow-xs hover:scale-105 transition-transform`}
+                              >
+                                <Icon size={12} />
+                                <span>{sub.label}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 3D Cutout Image */}
+                      <div
+                        className={`absolute -bottom-3 sm:-bottom-5 ${
+                          visual.align === "left" ? "-left-5 sm:-left-8" : "-right-5 sm:-right-8"
+                        } w-44 sm:w-52 h-44 sm:h-52 transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-2 pointer-events-none z-20`}
+                      >
+                        <Image
+                          src={visual.image}
+                          alt={cat.name}
+                          width={208}
+                          height={208}
+                          priority={true}
+                          unoptimized={true}
+                          className="w-full h-full object-contain filter drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]"
+                        />
+                      </div>
+
+                      {/* Selected Indicator Badge */}
+                      {isSelected && (
+                        <div className="absolute top-3 right-3 z-20 bg-indigo-600 text-white font-black text-[10px] uppercase px-3 py-1 rounded-full shadow-md animate-pulse">
+                          Active Filter
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </section>
 
         {/* Featured Hero Card ("Recommended for You") */}
@@ -704,16 +767,12 @@ export default function PublicDiscoveryPage() {
                 </div>
               </div>
 
-              {/* Media Container */}
-              <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden mb-4 bg-slate-100 shadow-inner">
-                <Image 
+              {/* Media Container - Retaining natural actual aspect ratio */}
+              <div className="relative w-full rounded-2xl overflow-hidden mb-4 bg-slate-100 shadow-inner flex items-center justify-center">
+                <img 
                   src={featuredAd.media_url} 
                   alt={featuredAd.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 1200px"
-                  priority={true}
-                  unoptimized={true}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  className="w-full h-auto max-h-[480px] object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-550" 
                 />
                 {featuredAd.distance_km !== undefined && (
                   <div className="absolute bottom-3 left-3 bg-white/95 text-slate-900 font-bold text-[11px] sm:text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow-md border border-slate-200">
@@ -821,7 +880,17 @@ export default function PublicDiscoveryPage() {
       )}
 
       {/* Offer Detail Modal */}
-      <OfferModal ad={selectedAd} onClose={() => setSelectedAd(null)} />
+      <OfferModal 
+        ad={selectedAd} 
+        onClose={() => {
+          setSelectedAd(null);
+          if (isAutoPopup) {
+            const snoozeTime = Date.now() + 3 * 60 * 60 * 1000; // 3 hours
+            localStorage.setItem("offerz_auto_popup_snooze", snoozeTime.toString());
+            setIsAutoPopup(false);
+          }
+        }} 
+      />
 
       {/* Location Selection Modal */}
       <LocationModal
