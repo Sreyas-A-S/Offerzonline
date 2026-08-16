@@ -67,7 +67,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "ads" | "categories" | "settings">("overview");
-  const [siteLogo, setSiteLogo] = useState<string>("/logo.png");
+  const [siteLogo, setSiteLogo] = useState<string>("/api/logo");
   const [logoUploading, setLogoUploading] = useState(false);
   const [adsPage, setAdsPage] = useState(1);
   const [categoriesPage, setCategoriesPage] = useState(1);

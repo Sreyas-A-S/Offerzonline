@@ -205,57 +205,55 @@ export default function OffersListingPage() {
       {/* Background Soft Glows */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-indigo-50/60 via-purple-50/30 to-transparent blur-3xl pointer-events-none -z-10" />
 
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Top Header / Navbar */}
-        <header className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/80 backdrop-blur-md border border-slate-200/60 p-4 sm:p-5 rounded-3xl shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <Link 
-                href="/" 
-                className="p-2 hover:bg-slate-100 rounded-full transition text-slate-650 hover:text-slate-900 border border-slate-200/60"
-              >
-                <ArrowLeft size={16} />
-              </Link>
-              <img
-                src="/api/logo"
-                alt="Offerzonline Logo"
-                className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
-              />
-              <div>
-                <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                  Offerzonline
-                </h1>
-                <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">All Verified Offers</span>
-              </div>
-            </div>
-
-            {/* Mobile Location Selector */}
-            <div className="md:hidden flex-1 justify-end flex">
-              <button
-                onClick={() => setIsLocationModalOpen(true)}
-                className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer group max-w-[150px] sm:max-w-[200px]"
-              >
-                <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition shrink-0" />
-                <span className="truncate text-slate-900 flex-1 text-left">{locationName}</span>
-                <ChevronDown size={11} className="text-slate-400 shrink-0" />
-              </button>
-            </div>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative flex-1 max-w-xl mx-0 md:mx-6">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
-              <Search size={15} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search active offers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950/10 focus:bg-white transition-all shadow-2xs"
+      {/* Full-Width Header Navbar */}
+      <header className="w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3.5 shadow-xs sticky top-0 z-40">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Link 
+              href="/" 
+              className="p-2 hover:bg-slate-100 rounded-full transition text-slate-650 hover:text-slate-900 border border-slate-200/60"
+            >
+              <ArrowLeft size={16} />
+            </Link>
+            <img
+              src="/api/logo"
+              alt="Offerzonline Logo"
+              className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
             />
+            <div>
+              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                Offerzonline
+              </h1>
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">All Verified Offers</span>
+            </div>
           </div>
+
+          {/* Mobile Location Selector */}
+          <div className="md:hidden flex-1 justify-end flex">
+            <button
+              onClick={() => setIsLocationModalOpen(true)}
+              className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer group max-w-[150px] sm:max-w-[200px]"
+            >
+              <MapPin size={12} className="text-slate-500 group-hover:text-slate-900 transition shrink-0" />
+              <span className="truncate text-slate-900 flex-1 text-left">{locationName}</span>
+              <ChevronDown size={11} className="text-slate-400 shrink-0" />
+            </button>
+          </div>
+        </div>
+
+        {/* Search bar */}
+        <div className="relative flex-1 max-w-xl mx-0 md:mx-6">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
+            <Search size={15} />
+          </div>
+          <input
+            type="text"
+            placeholder="Search active offers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950/10 focus:bg-white transition-all shadow-2xs"
+          />
+        </div>
 
           {/* Desktop Location Selector */}
           <div className="hidden md:flex items-center gap-3">
@@ -270,6 +268,8 @@ export default function OffersListingPage() {
           </div>
         </header>
 
+      {/* Main Content Container */}
+      <div className="max-w-7xl mx-auto space-y-6 px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         {/* Categories Selector Tabs */}
         <section className="flex flex-row overflow-x-auto scrollbar-none gap-2 pb-2">
           {CATEGORIES.map((cat) => {

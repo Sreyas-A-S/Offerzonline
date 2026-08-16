@@ -177,7 +177,7 @@ const INITIAL_CATEGORIES = [
 
 export default function PublicDiscoveryPage() {
   const [showPreloader, setShowPreloader] = useState(true);
-  const [siteLogo, setSiteLogo] = useState<string>("/logo.png");
+  const [siteLogo, setSiteLogo] = useState<string>("/api/logo");
   const [ads, setAds] = useState<any[]>(DEFAULT_INITIAL_ADS);
   const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
   const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
@@ -493,28 +493,25 @@ export default function PublicDiscoveryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-800 pb-32 pt-3 px-3 sm:px-6 lg:px-8 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-white text-slate-800 pb-32 pt-2 selection:bg-indigo-100 selection:text-indigo-900">
       
       {/* Background Soft Glows */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-indigo-50/60 via-purple-50/30 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full h-96 bg-gradient-to-b from-indigo-50/60 via-purple-50/30 to-transparent blur-3xl pointer-events-none -z-10" />
 
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-        
-        {/* Top Header / Navbar */}
-        <header ref={headerRef} className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pt-1 animate-header bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-3xl shadow-xs">
-          <div className="flex items-center justify-between gap-3">
-            {/* Logo */}
-            <div className="flex items-center gap-2.5">
-              <img
-                src={siteLogo}
-                alt="Offerzonline Logo"
-                className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
-              />
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight hidden sm:block">
-                Offerzonline
-              </h1>
-            </div>
+      {/* Full-Width Main Header Navbar */}
+      <header ref={headerRef} className="w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 animate-header bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3.5 shadow-xs sticky top-0 z-40">
+        <div className="flex items-center justify-between gap-3">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5">
+            <img
+              src={siteLogo}
+              alt="Offerzonline Logo"
+              className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
+            />
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight hidden sm:block">
+              Offerzonline
+            </h1>
+          </div>
 
             {/* Mobile Location */}
             <div className="flex items-center gap-2 md:hidden flex-1 justify-end">
@@ -573,6 +570,8 @@ export default function PublicDiscoveryPage() {
           </div>
         </header>
 
+      {/* Main Content Container */}
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         {/* Explore Categories Section - Cutout 3D Card Style matching Reference Screenshot */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
@@ -608,7 +607,7 @@ export default function PublicDiscoveryPage() {
                   <button
                     key={cat.id}
                     type="button"
-                    style={{ animationDelay: `${idx * 40}ms` }}
+                    style={{ animationDelay: `${idx * 20}ms` }}
                     onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
                     className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-300 shrink-0 cursor-pointer border ${
                       isSelected 
@@ -747,18 +746,24 @@ export default function PublicDiscoveryPage() {
         {featuredAd && selectedCategory === "all" && (
           <section ref={heroRef} className="space-y-3 animate-hero-card flex flex-col items-center">
             <div className="flex items-center justify-between w-full max-w-full">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900">Recommended for You</h2>
-              <Link href="/offers" className="text-xs font-bold text-indigo-600 hover:underline">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#4ca824] animate-pulse" />
+                <h2 className="text-sm sm:text-base font-bold text-slate-900">Recommended for You</h2>
+              </div>
+              <Link href="/offers" className="text-xs font-bold text-[#47a01b] hover:text-[#52b32c] hover:underline transition">
                 View All
               </Link>
             </div>
 
             <div 
               onClick={() => setSelectedAd(featuredAd)}
-              className="group relative bg-white border border-slate-200/90 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden inline-block w-fit max-w-full mx-auto"
+              className="group relative bg-white border-2 border-[#4ca824]/40 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-[0_10px_30px_-5px_rgba(76,168,36,0.18)] hover:shadow-[0_20px_40px_-5px_rgba(76,168,36,0.3)] hover:border-[#52b32c] transition-all duration-300 cursor-pointer overflow-hidden flex flex-col items-center justify-center w-fit max-w-full mx-auto"
             >
-              {/* Media Container - Shrink-wrapping natural image width */}
-              <div className="relative inline-flex items-center justify-center max-w-full rounded-2xl overflow-hidden mb-4 bg-slate-50 border border-slate-100/60 shadow-inner">
+              {/* Top Accent Gradient Line */}
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#47a01b] via-[#4ca824] to-[#52b32c]" />
+
+              {/* Media Container - Perfectly centered natural aspect ratio wrapper */}
+              <div className="relative flex items-center justify-center w-full max-w-full rounded-2xl overflow-hidden mb-4 bg-slate-50/80 border border-slate-100/80 shadow-inner mx-auto">
                 {/* Save Heart Button (Top Left Overlay) */}
                 <button 
                   onClick={(e) => toggleSaveAd(featuredAd.id, e)}
@@ -769,14 +774,14 @@ export default function PublicDiscoveryPage() {
                 </button>
 
                 {/* Arrow Expand Icon (Top Right Overlay) */}
-                <div className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-slate-900/90 backdrop-blur-md text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                <div className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-[#47a01b] text-white flex items-center justify-center shadow-md group-hover:scale-110 group-hover:bg-[#52b32c] transition-all">
                   <ArrowUpRight size={16} />
                 </div>
 
                 {featuredAd.media_type === "video" ? (
                   <video 
                     src={featuredAd.media_url} 
-                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500" 
+                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500 block mx-auto" 
                     controls 
                     autoPlay 
                     muted 
@@ -787,27 +792,27 @@ export default function PublicDiscoveryPage() {
                   <img 
                     src={featuredAd.media_url} 
                     alt={featuredAd.title}
-                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500" 
+                    className="w-auto h-auto max-h-[480px] max-w-full object-contain rounded-2xl group-hover:scale-[1.02] transition-transform duration-500 block mx-auto" 
                   />
                 )}
                 {featuredAd.distance_km !== undefined && (
                   <div className="absolute bottom-3 left-3 bg-white/95 text-slate-900 font-bold text-[11px] sm:text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow-md border border-slate-200">
-                    <MapPin size={12} className="text-indigo-600" />
+                    <MapPin size={12} className="text-[#47a01b]" />
                     {featuredAd.distance_km} km away
                   </div>
                 )}
               </div>
 
               {/* Title & Tags */}
-              <div className="text-center space-y-2 max-w-md mx-auto">
-                <h3 className="text-base sm:text-lg font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-900 transition-colors">
+              <div className="text-center space-y-2 max-w-md mx-auto w-full">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 line-clamp-2 group-hover:text-[#47a01b] transition-colors">
                   {featuredAd.title}
                 </h3>
                 <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                  <span className="bg-indigo-150 text-indigo-850 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-200">
+                  <span className="bg-[#4ca824]/10 text-[#3b851c] text-[11px] font-extrabold px-3 py-1 rounded-full border border-[#4ca824]/30 shadow-2xs">
                     ⚡ Verified Deal
                   </span>
-                  <span className="bg-emerald-150 text-emerald-850 text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-200">
+                  <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-200">
                     Nearby
                   </span>
                 </div>
