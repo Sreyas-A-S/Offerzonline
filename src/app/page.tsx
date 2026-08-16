@@ -194,6 +194,18 @@ export default function PublicDiscoveryPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedAd, setSelectedAd] = useState<any>(null);
   const [savedAdIds, setSavedAdIds] = useState<number[]>([]);
+
+  // Load saved ad IDs from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("offerz_saved_ad_ids");
+      if (saved) {
+        setSavedAdIds(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Error reading saved ads:", e);
+    }
+  }, []);
   const [activeTab, setActiveTab] = useState<"home" | "categories" | "sparkle" | "deals" | "saved">("home");
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -460,15 +472,25 @@ export default function PublicDiscoveryPage() {
 
   const toggleSaveAd = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSavedAdIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setSavedAdIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+      try {
+        localStorage.setItem("offerz_saved_ad_ids", JSON.stringify(next));
+      } catch (err) {
+        console.error("Error saving ad IDs to localStorage:", err);
+      }
+      return next;
+    });
   };
 
-  // Local Search Filter
-  const filteredAds = ads.filter((ad) =>
+  // Local Search Filter & Saved Filter
+  const searchedAds = ads.filter((ad) =>
     ad.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const filteredAds = activeTab === "saved"
+    ? searchedAds.filter((ad) => savedAdIds.includes(ad.id))
+    : searchedAds;
 
   const featuredAd = filteredAds.find((a) => a.is_recommended || a.isRecommended) || (filteredAds.length > 0 ? filteredAds[0] : null);
 
@@ -757,11 +779,8 @@ export default function PublicDiscoveryPage() {
 
             <div 
               onClick={() => setSelectedAd(featuredAd)}
-              className="group relative bg-white border-2 border-[#4ca824]/40 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-[0_10px_30px_-5px_rgba(76,168,36,0.18)] hover:shadow-[0_20px_40px_-5px_rgba(76,168,36,0.3)] hover:border-[#52b32c] transition-all duration-300 cursor-pointer overflow-hidden flex flex-col items-center justify-center w-fit max-w-full mx-auto"
+              className="group relative bg-white border border-slate-200/80 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col items-center justify-center w-fit max-w-full mx-auto"
             >
-              {/* Top Accent Gradient Line */}
-              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#47a01b] via-[#4ca824] to-[#52b32c]" />
-
               {/* Media Container - Shrink-wrapping around image width for perfect symmetry */}
               <div className="relative inline-flex items-center justify-center max-w-full rounded-2xl overflow-hidden mb-4 bg-transparent border border-slate-100/80 shadow-inner">
                 {/* Save Heart Button (Top Left Overlay) */}

@@ -69,6 +69,18 @@ export default function OffersListingPage() {
   const [selectedAd, setSelectedAd] = useState<any>(null);
   const [savedAdIds, setSavedAdIds] = useState<number[]>([]);
 
+  // Load saved ad IDs from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("offerz_saved_ad_ids");
+      if (saved) {
+        setSavedAdIds(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Error reading saved ads:", e);
+    }
+  }, []);
+
   // Location State
   const [location, setLocation] = useState<{ lat: number; lng: number }>({ lat: 28.6139, lng: 77.209 });
   const [locationName, setLocationName] = useState("Detecting location...");
@@ -190,9 +202,15 @@ export default function OffersListingPage() {
 
   const toggleSaveAd = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSavedAdIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setSavedAdIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+      try {
+        localStorage.setItem("offerz_saved_ad_ids", JSON.stringify(next));
+      } catch (err) {
+        console.error("Error saving ad IDs to localStorage:", err);
+      }
+      return next;
+    });
   };
 
   const filteredAds = ads.filter((ad) =>
