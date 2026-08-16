@@ -96,46 +96,88 @@ export async function POST(req: NextRequest) {
     try {
       const client = await pool.connect();
       try {
-        const result = await client.query(
-          `
-          INSERT INTO ads (
-            title, category_id, media_url, media_type, ad_format, target_url, 
-            latitude, longitude, radius_km, location, weight_priority, is_active,
-            description, expires_at, store_name, store_logo, store_phone, store_address,
-            original_price, promo_price, discount_value, terms
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
-          RETURNING *
-          `,
-          [
-            title,
-            categoryId,
-            mediaUrl,
-            mediaType,
-            adFormat,
-            targetUrl,
-            latitude,
-            longitude,
-            radiusKm,
-            weightPriority || 1,
-            description || null,
-            expiresAt || null,
-            storeName || null,
-            storeLogo || null,
-            storePhone || null,
-            storeAddress || null,
-            originalPrice || null,
-            promoPrice || null,
-            discountValue || null,
-            terms || null
-          ]
-        );
+        let result;
+        try {
+          // Attempt standard PostGIS insert
+          result = await client.query(
+            `
+            INSERT INTO ads (
+              title, category_id, media_url, media_type, ad_format, target_url, 
+              latitude, longitude, radius_km, location, weight_priority, is_active,
+              description, expires_at, store_name, store_logo, store_phone, store_address,
+              original_price, promo_price, discount_value, terms
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            RETURNING *
+            `,
+            [
+              title,
+              categoryId,
+              mediaUrl,
+              mediaType,
+              adFormat,
+              targetUrl,
+              latitude,
+              longitude,
+              radiusKm,
+              weightPriority || 1,
+              description || null,
+              expiresAt || null,
+              storeName || null,
+              storeLogo || null,
+              storePhone || null,
+              storeAddress || null,
+              originalPrice || null,
+              promoPrice || null,
+              discountValue || null,
+              terms || null
+            ]
+          );
+        } catch (postgisErr: any) {
+          console.warn("PostGIS insert failed, falling back to standard SQL insert:", postgisErr.message);
+          // Fallback SQL insert (no location column or ST_SetSRID)
+          result = await client.query(
+            `
+            INSERT INTO ads (
+              title, category_id, media_url, media_type, ad_format, target_url, 
+              latitude, longitude, radius_km, weight_priority, is_active,
+              description, expires_at, store_name, store_logo, store_phone, store_address,
+              original_price, promo_price, discount_value, terms
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            RETURNING *
+            `,
+            [
+              title,
+              categoryId,
+              mediaUrl,
+              mediaType,
+              adFormat,
+              targetUrl,
+              latitude,
+              longitude,
+              radiusKm,
+              weightPriority || 1,
+              description || null,
+              expiresAt || null,
+              storeName || null,
+              storeLogo || null,
+              storePhone || null,
+              storeAddress || null,
+              originalPrice || null,
+              promoPrice || null,
+              discountValue || null,
+              terms || null
+            ]
+          );
+        }
 
         return NextResponse.json({ success: true, ad: result.rows[0] });
       } finally {
         client.release();
       }
     } catch (dbErr: any) {
+      console.error("DB insert error:", dbErr.message);
       // Mock creation fallback
       const catObj = MOCK_CATEGORIES.find((c) => c.id === parseInt(categoryId, 10));
       const newMockAd = {
@@ -187,67 +229,129 @@ export async function PUT(req: NextRequest) {
     try {
       const client = await pool.connect();
       try {
-        const result = await client.query(
-          `
-          UPDATE ads 
-          SET 
-            title = $1, 
-            category_id = $2, 
-            media_url = $3, 
-            media_type = $4, 
-            ad_format = $5, 
-            target_url = $6, 
-            latitude = $7, 
-            longitude = $8, 
-            radius_km = $9, 
-            location = ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, 
-            weight_priority = $10, 
-            is_active = $11, 
-            description = $12, 
-            expires_at = $13,
-            store_name = $14,
-            store_logo = $15,
-            store_phone = $16,
-            store_address = $17,
-            original_price = $18,
-            promo_price = $19,
-            discount_value = $20,
-            terms = $21,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = $22
-          RETURNING *
-          `,
-          [
-            title,
-            categoryId,
-            mediaUrl,
-            mediaType,
-            adFormat,
-            targetUrl,
-            latitude,
-            longitude,
-            radiusKm,
-            weightPriority || 1,
-            isActive !== undefined ? isActive : true,
-            description || null,
-            expiresAt || null,
-            storeName || null,
-            storeLogo || null,
-            storePhone || null,
-            storeAddress || null,
-            originalPrice || null,
-            promoPrice || null,
-            discountValue || null,
-            terms || null,
-            id,
-          ]
-        );
+        let result;
+        try {
+          // Attempt standard PostGIS update
+          result = await client.query(
+            `
+            UPDATE ads 
+            SET 
+              title = $1, 
+              category_id = $2, 
+              media_url = $3, 
+              media_type = $4, 
+              ad_format = $5, 
+              target_url = $6, 
+              latitude = $7, 
+              longitude = $8, 
+              radius_km = $9, 
+              location = ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography, 
+              weight_priority = $10, 
+              is_active = $11, 
+              description = $12, 
+              expires_at = $13,
+              store_name = $14,
+              store_logo = $15,
+              store_phone = $16,
+              store_address = $17,
+              original_price = $18,
+              promo_price = $19,
+              discount_value = $20,
+              terms = $21,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = $22
+            RETURNING *
+            `,
+            [
+              title,
+              categoryId,
+              mediaUrl,
+              mediaType,
+              adFormat,
+              targetUrl,
+              latitude,
+              longitude,
+              radiusKm,
+              weightPriority || 1,
+              isActive !== undefined ? isActive : true,
+              description || null,
+              expiresAt || null,
+              storeName || null,
+              storeLogo || null,
+              storePhone || null,
+              storeAddress || null,
+              originalPrice || null,
+              promoPrice || null,
+              discountValue || null,
+              terms || null,
+              id,
+            ]
+          );
+        } catch (postgisErr: any) {
+          console.warn("PostGIS update failed, falling back to standard SQL update:", postgisErr.message);
+          // Fallback SQL update (no location column or ST_SetSRID)
+          result = await client.query(
+            `
+            UPDATE ads 
+            SET 
+              title = $1, 
+              category_id = $2, 
+              media_url = $3, 
+              media_type = $4, 
+              ad_format = $5, 
+              target_url = $6, 
+              latitude = $7, 
+              longitude = $8, 
+              radius_km = $9, 
+              weight_priority = $10, 
+              is_active = $11, 
+              description = $12, 
+              expires_at = $13,
+              store_name = $14,
+              store_logo = $15,
+              store_phone = $16,
+              store_address = $17,
+              original_price = $18,
+              promo_price = $19,
+              discount_value = $20,
+              terms = $21,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = $22
+            RETURNING *
+            `,
+            [
+              title,
+              categoryId,
+              mediaUrl,
+              mediaType,
+              adFormat,
+              targetUrl,
+              latitude,
+              longitude,
+              radiusKm,
+              weightPriority || 1,
+              isActive !== undefined ? isActive : true,
+              description || null,
+              expiresAt || null,
+              storeName || null,
+              storeLogo || null,
+              storePhone || null,
+              storeAddress || null,
+              originalPrice || null,
+              promoPrice || null,
+              discountValue || null,
+              terms || null,
+              id,
+            ]
+          );
+        }
 
         return NextResponse.json({ success: true, ad: result.rows[0] });
       } finally {
         client.release();
       }
     } catch (dbErr: any) {
+      console.error("DB update error:", dbErr.message);
       MOCK_STORED_ADS = MOCK_STORED_ADS.map((a) =>
         a.id.toString() === id.toString()
           ? {
