@@ -177,8 +177,8 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 max-h-[82vh] overflow-y-auto scrollbar-none">
           {/* Left Column: Visuals & Map */}
           <div className="flex flex-col border-r border-slate-100 md:max-h-[82vh] md:overflow-y-auto scrollbar-none">
-            {/* Hero Banner Container */}
-            <div className="relative w-full aspect-[4/3] bg-gradient-to-br from-slate-955 via-slate-900 to-indigo-950 overflow-hidden group">
+            {/* Hero Banner Container - Full natural size display */}
+            <div className="relative w-full min-h-[300px] max-h-[550px] bg-slate-950/90 overflow-hidden group flex items-center justify-center p-2">
               {mediaUrls.length > 0 && (() => {
                 const currentUrl = mediaUrls[activeMediaIndex];
                 const isVideo = currentUrl.split("?")[0].split(".").pop()?.toLowerCase() === "mp4" || (ad.media_type === "video" && !currentUrl.includes("."));
@@ -191,7 +191,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                     playsInline
                     preload="auto"
                     onClick={() => setFullscreenMediaOpen(true)}
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="w-full h-auto max-h-[520px] object-contain cursor-pointer rounded-xl"
                   >
                     <source src={currentUrl} type="video/mp4" />
                   </video>
@@ -201,7 +201,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                     src={getOptimizedUrl(currentUrl)}
                     alt={ad.title}
                     onClick={() => setFullscreenMediaOpen(true)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 cursor-pointer"
+                    className="w-full h-auto max-h-[520px] object-contain group-hover:scale-[1.01] transition-transform duration-500 cursor-pointer rounded-xl"
                   />
                 );
               })()}

@@ -88,8 +88,8 @@ export default function AdminDashboard() {
     targetUrl: "",
     mediaUrl: "",
     mediaType: "image",
-    latitude: 28.6139,
-    longitude: 77.2090,
+    latitude: null as number | null,
+    longitude: null as number | null,
     radiusKm: 10,
     weightPriority: 5,
     description: "",
@@ -467,8 +467,8 @@ export default function AdminDashboard() {
           targetUrl: "",
           mediaUrl: "",
           mediaType: "image",
-          latitude: 28.6139,
-          longitude: 77.2090,
+          latitude: null,
+          longitude: null,
           radiusKm: 10,
           weightPriority: 5,
           description: "",
@@ -503,8 +503,8 @@ export default function AdminDashboard() {
       targetUrl: ad.target_url || ad.targetUrl || "",
       mediaUrl: ad.media_url || ad.mediaUrl || "",
       mediaType: ad.media_type || ad.mediaType || "image",
-      latitude: parseFloat(ad.latitude) || 28.6139,
-      longitude: parseFloat(ad.longitude) || 77.2090,
+      latitude: ad.latitude !== null && ad.latitude !== undefined ? parseFloat(ad.latitude) : null,
+      longitude: ad.longitude !== null && ad.longitude !== undefined ? parseFloat(ad.longitude) : null,
       radiusKm: parseInt((ad.radius_km || ad.radiusKm || 10).toString(), 10),
       weightPriority: parseInt((ad.weight_priority || ad.weightPriority || 5).toString(), 10),
       description: ad.description || "",
@@ -1292,25 +1292,63 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Geolocation Pin Selector */}
+                  {/* Geolocation Pin Selector (Optional) */}
                   <div className="bg-[#0b0f19] p-6 border border-[#1e293b] rounded-[2rem] space-y-4">
                     <div className="flex justify-between items-center">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
-                        Pin Target Geolocation
-                      </label>
-                      <span className="text-[10px] text-indigo-400 font-mono font-bold">
-                        Lat: {formData.latitude.toFixed(4)}, Lng: {formData.longitude.toFixed(4)}
-                      </span>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Pin Target Geolocation (Optional)
+                        </label>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          {formData.latitude !== null && formData.longitude !== null
+                            ? "Ad target is bound to custom GPS radius."
+                            : "Global Ad (No geo-restriction - shown to all visitors)."
+                          }
+                        </span>
+                      </div>
+
+                      {formData.latitude !== null && formData.longitude !== null ? (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, latitude: null, longitude: null })}
+                          className="bg-rose-955/40 hover:bg-rose-900/60 border border-rose-900/60 text-rose-300 text-[11px] font-bold px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1"
+                        >
+                          ✕ Remove Location Pin
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, latitude: 8.5680, longitude: 76.8737 })}
+                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm"
+                        >
+                          + Add Location Pin
+                        </button>
+                      )}
                     </div>
 
-                    <div className="rounded-[1.5rem] overflow-hidden border border-[#1e293b] shadow-inner">
-                      <MapPicker
-                        lat={formData.latitude}
-                        lng={formData.longitude}
-                        radiusKm={formData.radiusKm}
-                        onChange={(lat, lng) => setFormData({ ...formData, latitude: lat, longitude: lng })}
-                      />
-                    </div>
+                    {formData.latitude !== null && formData.longitude !== null ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] text-indigo-400 font-mono font-bold">
+                            Lat: {formData.latitude.toFixed(4)}, Lng: {formData.longitude.toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="rounded-[1.5rem] overflow-hidden border border-[#1e293b] shadow-inner">
+                          <MapPicker
+                            lat={formData.latitude}
+                            lng={formData.longitude}
+                            radiusKm={formData.radiusKm}
+                            onChange={(lat, lng) => setFormData({ ...formData, latitude: lat, longitude: lng })}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 border border-dashed border-[#1e293b] rounded-2xl bg-slate-950/40 text-center">
+                        <span className="text-xs text-slate-400 font-semibold block">
+                          No Geolocation Pin active. This ad will serve globally across all locations.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1631,8 +1669,8 @@ export default function AdminDashboard() {
                                     mediaType: ad.media_type || ad.mediaType,
                                     adFormat: ad.ad_format || ad.adFormat,
                                     targetUrl: ad.target_url || ad.targetUrl,
-                                    latitude: parseFloat(ad.latitude),
-                                    longitude: parseFloat(ad.longitude),
+                                    latitude: ad.latitude !== null && ad.latitude !== undefined ? parseFloat(ad.latitude) : null,
+                                    longitude: ad.longitude !== null && ad.longitude !== undefined ? parseFloat(ad.longitude) : null,
                                     radiusKm: parseInt((ad.radius_km || ad.radiusKm || 10).toString(), 10),
                                     weightPriority: newPriority,
                                     description: ad.description || null,
@@ -1676,7 +1714,15 @@ export default function AdminDashboard() {
                             <option value={1}>P1 (Lowest)</option>
                           </select>
                         </td>
-                        <td className="px-6 py-4 text-slate-200 font-semibold">{ad.radius_km} km</td>
+                        <td className="px-6 py-4 text-slate-200 font-semibold">
+                          {ad.latitude !== null && ad.longitude !== null && ad.latitude !== undefined && ad.longitude !== undefined ? (
+                            `${ad.radius_km} km`
+                          ) : (
+                            <span className="bg-sky-950/60 border border-sky-800/60 text-sky-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                              Global (No Pin)
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-slate-300">{ad.views}</td>
                         <td className="px-6 py-4 text-slate-300">{ad.clicks}</td>
                         <td className="px-6 py-4 font-bold text-indigo-400">{ad.ctr}%</td>
