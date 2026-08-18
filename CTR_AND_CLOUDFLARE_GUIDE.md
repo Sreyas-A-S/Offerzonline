@@ -77,3 +77,8 @@ To tell Cloudflare *what* to cache at the edge:
 git pull
 docker compose build app
 docker compose up -d app
+
+
+git pull
+docker compose restart app
+docker compose up -d app

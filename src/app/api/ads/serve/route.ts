@@ -11,226 +11,80 @@ export async function GET(req: NextRequest) {
   const lng = parseFloat(searchParams.get("lng") || "0");
   const categoryId = searchParams.get("category");
   const format = searchParams.get("format");
-  const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const limit = parseInt(searchParams.get("limit") || "50", 10);
 
   try {
     const client = await pool.connect();
     try {
-      // Direct ad fetch by ID or UUID for shared link opening
+      // 1. Direct single ad lookup (by numeric ID or UUID)
       if (adId) {
         const isNumeric = /^\d+$/.test(adId);
-        const result = await client.query(`
-          SELECT 
-            a.id,
-            a.uuid,
-            a.title,
-            a.category_id,
-            c.name as category_name,
-            a.media_url,
-            a.media_type,
-            a.ad_format,
-            a.target_url,
-            a.latitude,
-            a.longitude,
-            a.radius_km,
-            a.weight_priority,
-            a.description,
-            a.expires_at,
-            a.store_name,
-            a.store_logo,
-            a.store_phone,
-            a.store_address,
-            a.original_price,
-            a.promo_price,
-            a.discount_value,
-            a.terms
-          FROM ads a
-          LEFT JOIN categories c ON a.category_id = c.id
-          WHERE ${isNumeric ? "a.id = $1" : "a.uuid = $1"}
-        `, [isNumeric ? parseInt(adId, 10) : adId]);
-        return NextResponse.json({ ads: result.rows });
+        const result = await client.query(
+          `SELECT a.*, c.name as category_name 
+           FROM ads a 
+           LEFT JOIN categories c ON a.category_id = c.id 
+           WHERE ${isNumeric ? "a.id = $1" : "a.uuid = $1"}`,
+          [isNumeric ? parseInt(adId, 10) : adId]
+        );
+        return NextResponse.json(
+          { ads: result.rows },
+          {
+            headers: {
+              "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            },
+          }
+        );
       }
 
-      let query = "";
-      const queryParams: any[] = [];
+      // 2. Fetch all active campaigns with optional category and format filter
+      let sql = `
+        SELECT 
+          a.*,
+          c.name as category_name,
+          COALESCE(
+            CASE 
+              WHEN $1::float != 0 AND $2::float != 0 AND a.latitude IS NOT NULL AND a.longitude IS NOT NULL THEN
+                ROUND((6371 * acos(LEAST(1.0, GREATEST(-1.0, 
+                  cos(radians($2::float)) * cos(radians(a.latitude)) * 
+                  cos(radians(a.longitude) - radians($1::float)) + 
+                  sin(radians($2::float)) * sin(radians(a.latitude))
+                ))))::numeric, 2)
+              ELSE 0
+            END, 0
+          ) as distance_km
+        FROM ads a
+        LEFT JOIN categories c ON a.category_id = c.id
+        WHERE (a.is_active IS NULL OR a.is_active = TRUE)
+      `;
 
-      // Check if location column exists
-      const colCheck = await client.query(`
-        SELECT column_name FROM information_schema.columns 
-        WHERE table_name='ads' AND column_name='location'
-      `);
-      const hasLocationCol = colCheck.rows.length > 0;
+      const params: any[] = [lng, lat];
+      let paramIdx = 3;
 
-      if (hasLocationCol) {
-        query = `
-          SELECT 
-            a.id,
-            a.uuid,
-            a.title,
-            a.category_id,
-            c.name as category_name,
-            a.media_url,
-            a.media_type,
-            a.ad_format,
-            a.target_url,
-            a.latitude,
-            a.longitude,
-            a.radius_km,
-            a.weight_priority,
-            a.description,
-            a.expires_at,
-            a.store_name,
-            a.store_logo,
-            a.store_phone,
-            a.store_address,
-            a.original_price,
-            a.promo_price,
-            a.discount_value,
-            a.terms,
-            ROUND(
-              (ST_Distance(
-                a.location,
-                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-              ) / 1000)::numeric, 2
-            ) as distance_km
-          FROM ads a
-          LEFT JOIN categories c ON a.category_id = c.id
-          WHERE a.is_active = TRUE
-        `;
-        queryParams.push(lng, lat);
-        let paramCounter = 3;
-
-        if (lat !== 0 || lng !== 0) {
-          query += ` AND ST_DWithin(a.location, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, a.radius_km * 1000)`;
+      if (categoryId && categoryId !== "all") {
+        const isNumeric = /^\d+$/.test(categoryId);
+        if (isNumeric) {
+          sql += ` AND a.category_id = $${paramIdx++}`;
+          params.push(parseInt(categoryId, 10));
+        } else {
+          sql += ` AND (c.name ILIKE $${paramIdx} OR c.slug ILIKE $${paramIdx})`;
+          params.push(`%${categoryId}%`);
+          paramIdx++;
         }
-
-        if (categoryId && categoryId !== "all") {
-          const isNumeric = /^\d+$/.test(categoryId);
-          if (isNumeric) {
-            query += ` AND a.category_id = $${paramCounter}`;
-            queryParams.push(parseInt(categoryId, 10));
-          } else {
-            query += ` AND (c.name ILIKE $${paramCounter} OR c.slug ILIKE $${paramCounter})`;
-            queryParams.push(`%${categoryId}%`);
-          }
-          paramCounter++;
-        }
-
-        if (format) {
-          query += ` AND a.ad_format = $${paramCounter}`;
-          queryParams.push(format);
-          paramCounter++;
-        }
-
-        query += ` ORDER BY a.weight_priority DESC, distance_km ASC LIMIT $${paramCounter}`;
-        queryParams.push(limit);
-      } else {
-        // Fallback to standard Haversine distance query for PostGIS-less PostgreSQL setup
-        query = `
-          SELECT 
-            a.id,
-            a.uuid,
-            a.title,
-            a.category_id,
-            c.name as category_name,
-            a.media_url,
-            a.media_type,
-            a.ad_format,
-            a.target_url,
-            a.latitude,
-            a.longitude,
-            a.radius_km,
-            a.weight_priority,
-            a.description,
-            a.expires_at,
-            a.store_name,
-            a.store_logo,
-            a.store_phone,
-            a.store_address,
-            a.original_price,
-            a.promo_price,
-            a.discount_value,
-            a.terms,
-            ROUND(
-              (6371 * acos(
-                LEAST(1.0, GREATEST(-1.0,
-                  cos(radians($2)) * cos(radians(a.latitude)) *
-                  cos(radians(a.longitude) - radians($1)) +
-                  sin(radians($2)) * sin(radians(a.latitude))
-                ))
-              ))::numeric, 2
-            ) as distance_km
-          FROM ads a
-          LEFT JOIN categories c ON a.category_id = c.id
-          WHERE a.is_active = TRUE
-        `;
-        queryParams.push(lng, lat);
-        let paramCounter = 3;
-
-        if (lat !== 0 && lng !== 0) {
-          query += ` AND (6371 * acos(LEAST(1.0, GREATEST(-1.0, cos(radians($2)) * cos(radians(a.latitude)) * cos(radians(a.longitude) - radians($1)) + sin(radians($2)) * sin(radians(a.latitude)))))) <= a.radius_km`;
-        }
-
-        if (categoryId && categoryId !== "all") {
-          const isNumeric = /^\d+$/.test(categoryId);
-          if (isNumeric) {
-            query += ` AND a.category_id = $${paramCounter}`;
-            queryParams.push(parseInt(categoryId, 10));
-          } else {
-            query += ` AND (c.name ILIKE $${paramCounter} OR c.slug ILIKE $${paramCounter})`;
-            queryParams.push(`%${categoryId}%`);
-          }
-          paramCounter++;
-        }
-
-        if (format) {
-          query += ` AND a.ad_format = $${paramCounter}`;
-          queryParams.push(format);
-          paramCounter++;
-        }
-
-        query += ` ORDER BY a.weight_priority DESC, distance_km ASC LIMIT $${paramCounter}`;
-        queryParams.push(limit);
       }
 
-      const result = await client.query(query, queryParams);
-      let adsToReturn = result.rows;
-
-      // Fallback: If no ads exist strictly inside the user's specific GPS radius, return active ads ordered by priority
-      if (adsToReturn.length === 0) {
-        let fallbackQuery = `
-          SELECT 
-            a.id, a.uuid, a.title, a.category_id, c.name as category_name,
-            a.media_url, a.media_type, a.ad_format, a.target_url,
-            a.latitude, a.longitude, a.radius_km, a.weight_priority,
-            a.description, a.expires_at, a.store_name, a.store_logo,
-            a.store_phone, a.store_address, a.original_price,
-            a.promo_price, a.discount_value, a.terms,
-            0 as distance_km
-          FROM ads a
-          LEFT JOIN categories c ON a.category_id = c.id
-          WHERE a.is_active = TRUE
-        `;
-        const fallbackParams: any[] = [];
-        if (categoryId && categoryId !== "all") {
-          const isNumeric = /^\d+$/.test(categoryId);
-          if (isNumeric) {
-            fallbackQuery += ` AND a.category_id = $1`;
-            fallbackParams.push(parseInt(categoryId, 10));
-          } else {
-            fallbackQuery += ` AND (c.name ILIKE $1 OR c.slug ILIKE $1)`;
-            fallbackParams.push(`%${categoryId}%`);
-          }
-        }
-        fallbackQuery += ` ORDER BY a.weight_priority DESC, a.created_at DESC LIMIT 20`;
-        const fallbackRes = await client.query(fallbackQuery, fallbackParams);
-        adsToReturn = fallbackRes.rows;
+      if (format) {
+        sql += ` AND a.ad_format = $${paramIdx++}`;
+        params.push(format);
       }
+
+      sql += ` ORDER BY a.weight_priority DESC, a.created_at DESC LIMIT $${paramIdx++}`;
+      params.push(limit);
+
+      const result = await client.query(sql, params);
 
       return NextResponse.json(
-        { ads: adsToReturn },
+        { ads: result.rows },
         {
-          status: 200,
           headers: {
             "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
           },
@@ -240,7 +94,7 @@ export async function GET(req: NextRequest) {
       client.release();
     }
   } catch (error: any) {
-    console.error("Ads serve query error:", error.message);
+    console.error("Ads serve query error:", error);
     return NextResponse.json({ ads: [] }, { status: 200 });
   }
 }

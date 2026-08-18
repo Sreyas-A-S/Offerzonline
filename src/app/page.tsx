@@ -452,7 +452,12 @@ export default function PublicDiscoveryPage() {
 
   // Local Search Filter & Saved Filter
   const searchedAds = ads.filter((ad) =>
-    ad.title.toLowerCase().includes(searchQuery.toLowerCase())
+    ad && (
+      !searchQuery ||
+      (ad.title && ad.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (ad.store_name && ad.store_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (ad.category_name && ad.category_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
   );
 
   const filteredAds = activeTab === "saved"

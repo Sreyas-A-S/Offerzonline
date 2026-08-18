@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const MOCK_CATEGORIES = [
   { id: 1, name: "Retail & Shopping", slug: "retail-shopping" },
   { id: 2, name: "Food & Dining", slug: "food-dining" },
@@ -10,48 +13,7 @@ const MOCK_CATEGORIES = [
   { id: 6, name: "Electronics & Tech", slug: "electronics-tech" },
 ];
 
-let MOCK_STORED_ADS: any[] = [
-  {
-    id: 1,
-    title: "50% Off Gourmet Pizza & Pasta Combo",
-    category_name: "Food & Dining",
-    category_id: 2,
-    media_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80",
-    media_type: "image",
-    ad_format: "300x250",
-    target_url: "https://offerzonline.com/deals/pizza",
-    latitude: 28.6139,
-    longitude: 77.209,
-    radius_km: 10,
-    weight_priority: 5,
-    distance_km: 1.2,
-    views: 0,
-    clicks: 0,
-    ctr: 0,
-    top_referrer: "Direct",
-    is_active: true,
-  },
-  {
-    id: 2,
-    title: "Buy 1 Get 1 Free Premium Gym Membership",
-    category_name: "Health & Fitness",
-    category_id: 5,
-    media_url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80",
-    media_type: "image",
-    ad_format: "responsive",
-    target_url: "https://offerzonline.com/deals/fitness",
-    latitude: 28.6139,
-    longitude: 77.209,
-    radius_km: 15,
-    weight_priority: 4,
-    distance_km: 3.4,
-    views: 0,
-    clicks: 0,
-    ctr: 0,
-    top_referrer: "Direct",
-    is_active: true,
-  },
-];
+let MOCK_STORED_ADS: any[] = [];
 
 export async function GET(req: NextRequest) {
   try {
