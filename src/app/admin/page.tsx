@@ -365,8 +365,8 @@ export default function AdminDashboard() {
   const [adReportLogs, setAdReportLogs] = useState<any[]>([]);
   const [adReportLoading, setAdReportLoading] = useState(false);
 
-  // Multi-Filter States for Analytics (defaults to Today / 24h)
-  const [analyticsTimeframe, setAnalyticsTimeframe] = useState("24h");
+  // Multi-Filter States for Analytics (defaults to Today IST Calendar Day)
+  const [analyticsTimeframe, setAnalyticsTimeframe] = useState("today");
   const [analyticsStartDate, setAnalyticsStartDate] = useState("");
   const [analyticsEndDate, setAnalyticsEndDate] = useState("");
   const [analyticsCategory, setAnalyticsCategory] = useState("all");
@@ -414,13 +414,13 @@ export default function AdminDashboard() {
   };
 
   const resetAnalyticsFilters = () => {
-    setAnalyticsTimeframe("24h");
+    setAnalyticsTimeframe("today");
     setAnalyticsStartDate("");
     setAnalyticsEndDate("");
     setAnalyticsCategory("all");
     setAnalyticsAd("all");
     setAnalyticsReferrer("all");
-    fetchFilteredAnalytics("24h", "", "", "all", "all", "all");
+    fetchFilteredAnalytics("today", "", "", "all", "all", "all");
   };
 
   const fetchDashboardData = async () => {
@@ -1121,7 +1121,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Reset / Quick status */}
-                {(analyticsTimeframe !== "24h" || analyticsStartDate || analyticsEndDate || analyticsCategory !== "all" || analyticsAd !== "all" || analyticsReferrer !== "all") && (
+                {(analyticsTimeframe !== "today" || analyticsStartDate || analyticsEndDate || analyticsCategory !== "all" || analyticsAd !== "all" || analyticsReferrer !== "all") && (
                   <button
                     onClick={resetAnalyticsFilters}
                     className="self-start md:self-auto text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-800/40 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
@@ -1146,7 +1146,8 @@ export default function AdminDashboard() {
                     }}
                     className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500 cursor-pointer"
                   >
-                    <option value="24h">Today (Last 24 Hours)</option>
+                    <option value="today">Today (IST)</option>
+                    <option value="yesterday">Yesterday (IST)</option>
                     <option value="7d">Last 7 Days</option>
                     <option value="30d">Last 30 Days</option>
                     <option value="all">All Time</option>

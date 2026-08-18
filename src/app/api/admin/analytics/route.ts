@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const adIdFilter = searchParams.get("ad_id");
-    const timeframe = searchParams.get("timeframe") || "24h"; // default to 24h (Today / Current Date)
+    const timeframe = searchParams.get("timeframe") || "today"; // default to today (Calendar Day in IST)
     const startDate = searchParams.get("start_date");
     const endDate = searchParams.get("end_date");
     const categoryId = searchParams.get("category_id");
@@ -19,12 +19,16 @@ export async function GET(req: NextRequest) {
       const logParams: any[] = [];
       let paramIdx = 1;
 
-      if (timeframe === "24h") {
-        logConditions.push(`l.timestamp >= NOW() - INTERVAL '24 hours'`);
+      if (timeframe === "today" || timeframe === "24h") {
+        // Today starting from 00:00:00 IST to present moment
+        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date`);
+      } else if (timeframe === "yesterday") {
+        // Yesterday full calendar day in IST
+        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 1`);
       } else if (timeframe === "7d") {
-        logConditions.push(`l.timestamp >= NOW() - INTERVAL '7 days'`);
+        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 6`);
       } else if (timeframe === "30d") {
-        logConditions.push(`l.timestamp >= NOW() - INTERVAL '30 days'`);
+        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 29`);
       } else if (timeframe === "custom") {
         if (startDate) {
           logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp`);
