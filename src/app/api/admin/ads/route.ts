@@ -429,6 +429,8 @@ export async function DELETE(req: NextRequest) {
             [id]
           );
         } else {
+          // Explicitly purge related analytics logs to guarantee zero orphaned logs
+          await client.query(`DELETE FROM analytics_logs WHERE ad_id = $1`, [id]);
           await client.query(`DELETE FROM ads WHERE id = $1`, [id]);
         }
         return NextResponse.json({ success: true });

@@ -92,6 +92,33 @@ export function cleanReferrer(rawReferrer?: string): string {
   const trimmed = rawReferrer.trim();
   if (!trimmed || trimmed === "Direct" || trimmed === "Direct / Bookmark") return "Direct";
 
+  // Handle android-app:// and app package referrers
+  if (trimmed.startsWith("android-app://") || trimmed.includes("com.google.android") || trimmed.includes("android.")) {
+    const pkg = trimmed.replace("android-app://", "").replace(/\/.*$/, "").toLowerCase();
+    
+    if (pkg.includes("googlequicksearchbox")) return "Google App (Android)";
+    if (pkg.includes("chrome")) return "Google Chrome (Android)";
+    if (pkg.includes("gm") || pkg.includes("gmail")) return "Gmail App";
+    if (pkg.includes("instagram")) return "Instagram App";
+    if (pkg.includes("facebook") || pkg.includes("katana")) return "Facebook App";
+    if (pkg.includes("orca")) return "Messenger App";
+    if (pkg.includes("whatsapp")) return "WhatsApp App";
+    if (pkg.includes("twitter") || pkg.includes("x.com")) return "X (Twitter) App";
+    if (pkg.includes("telegram")) return "Telegram App";
+    if (pkg.includes("linkedin")) return "LinkedIn App";
+    if (pkg.includes("reddit")) return "Reddit App";
+    if (pkg.includes("pinterest")) return "Pinterest App";
+    if (pkg.includes("snapchat")) return "Snapchat App";
+    if (pkg.includes("sbrowser") || pkg.includes("sec.android")) return "Samsung Internet App";
+    if (pkg.includes("bing")) return "Bing Search App";
+    if (pkg.includes("duckduckgo")) return "DuckDuckGo App";
+
+    // Extract last segment of package name as fallback readable name
+    const parts = pkg.split(".");
+    const appName = parts[parts.length - 1];
+    return appName ? `${appName.charAt(0).toUpperCase() + appName.slice(1)} App (Android)` : "Android App";
+  }
+
   try {
     const url = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
     let host = url.hostname.toLowerCase().replace(/^www\./, "");

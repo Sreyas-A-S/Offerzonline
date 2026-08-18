@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { cleanReferrer } from "@/utils/analytics";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,6 +14,19 @@ export async function GET(req: NextRequest) {
 
     const client = await pool.connect();
     try {
+      // Auto-purge any lingering orphaned ad logs
+      await client.query(`
+        DELETE FROM analytics_logs 
+        WHERE ad_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM ads WHERE ads.id = analytics_logs.ad_id);
+      `).catch(() => {});
+
+      // One-time auto cleanup for android package URIs in existing DB logs
+      await client.query(`
+        UPDATE analytics_logs 
+        SET referrer_domain = 'Google App (Android)' 
+        WHERE referrer_domain ILIKE '%googlequicksearchbox%' OR referrer_domain ILIKE '%com.google.android%';
+      `).catch(() => {});
+
       // Build dynamic WHERE clauses for analytics_logs
       const logConditions: string[] = [];
       const logParams: any[] = [];
@@ -190,10 +204,19 @@ export async function GET(req: NextRequest) {
           totalAdImpressions,
           totalAdClicks,
         },
-        topReferrers: topReferrersRes.rows,
-        recentLogs: recentLogsRes.rows,
-        adBreakdowns: adBreakdownRes.rows,
-        availableReferrers: allReferrersRes.rows.map((r) => r.referrer),
+        topReferrers: topReferrersRes.rows.map((r) => ({
+          ...r,
+          referrer: cleanReferrer(r.referrer),
+        })),
+        recentLogs: recentLogsRes.rows.map((l) => ({
+          ...l,
+          referrer_domain: cleanReferrer(l.referrer_domain),
+        })),
+        adBreakdowns: adBreakdownRes.rows.map((b) => ({
+          ...b,
+          top_referrer: cleanReferrer(b.top_referrer),
+        })),
+        availableReferrers: Array.from(new Set(allReferrersRes.rows.map((r) => cleanReferrer(r.referrer)))),
       });
     } finally {
       client.release();
