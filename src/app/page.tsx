@@ -126,47 +126,6 @@ const DEFAULT_CUTOUT_CARD = {
   ]
 };
 
-const DEFAULT_INITIAL_ADS = [
-  {
-    id: 1,
-    title: "50% Off Gourmet Pizza & Pasta Combo",
-    category_name: "Food & Dining",
-    category_id: 2,
-    media_url: "/images/categories/food.png",
-    media_type: "image",
-    ad_format: "300x250",
-    target_url: "https://offerzonline.com/deals/pizza",
-    latitude: 28.6139,
-    longitude: 77.209,
-    radius_km: 10,
-    weight_priority: 5,
-    distance_km: 1.2,
-    views: 142,
-    clicks: 18,
-    ctr: 12.68,
-    is_active: true,
-  },
-  {
-    id: 2,
-    title: "Buy 1 Get 1 Free Premium Gym Membership",
-    category_name: "Health & Fitness",
-    category_id: 5,
-    media_url: "/images/categories/fitness.png",
-    media_type: "image",
-    ad_format: "responsive",
-    target_url: "https://offerzonline.com/deals/fitness",
-    latitude: 28.6139,
-    longitude: 77.209,
-    radius_km: 15,
-    weight_priority: 4,
-    distance_km: 3.4,
-    views: 98,
-    clicks: 11,
-    ctr: 11.22,
-    is_active: true,
-  },
-];
-
 const INITIAL_CATEGORIES = [
   { id: 1, name: "Food & Dining" },
   { id: 2, name: "Retail & Shopping" },
@@ -179,7 +138,7 @@ const INITIAL_CATEGORIES = [
 export default function PublicDiscoveryPage() {
   const [showPreloader, setShowPreloader] = useState(true);
   const [siteLogo, setSiteLogo] = useState<string>("/api/logo");
-  const [ads, setAds] = useState<any[]>(DEFAULT_INITIAL_ADS);
+  const [ads, setAds] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES);
   const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
 
