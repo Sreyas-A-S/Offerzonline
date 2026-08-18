@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
            SELECT id, 'impression', $2, $3, $4, $5, $6
            FROM ads
            WHERE id = ANY($1::int[])`,
-          [idsToLog, referrer || "direct", ip, userAgent, visitorId, userLocation || "Unknown"]
+          [idsToLog, referrer || req.headers.get("referer") || "Direct", ip, userAgent, visitorId, userLocation || "Unknown"]
         );
       } finally {
         client.release();

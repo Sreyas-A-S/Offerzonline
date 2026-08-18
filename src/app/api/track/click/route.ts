@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       }
 
       // Log click event asynchronously
-      const referrer = req.headers.get("referer") || "direct";
+      const referrer = searchParams.get("referrer") || req.headers.get("referer") || "Direct";
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
       const userAgent = req.headers.get("user-agent") || "";
       const visitorId = searchParams.get("visitor_id") || null;

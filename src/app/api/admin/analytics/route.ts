@@ -31,6 +31,17 @@ export async function GET(req: NextRequest) {
       );
       const totalAdClicks = adClicksRes.rows[0]?.count || 0;
 
+      // Top Referrers Breakdown
+      const topReferrersRes = await client.query(`
+        SELECT 
+          COALESCE(NULLIF(referrer_domain, ''), 'Direct / Bookmark') as referrer, 
+          COUNT(*)::int as count 
+        FROM analytics_logs 
+        GROUP BY referrer 
+        ORDER BY count DESC 
+        LIMIT 10
+      `);
+
       // 4. Ad-Level Detailed Reports Query
       const adReportsQuery = adIdFilter
         ? `SELECT 
@@ -95,6 +106,7 @@ export async function GET(req: NextRequest) {
           totalAdImpressions,
           totalAdClicks,
         },
+        topReferrers: topReferrersRes.rows,
         recentLogs: recentLogsRes.rows,
         adBreakdowns: adBreakdownRes.rows,
       });

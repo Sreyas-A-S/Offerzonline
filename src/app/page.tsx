@@ -243,6 +243,7 @@ export default function PublicDiscoveryPage() {
         eventType: "page_view",
         pagePath: window.location.pathname,
         visitorId,
+        referrer: document.referrer || "Direct",
       }),
     }).catch((e) => console.error("Pageview log error:", e));
 

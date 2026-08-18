@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { 
   Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
-  Menu, X, Layers, BarChart2, Code, Copy, Check
+  Menu, X, Layers, BarChart2, Code, Copy, Check, Globe
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -187,6 +187,7 @@ export default function AdminDashboard() {
     totalAdImpressions: 0,
     totalAdClicks: 0,
   });
+  const [topReferrers, setTopReferrers] = useState<any[]>([]);
   const [recentAuditLogs, setRecentAuditLogs] = useState<any[]>([]);
   const [adBreakdowns, setAdBreakdowns] = useState<any[]>([]);
   const [selectedAdReport, setSelectedAdReport] = useState<any | null>(null);
@@ -218,6 +219,9 @@ export default function AdminDashboard() {
       const analyticsData = await analyticsRes.json();
       if (analyticsData.summary) {
         setAnalyticsSummary(analyticsData.summary);
+      }
+      if (analyticsData.topReferrers) {
+        setTopReferrers(analyticsData.topReferrers);
       }
       if (analyticsData.recentLogs) {
         setRecentAuditLogs(analyticsData.recentLogs);
@@ -906,24 +910,73 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Performance Chart */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm">
-              <h3 className="font-bold text-lg text-white mb-6 tracking-tight">Ad Performance Comparison</h3>
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={ads}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                    <XAxis dataKey="title" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: "#0f172a", borderColor: "rgba(255,255,255,0.08)", borderRadius: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", color: "#fff" }} 
-                      labelStyle={{ fontWeight: "bold", color: "#fff" }}
-                    />
-                    <Bar dataKey="views" fill="#4f46e5" name="Impressions" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="clicks" fill="#9333ea" name="Clicks" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+            {/* Performance Chart & Traffic Sources Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm">
+                <h3 className="font-bold text-lg text-white mb-6 tracking-tight">Ad Performance Comparison</h3>
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={ads}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                      <XAxis dataKey="title" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: "#0f172a", borderColor: "rgba(255,255,255,0.08)", borderRadius: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", color: "#fff" }} 
+                        labelStyle={{ fontWeight: "bold", color: "#fff" }}
+                      />
+                      <Bar dataKey="views" fill="#4f46e5" name="Impressions" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="clicks" fill="#9333ea" name="Clicks" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
+
+              {/* Traffic Sources / Referrers */}
+              <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-lg text-white tracking-tight">Traffic Sources</h3>
+                      <p className="text-xs text-slate-400">Referrer domains & sources</p>
+                    </div>
+                    <Globe size={20} className="text-indigo-400" />
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    {topReferrers.length > 0 ? (
+                      topReferrers.slice(0, 5).map((item, idx) => {
+                        const totalHits = topReferrers.reduce((acc, curr) => acc + (curr.count || 0), 0);
+                        const pct = totalHits > 0 ? Math.round((item.count / totalHits) * 100) : 0;
+                        return (
+                          <div key={idx} className="bg-[#0b0f19] border border-[#1e293b] p-3 rounded-2xl flex items-center justify-between">
+                            <div className="min-w-0 flex-1 pr-2">
+                              <span className="text-xs font-bold text-white block truncate" title={item.referrer}>
+                                {item.referrer}
+                              </span>
+                              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                <div 
+                                  className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full" 
+                                  style={{ width: `${pct}%` }} 
+                                />
+                              </div>
+                            </div>
+                            <div className="text-right pl-2">
+                              <span className="text-xs font-extrabold text-indigo-400 block">{item.count}</span>
+                              <span className="text-[10px] text-slate-500 font-medium">{pct}%</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="py-12 text-center text-slate-500 text-xs font-semibold">
+                        No referrer logs recorded yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
                 {/* Campaign / Ad-Level Performance Report Table */}
             <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
               <div className="flex items-center justify-between">
@@ -2387,12 +2440,13 @@ export default function AdminDashboard() {
 
             {/* Ad Event Activity Log Table */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ad Interaction Log (IP, Location, User Agent)</h4>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ad Interaction Log (Referrer, IP, Location, User Agent)</h4>
               <div className="overflow-x-auto rounded-2xl border border-[#1e293b] bg-[#0b0f19]">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#131b2e] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#1e293b]">
                     <tr>
                       <th className="p-3">Event Type</th>
+                      <th className="p-3">Referrer / Source</th>
                       <th className="p-3">IP Address</th>
                       <th className="p-3">Location</th>
                       <th className="p-3">User Agent / Device</th>
@@ -2402,7 +2456,7 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
                     {adReportLoading ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-slate-400">Loading ad activity records...</td>
+                        <td colSpan={6} className="p-8 text-center text-slate-400">Loading ad activity records...</td>
                       </tr>
                     ) : adReportLogs.length > 0 ? (
                       adReportLogs.map((log) => (
@@ -2418,6 +2472,11 @@ export default function AdminDashboard() {
                               {log.event_type}
                             </span>
                           </td>
+                          <td className="p-3 font-mono text-[10px]">
+                            <span className="text-purple-300 bg-purple-950/40 border border-purple-800/40 px-2 py-0.5 rounded max-w-[140px] truncate block" title={log.referrer_domain || "Direct"}>
+                              {log.referrer_domain || "Direct"}
+                            </span>
+                          </td>
                           <td className="p-3 font-mono text-indigo-300">{log.user_ip}</td>
                           <td className="p-3">{log.user_location_name || "Unknown"}</td>
                           <td className="p-3 font-mono text-[10px] text-slate-400 max-w-xs truncate" title={log.user_agent}>
@@ -2430,7 +2489,7 @@ export default function AdminDashboard() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-slate-500 font-semibold">
+                        <td colSpan={6} className="p-8 text-center text-slate-500 font-semibold">
                           No direct interaction logs recorded for this campaign yet.
                         </td>
                       </tr>

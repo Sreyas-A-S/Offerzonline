@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ||
       "127.0.0.1";
     const userAgent = req.headers.get("user-agent") || "";
-    const referrerDomain = req.headers.get("referer") || "";
+    const referrerDomain = body.referrer || body.referrerDomain || req.headers.get("referer") || "Direct";
 
     const client = await pool.connect();
     try {
