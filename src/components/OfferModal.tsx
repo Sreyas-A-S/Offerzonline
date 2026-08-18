@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MapPin, ExternalLink, X, Share2, Check, Phone, Map, ChevronDown, ChevronUp, Store } from "lucide-react";
 import { getOrCreateVisitorId, getTrafficSource } from "@/utils/analytics";
+import { getAdSlug } from "@/utils/adSlug";
 
 interface OfferModalProps {
   ad: any;
@@ -123,7 +124,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
   };
 
   const handleShare = async () => {
-    const shareId = ad.uuid || ad.id;
+    const shareId = getAdSlug(ad.title);
     const shareUrl = `${window.location.origin}/?ad=${shareId}`;
     if (navigator.share) {
       try {
