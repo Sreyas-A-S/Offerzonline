@@ -5,10 +5,10 @@ import {
   Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
   Menu, X, Layers, BarChart2, Code, Copy, Check, Globe, Filter, Calendar,
-  RotateCcw, SlidersHorizontal, Search, ChevronDown
+  RotateCcw, SlidersHorizontal, Search, ChevronDown, Clock, Flame
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
 import Cropper from "react-easy-crop";
 import { parseUserAgentDetails, formatLocationName } from "@/utils/analytics";
 
@@ -354,6 +354,8 @@ export default function AdminDashboard() {
     totalAdClicks: 0,
   });
   const [topReferrers, setTopReferrers] = useState<any[]>([]);
+  const [hourlyStats, setHourlyStats] = useState<any[]>([]);
+  const [peakHour, setPeakHour] = useState<any | null>(null);
   const [recentAuditLogs, setRecentAuditLogs] = useState<any[]>([]);
   const [adBreakdowns, setAdBreakdowns] = useState<any[]>([]);
   const [selectedAdReport, setSelectedAdReport] = useState<any | null>(null);
@@ -393,6 +395,8 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/admin/analytics?${params.toString()}`);
       const data = await res.json();
       if (data.summary) setAnalyticsSummary(data.summary);
+      if (data.hourlyStats) setHourlyStats(data.hourlyStats);
+      if (data.peakHour !== undefined) setPeakHour(data.peakHour);
       if (data.topReferrers) setTopReferrers(data.topReferrers);
       if (data.recentLogs) setRecentAuditLogs(data.recentLogs);
       if (data.adBreakdowns) setAdBreakdowns(data.adBreakdowns);
@@ -1279,6 +1283,90 @@ export default function AdminDashboard() {
                   <MousePointerClick size={18} className="text-emerald-400" />
                 </div>
                 <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalAdClicks}</h3>
+              </div>
+            </div>
+
+            {/* Hourly Traffic Breakdown / Peak Activity Hours Chart */}
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1e293b] pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <Clock size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-white tracking-tight flex items-center gap-2">
+                      Hourly Traffic & Peak Activity Hours
+                    </h3>
+                    <p className="text-xs text-slate-400">Analyze traffic volume across the 24 hours of the day (Indian Standard Time)</p>
+                  </div>
+                </div>
+
+                {/* Peak Hour Indicator */}
+                {peakHour && peakHour.hits > 0 ? (
+                  <div className="bg-amber-950/40 border border-amber-500/30 px-3.5 py-1.5 rounded-2xl flex items-center gap-2 text-xs text-amber-300">
+                    <Flame size={14} className="text-amber-400 animate-pulse" />
+                    <span className="font-medium">Peak Hour:</span>
+                    <span className="font-black text-white bg-amber-500/20 px-2 py-0.5 rounded-lg font-mono">
+                      {peakHour.label} ({peakHour.hits} hits)
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                    <Clock size={13} /> 24-Hour Timeline
+                  </div>
+                )}
+              </div>
+
+              {/* Stacked Hourly Bar Chart */}
+              <div className="h-72 w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={hourlyStats} barCategoryGap="15%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis 
+                      dataKey="label" 
+                      stroke="#94a3b8" 
+                      fontSize={10} 
+                      tickLine={false}
+                      interval={1}
+                    />
+                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} allowDecimals={false} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "#0b0f19", 
+                        borderColor: "rgba(255,255,255,0.12)", 
+                        borderRadius: "16px", 
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.4)", 
+                        color: "#fff",
+                        fontSize: "12px"
+                      }} 
+                      labelFormatter={(label) => `Time: ${label} (IST)`}
+                    />
+                    <Bar dataKey="pageViews" fill="#38bdf8" name="Page Views" stackId="a" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="impressions" fill="#6366f1" name="Ad Impressions" stackId="a" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="clicks" fill="#10b981" name="Ad Clicks" stackId="a" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Legend & quick summary footer */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs border-t border-[#1e293b]">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-[#38bdf8]" />
+                    <span className="text-slate-300 text-[11px] font-medium">Page Views</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-[#6366f1]" />
+                    <span className="text-slate-300 text-[11px] font-medium">Ad Impressions</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-[#10b981]" />
+                    <span className="text-slate-300 text-[11px] font-medium">Ad Clicks</span>
+                  </div>
+                </div>
+                <span className="text-[11px] text-slate-400 font-mono">
+                  Total Timeline Hits: <strong className="text-white">{hourlyStats.reduce((a, c) => a + (c.hits || 0), 0)}</strong>
+                </span>
               </div>
             </div>
 

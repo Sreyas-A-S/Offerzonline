@@ -177,6 +177,45 @@ export async function GET(req: NextRequest) {
         adBreakdownParams
       );
 
+      // 5. Hourly Hit Distribution (00:00 to 23:00 IST)
+      const hourlyRes = await client.query(`
+        SELECT 
+          EXTRACT(HOUR FROM l.timestamp AT TIME ZONE 'Asia/Kolkata')::int as hour,
+          COUNT(*)::int as total_hits,
+          COUNT(CASE WHEN l.event_type = 'page_view' THEN 1 END)::int as page_views,
+          COUNT(CASE WHEN l.event_type = 'impression' THEN 1 END)::int as impressions,
+          COUNT(CASE WHEN l.event_type = 'click' THEN 1 END)::int as clicks
+        FROM analytics_logs l
+        ${logWhereSql}
+        GROUP BY hour
+        ORDER BY hour ASC;
+      `, logParams);
+
+      const hourlyMap = new Map<number, any>();
+      hourlyRes.rows.forEach((r) => hourlyMap.set(r.hour, r));
+
+      const hourlyStats = Array.from({ length: 24 }, (_, h) => {
+        const hour12 = h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`;
+        const hour24 = `${h.toString().padStart(2, "0")}:00`;
+        const matched = hourlyMap.get(h) || {};
+        return {
+          hour: h,
+          label: hour12,
+          time24: hour24,
+          hits: matched.total_hits || 0,
+          pageViews: matched.page_views || 0,
+          impressions: matched.impressions || 0,
+          clicks: matched.clicks || 0,
+        };
+      });
+
+      let peakHour = hourlyStats[0];
+      for (const item of hourlyStats) {
+        if (item.hits > peakHour.hits) {
+          peakHour = item;
+        }
+      }
+
       // Available Referrers for dropdown
       const allReferrersRes = await client.query(`
         SELECT DISTINCT COALESCE(NULLIF(referrer_domain, ''), 'Direct') as referrer
@@ -191,6 +230,8 @@ export async function GET(req: NextRequest) {
           totalAdImpressions,
           totalAdClicks,
         },
+        hourlyStats,
+        peakHour: peakHour.hits > 0 ? peakHour : null,
         topReferrers: topReferrersRes.rows.map((r) => ({
           ...r,
           referrer: cleanReferrer(r.referrer),
