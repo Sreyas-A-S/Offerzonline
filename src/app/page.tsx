@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import gsap from "gsap";
 import { getOrCreateVisitorId, getTrafficSource, getStoredLocationName } from "@/utils/analytics";
 
 // Category Visual Metadata inspired by the reference design with 3D cutouts & sub-tags
