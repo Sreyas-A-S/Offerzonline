@@ -174,7 +174,7 @@ export default function PublicDiscoveryPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Fetch dynamic brand logo, track page view, and hide preloader smoothly after 1.5s
+  // Fetch dynamic brand logo, track page view, and hide the preloader quickly
   useEffect(() => {
     async function loadBrandLogo() {
       try {
@@ -209,7 +209,7 @@ export default function PublicDiscoveryPage() {
 
     const timer = setTimeout(() => {
       setShowPreloader(false);
-    }, 1500);
+    }, 400);
     return () => clearTimeout(timer);
   }, []);
 
