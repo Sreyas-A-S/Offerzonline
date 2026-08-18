@@ -1224,7 +1224,7 @@ export default function AdminDashboard() {
                 }
                 return null;
               })()}
-            </div>          </div>
+            </div>
           </div>
         )}
 

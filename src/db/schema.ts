@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { pgTable, serial, varchar, text, decimal, integer, boolean, timestamp, customType } from "drizzle-orm/pg-core";
 
 // Custom PostGIS point type for Drizzle
@@ -24,7 +25,7 @@ export const categories = pgTable("categories", {
 
 export const ads = pgTable("ads", {
   id: serial("id").primaryKey(),
-  uuid: varchar("uuid", { length: 36 }).notNull().defaultRandom(),
+  uuid: varchar("uuid", { length: 36 }).notNull().default(sql`gen_random_uuid()::text`),
   title: varchar("title", { length: 255 }).notNull(),
   categoryId: integer("category_id").references(() => categories.id),
   mediaUrl: text("media_url").notNull(),
