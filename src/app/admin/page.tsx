@@ -56,6 +56,39 @@ const getCroppedImg = (imageSrc: string, pixelCrop: any): Promise<Blob> => {
   });
 };
 
+const formatIST = (timestamp: any) => {
+  if (!timestamp) return "-";
+  try {
+    const formatted = new Date(timestamp).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+    return `${formatted} IST`;
+  } catch (e) {
+    return String(timestamp);
+  }
+};
+
+const formatDateIST = (date: any) => {
+  if (!date) return "-";
+  try {
+    return new Date(date).toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch (e) {
+    return String(date);
+  }
+};
+
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginUsername, setLoginUsername] = useState("");
@@ -1129,10 +1162,11 @@ export default function AdminDashboard() {
                   <thead className="bg-[#131b2e] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#1e293b]">
                     <tr>
                       <th className="p-3.5">Event</th>
+                      <th className="p-3.5">Referrer</th>
                       <th className="p-3.5">IP Address</th>
                       <th className="p-3.5">User Location</th>
                       <th className="p-3.5">Browser Agent / Device</th>
-                      <th className="p-3.5">Timestamp</th>
+                      <th className="p-3.5">Timestamp (IST)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
@@ -1161,13 +1195,18 @@ export default function AdminDashboard() {
                                   </span>
                                   {log.ad_title && <span className="block text-[10px] text-slate-400 truncate max-w-[140px] mt-0.5">{log.ad_title}</span>}
                                 </td>
+                                <td className="p-3.5 font-mono text-[11px]">
+                                  <span className="text-purple-300 bg-purple-950/40 border border-purple-800/40 px-2 py-0.5 rounded max-w-[120px] truncate block" title={log.referrer_domain || "Direct"}>
+                                    {log.referrer_domain || "Direct"}
+                                  </span>
+                                </td>
                                 <td className="p-3.5 font-mono text-indigo-300">{log.user_ip}</td>
                                 <td className="p-3.5">{log.user_location_name || "Unknown"}</td>
                                 <td className="p-3.5 font-mono text-[11px] text-slate-400 max-w-xs truncate" title={log.user_agent}>
                                   {log.user_agent}
                                 </td>
-                                <td className="p-3.5 text-slate-400 font-mono text-[11px]">
-                                  {new Date(log.timestamp).toLocaleString()}
+                                <td className="p-3.5 text-slate-300 font-mono text-[11px] whitespace-nowrap">
+                                  {formatIST(log.timestamp)}
                                 </td>
                               </tr>
                             ))}
@@ -1176,7 +1215,7 @@ export default function AdminDashboard() {
                       } else {
                         return (
                           <tr>
-                            <td colSpan={5} className="p-8 text-center text-slate-500 font-semibold">
+                            <td colSpan={6} className="p-8 text-center text-slate-500 font-semibold">
                               No traffic logs recorded yet. Visit the public page to see real-time hits!
                             </td>
                           </tr>
@@ -1807,7 +1846,7 @@ export default function AdminDashboard() {
                             )}
                             {ad.expires_at && (
                               <span className="text-[10px] text-slate-400 font-medium">
-                                Exp: {new Date(ad.expires_at).toLocaleDateString()}
+                                Exp: {formatDateIST(ad.expires_at)}
                               </span>
                             )}
                           </div>
@@ -2467,7 +2506,7 @@ export default function AdminDashboard() {
                       <th className="p-3">IP Address</th>
                       <th className="p-3">Location</th>
                       <th className="p-3">User Agent / Device</th>
-                      <th className="p-3">Timestamp</th>
+                      <th className="p-3">Timestamp (IST)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
@@ -2499,8 +2538,8 @@ export default function AdminDashboard() {
                           <td className="p-3 font-mono text-[10px] text-slate-400 max-w-xs truncate" title={log.user_agent}>
                             {log.user_agent}
                           </td>
-                          <td className="p-3 text-slate-400 font-mono text-[10px]">
-                            {new Date(log.timestamp).toLocaleString()}
+                          <td className="p-3 text-slate-300 font-mono text-[10px] whitespace-nowrap">
+                            {formatIST(log.timestamp)}
                           </td>
                         </tr>
                       ))

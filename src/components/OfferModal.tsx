@@ -393,7 +393,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
               {ad.expires_at && (
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 flex items-center gap-2.5">
                   <span className="text-xs font-black text-amber-900 flex items-center gap-1.5">
-                    ⏳ Valid Until: {new Date(ad.expires_at).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                    ⏳ Valid Until: {new Date(ad.expires_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                   </span>
                 </div>
               )}

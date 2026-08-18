@@ -221,7 +221,7 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
           {/* Expiry Date Badge */}
           {ad.expires_at && (
             <div className="absolute bottom-2.5 right-2.5 bg-amber-500/95 text-white font-extrabold text-[9px] sm:text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm border border-amber-600/10">
-              ⏳ {new Date(ad.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              ⏳ {new Date(ad.expires_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", month: "short", day: "numeric" })}
             </div>
           )}
         </div>
