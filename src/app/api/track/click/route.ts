@@ -27,16 +27,35 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL("/?fallback=ad_expired", req.url), 302);
       }
 
-      // Log click event asynchronously
-      const referrer = searchParams.get("referrer") || req.headers.get("referer") || "Direct";
+      // Extract client details and geo headers
+      const rawRef = searchParams.get("referrer") || req.headers.get("referer") || "Direct";
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
       const userAgent = req.headers.get("user-agent") || "";
       const visitorId = searchParams.get("visitor_id") || null;
+      
+      // Auto-resolve geo headers if available
+      const cfCity = req.headers.get("cf-ipcity");
+      const cfCountry = req.headers.get("cf-ipcountry");
+      const geoLoc = cfCity && cfCountry ? `${cfCity}, ${cfCountry}` : (cfCountry || null);
 
-      client.query(
-        `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip, user_agent, visitor_id) VALUES ($1, 'click', $2, $3, $4, $5)`,
-        [adId, referrer, ip, userAgent, visitorId]
-      ).catch((e) => console.error("Click log error:", e));
+      // Anti-Fraud Deduplication: Check if this visitor/IP already clicked this ad within the last 5 minutes
+      const dupCheck = await client.query(
+        `SELECT id FROM analytics_logs 
+         WHERE ad_id = $1 AND event_type = 'click' 
+           AND (visitor_id = $2 OR (visitor_id IS NULL AND user_ip = $3))
+           AND timestamp >= NOW() - INTERVAL '5 minutes'
+         LIMIT 1`,
+        [adId, visitorId, ip]
+      );
+
+      if (dupCheck.rows.length === 0) {
+        // Safe to log new unique click
+        await client.query(
+          `INSERT INTO analytics_logs (ad_id, event_type, referrer_domain, user_ip, user_agent, visitor_id, user_location_name) 
+           VALUES ($1, 'click', $2, $3, $4, $5, $6)`,
+          [adId, rawRef, ip, userAgent, visitorId, geoLoc]
+        );
+      }
 
       // 302 Redirect to target URL
       return NextResponse.redirect(ad.target_url, 302);
