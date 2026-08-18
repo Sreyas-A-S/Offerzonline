@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import gsap from "gsap";
-import { getOrCreateVisitorId, getTrafficSource } from "@/utils/analytics";
+import { getOrCreateVisitorId, getTrafficSource, getStoredLocationName } from "@/utils/analytics";
 
 // Category Visual Metadata inspired by the reference design with 3D cutouts & sub-tags
 const CATEGORY_CUTOUT_CARDS: Record<string, { 
@@ -232,7 +231,7 @@ export default function PublicDiscoveryPage() {
     // Persistent visitorId and traffic source (including QR code posters and campaigns)
     const visitorId = getOrCreateVisitorId();
     const trafficSource = getTrafficSource();
-    const storedLocation = typeof window !== "undefined" ? localStorage.getItem("offerz_user_location") || "Unknown" : "Unknown";
+    const storedLocation = getStoredLocationName();
 
     // Log public pageview asynchronously
     fetch("/api/track/pageview", {

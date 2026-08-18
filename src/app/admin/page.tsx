@@ -10,7 +10,7 @@ import {
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import Cropper from "react-easy-crop";
-import { parseUserAgentDetails } from "@/utils/analytics";
+import { parseUserAgentDetails, formatLocationName } from "@/utils/analytics";
 
 function SearchableSelect({
   label,
@@ -360,8 +360,8 @@ export default function AdminDashboard() {
   const [adReportLogs, setAdReportLogs] = useState<any[]>([]);
   const [adReportLoading, setAdReportLoading] = useState(false);
 
-  // Multi-Filter States for Analytics (defaults to 24h / Today's data)
-  const [analyticsTimeframe, setAnalyticsTimeframe] = useState("24h");
+  // Multi-Filter States for Analytics
+  const [analyticsTimeframe, setAnalyticsTimeframe] = useState("all");
   const [analyticsStartDate, setAnalyticsStartDate] = useState("");
   const [analyticsEndDate, setAnalyticsEndDate] = useState("");
   const [analyticsCategory, setAnalyticsCategory] = useState("all");
@@ -424,13 +424,13 @@ export default function AdminDashboard() {
   };
 
   const resetAnalyticsFilters = () => {
-    setAnalyticsTimeframe("24h");
+    setAnalyticsTimeframe("all");
     setAnalyticsStartDate("");
     setAnalyticsEndDate("");
     setAnalyticsCategory("all");
     setAnalyticsAd("all");
     setAnalyticsReferrer("all");
-    fetchFilteredAnalytics("24h", "", "", "all", "all", "all");
+    fetchFilteredAnalytics("all", "", "", "all", "all", "all");
   };
 
   const fetchDashboardData = async () => {
@@ -1131,7 +1131,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Reset / Quick status */}
-                {(analyticsTimeframe !== "24h" || analyticsStartDate || analyticsEndDate || analyticsCategory !== "all" || analyticsAd !== "all" || analyticsReferrer !== "all") && (
+                {(analyticsTimeframe !== "all" || analyticsStartDate || analyticsEndDate || analyticsCategory !== "all" || analyticsAd !== "all" || analyticsReferrer !== "all") && (
                   <button
                     onClick={resetAnalyticsFilters}
                     className="self-start md:self-auto text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-800/40 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
@@ -1593,12 +1593,17 @@ export default function AdminDashboard() {
                                     )}
                                   </td>
                                   <td className="p-3.5">
-                                    <div className="flex items-center gap-1 text-xs text-slate-200 font-medium max-w-[180px]">
-                                      <MapPin size={12} className="text-rose-400 shrink-0" />
-                                      <span className="truncate" title={log.user_location_name || "Unknown Location"}>
-                                        {log.user_location_name || "Unknown Location"}
-                                      </span>
-                                    </div>
+                                    {(() => {
+                                      const cleanLoc = formatLocationName(log.user_location_name);
+                                      return (
+                                        <div className="flex items-center gap-1 text-xs text-slate-200 font-medium max-w-[180px]">
+                                          <MapPin size={12} className="text-rose-400 shrink-0" />
+                                          <span className="truncate" title={cleanLoc}>
+                                            {cleanLoc}
+                                          </span>
+                                        </div>
+                                      );
+                                    })()}
                                   </td>
                                   <td className="p-3.5">
                                     <div className="space-y-0.5">

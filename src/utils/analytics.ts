@@ -220,6 +220,51 @@ export function parseUserAgentDetails(ua: string): {
 }
 
 /**
+ * Formats any raw location string or serialized JSON into a clean human-readable city/area name
+ */
+export function formatLocationName(rawLocation?: string | null): string {
+  if (!rawLocation || typeof rawLocation !== "string") return "Unknown Location";
+  const trimmed = rawLocation.trim();
+  if (!trimmed || trimmed === "Unknown" || trimmed === "Unknown Location" || trimmed === "null" || trimmed === "undefined") {
+    return "Unknown Location";
+  }
+
+  // Handle JSON serialized location objects (e.g. {"name":"Kanayannur","lat":9.97,"lng":76.28})
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object") {
+        const loc = parsed.name || parsed.city || parsed.area || parsed.location || parsed.address;
+        if (loc && typeof loc === "string" && loc.trim() !== "" && loc !== "Current Location") {
+          return loc.trim();
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // Strip extraneous quotes or brackets
+  const cleaned = trimmed.replace(/^["']|["']$/g, "").trim();
+  return cleaned || "Unknown Location";
+}
+
+/**
+ * Gets clean user location from localStorage on the client
+ */
+export function getStoredLocationName(): string {
+  if (typeof window === "undefined") return "Unknown";
+  try {
+    const raw = localStorage.getItem("offerz_user_location");
+    if (!raw) return "Unknown";
+    const formatted = formatLocationName(raw);
+    return formatted === "Unknown Location" ? "Unknown" : formatted;
+  } catch {
+    return "Unknown";
+  }
+}
+
+/**
  * Extracts and sanitizes clean client IP (handles IPv4, IPv6, and stripped prefixes)
  */
 export function extractClientIp(headers: Headers): string {
@@ -246,9 +291,12 @@ export async function resolveLocationFromHeadersAndIp(
   ip: string, 
   clientProvidedLocation?: string
 ): Promise<string> {
-  // If client GPS reverse geocoded location is already provided, use it
-  if (clientProvidedLocation && clientProvidedLocation !== "Unknown" && clientProvidedLocation.trim() !== "") {
-    return clientProvidedLocation.trim();
+  // If client GPS reverse geocoded location is already provided, format and use it
+  if (clientProvidedLocation) {
+    const cleanClientLoc = formatLocationName(clientProvidedLocation);
+    if (cleanClientLoc !== "Unknown Location") {
+      return cleanClientLoc;
+    }
   }
 
   // 1. Cloudflare CDN Geo headers
