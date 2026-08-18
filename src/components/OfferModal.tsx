@@ -162,7 +162,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
     >
       <div
         ref={modalContentRef}
-        className={`bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden relative border border-slate-100 transition-all duration-300 flex flex-col justify-between ${
+        className={`bg-white w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden relative border border-slate-100 transition-all duration-300 flex flex-col justify-between ${
           isClosing ? "scale-95 translate-y-4 opacity-0" : "scale-100 translate-y-0 opacity-100"
         }`}
       >
@@ -210,7 +210,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                     playsInline
                     preload="auto"
                     onClick={() => setFullscreenMediaOpen(true)}
-                    className="w-full h-auto max-h-[520px] object-contain cursor-pointer rounded-xl"
+                    className="w-full h-auto max-h-[520px] object-contain cursor-pointer rounded-md"
                   >
                     <source src={currentUrl} type="video/mp4" />
                   </video>
@@ -220,7 +220,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                     src={getOptimizedUrl(currentUrl)}
                     alt={ad.title}
                     onClick={() => setFullscreenMediaOpen(true)}
-                    className="w-full h-auto max-h-[520px] object-contain group-hover:scale-[1.01] transition-transform duration-500 cursor-pointer rounded-xl"
+                    className="w-full h-auto max-h-[520px] object-contain group-hover:scale-[1.01] transition-transform duration-500 cursor-pointer rounded-md"
                   />
                 );
               })()}
@@ -313,7 +313,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
               {/* Pricing & Discounts callout */}
               {(ad.original_price || ad.originalPrice || ad.promo_price || ad.promoPrice || ad.discount_value || ad.discountValue) && (
-                <div className="bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 rounded-2xl p-4 flex items-center justify-between shadow-xs">
+                <div className="bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 rounded-lg p-4 flex items-center justify-between shadow-xs">
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-indigo-455 uppercase tracking-wider block">Special Promo Offer</span>
                     <div className="flex items-baseline gap-2">
@@ -349,7 +349,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
               {/* Merchant Details */}
               {(ad.store_name || ad.storeName || ad.store_address || ad.storeAddress || ad.store_phone || ad.storePhone) && (
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3.5 shadow-xs">
+                <div className="bg-slate-50 rounded-lg p-5 border border-slate-100 space-y-3.5 shadow-xs">
                   <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">About the Merchant</h4>
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
