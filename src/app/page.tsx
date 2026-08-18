@@ -330,15 +330,20 @@ export default function PublicDiscoveryPage() {
     async function fetchAds() {
       setLoading(true);
       try {
-        const query = new URLSearchParams({
-          lat: location.lat.toString(),
-          lng: location.lng.toString(),
-          category: selectedCategory,
-        });
+        const query = new URLSearchParams();
+        if (location.lat && location.lng) {
+          query.append("lat", location.lat.toString());
+          query.append("lng", location.lng.toString());
+        }
+        if (selectedCategory && selectedCategory !== "all") {
+          query.append("category", selectedCategory);
+        }
 
         const res = await fetch(`/api/ads/serve?${query.toString()}`);
         const data = await res.json();
-        setAds(data.ads || []);
+        if (data && Array.isArray(data.ads)) {
+          setAds(data.ads);
+        }
       } catch (err) {
         console.error("Error loading ads:", err);
       } finally {
@@ -353,9 +358,11 @@ export default function PublicDiscoveryPage() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await fetch("/api/admin/ads");
+        const res = await fetch("/api/admin/categories");
         const data = await res.json();
-        setCategories(data.categories || []);
+        if (data && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories);
+        }
       } catch (err) {
         console.error("Categories fetch fail:", err);
       }

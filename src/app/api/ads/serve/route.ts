@@ -105,8 +105,14 @@ export async function GET(req: NextRequest) {
         }
 
         if (categoryId && categoryId !== "all") {
-          query += ` AND a.category_id = $${paramCounter}`;
-          queryParams.push(parseInt(categoryId, 10));
+          const isNumeric = /^\d+$/.test(categoryId);
+          if (isNumeric) {
+            query += ` AND a.category_id = $${paramCounter}`;
+            queryParams.push(parseInt(categoryId, 10));
+          } else {
+            query += ` AND (c.name ILIKE $${paramCounter} OR c.slug ILIKE $${paramCounter})`;
+            queryParams.push(`%${categoryId}%`);
+          }
           paramCounter++;
         }
 
@@ -166,8 +172,14 @@ export async function GET(req: NextRequest) {
         }
 
         if (categoryId && categoryId !== "all") {
-          query += ` AND a.category_id = $${paramCounter}`;
-          queryParams.push(parseInt(categoryId, 10));
+          const isNumeric = /^\d+$/.test(categoryId);
+          if (isNumeric) {
+            query += ` AND a.category_id = $${paramCounter}`;
+            queryParams.push(parseInt(categoryId, 10));
+          } else {
+            query += ` AND (c.name ILIKE $${paramCounter} OR c.slug ILIKE $${paramCounter})`;
+            queryParams.push(`%${categoryId}%`);
+          }
           paramCounter++;
         }
 
@@ -186,7 +198,7 @@ export async function GET(req: NextRequest) {
 
       // Fallback: If no ads exist strictly inside the user's specific GPS radius, return active ads ordered by priority
       if (adsToReturn.length === 0) {
-        const fallbackQuery = `
+        let fallbackQuery = `
           SELECT 
             a.id, a.uuid, a.title, a.category_id, c.name as category_name,
             a.media_url, a.media_type, a.ad_format, a.target_url,
@@ -198,11 +210,20 @@ export async function GET(req: NextRequest) {
           FROM ads a
           LEFT JOIN categories c ON a.category_id = c.id
           WHERE a.is_active = TRUE
-          ${categoryId && categoryId !== "all" ? `AND a.category_id = ${parseInt(categoryId, 10)}` : ""}
-          ORDER BY a.weight_priority DESC, a.created_at DESC
-          LIMIT 20
         `;
-        const fallbackRes = await client.query(fallbackQuery);
+        const fallbackParams: any[] = [];
+        if (categoryId && categoryId !== "all") {
+          const isNumeric = /^\d+$/.test(categoryId);
+          if (isNumeric) {
+            fallbackQuery += ` AND a.category_id = $1`;
+            fallbackParams.push(parseInt(categoryId, 10));
+          } else {
+            fallbackQuery += ` AND (c.name ILIKE $1 OR c.slug ILIKE $1)`;
+            fallbackParams.push(`%${categoryId}%`);
+          }
+        }
+        fallbackQuery += ` ORDER BY a.weight_priority DESC, a.created_at DESC LIMIT 20`;
+        const fallbackRes = await client.query(fallbackQuery, fallbackParams);
         adsToReturn = fallbackRes.rows;
       }
 
