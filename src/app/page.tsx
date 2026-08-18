@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import gsap from "gsap";
-import { getOrCreateVisitorId, cleanReferrer } from "@/utils/analytics";
+import { getOrCreateVisitorId, getTrafficSource } from "@/utils/analytics";
 
 // Category Visual Metadata inspired by the reference design with 3D cutouts & sub-tags
 const CATEGORY_CUTOUT_CARDS: Record<string, { 
@@ -229,9 +229,9 @@ export default function PublicDiscoveryPage() {
     }
     loadBrandLogo();
 
-    // Persistent visitorId and clean referrer
+    // Persistent visitorId and traffic source (including QR code posters and campaigns)
     const visitorId = getOrCreateVisitorId();
-    const referrer = cleanReferrer(typeof document !== "undefined" ? document.referrer : "");
+    const trafficSource = getTrafficSource();
 
     // Log public pageview asynchronously
     fetch("/api/track/pageview", {
@@ -241,7 +241,8 @@ export default function PublicDiscoveryPage() {
         eventType: "page_view",
         pagePath: typeof window !== "undefined" ? window.location.pathname : "/",
         visitorId,
-        referrer,
+        referrer: trafficSource,
+        locationName: userLocationName || "Unknown",
       }),
     }).catch((e) => console.error("Pageview log error:", e));
 

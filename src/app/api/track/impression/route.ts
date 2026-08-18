@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { extractClientIp, resolveLocationFromHeadersAndIp, cleanReferrer } from "@/utils/analytics";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { adId, adIds, referrer, userLocation } = body;
 
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
+    const ip = extractClientIp(req.headers);
     const userAgent = req.headers.get("user-agent") || "";
     const visitorId = body.visitorId || null;
     const idsToLog: number[] = adIds ? adIds : (adId ? [adId] : []);
@@ -15,12 +16,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "adId or adIds required" }, { status: 400 });
     }
 
-    // Auto-resolve geo headers if client location is unknown
-    const cfCity = req.headers.get("cf-ipcity");
-    const cfCountry = req.headers.get("cf-ipcountry");
-    const headerLoc = cfCity && cfCountry ? `${cfCity}, ${cfCountry}` : (cfCountry || null);
-    const finalLocation = (!userLocation || userLocation === "Unknown") ? (headerLoc || "Unknown") : userLocation;
-    const finalReferrer = referrer || req.headers.get("referer") || "Direct";
+    // Auto-resolve geo location (client reverse geocode or server GeoIP)
+    const finalLocation = await resolveLocationFromHeadersAndIp(req.headers, ip, userLocation);
+    const finalReferrer = cleanReferrer(referrer || req.headers.get("referer") || "Direct");
 
     try {
       const client = await pool.connect();

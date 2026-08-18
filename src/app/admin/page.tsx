@@ -1516,6 +1516,7 @@ export default function AdminDashboard() {
                           <>
                             {currentLogs.map((log) => {
                               const uaInfo = parseUserAgentDetails(log.user_agent);
+                              const isIpv6 = log.user_ip && log.user_ip.includes(":");
                               return (
                                 <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
                                   <td className="p-3.5">
@@ -1533,23 +1534,51 @@ export default function AdminDashboard() {
                                     {log.ad_title && <span className="block text-[10px] text-slate-400 truncate max-w-[140px] mt-0.5">{log.ad_title}</span>}
                                   </td>
                                   <td className="p-3.5 font-mono text-[11px]">
-                                    <span className="text-purple-300 bg-purple-950/40 border border-purple-800/40 px-2 py-0.5 rounded max-w-[120px] truncate block" title={log.referrer_domain || "Direct"}>
+                                    <span 
+                                      className={`px-2 py-0.5 rounded max-w-[140px] truncate block ${
+                                        log.referrer_domain && log.referrer_domain.toLowerCase().includes("qr")
+                                          ? "text-amber-300 bg-amber-950/40 border border-amber-800/40 font-bold"
+                                          : "text-purple-300 bg-purple-950/40 border border-purple-800/40"
+                                      }`} 
+                                      title={log.referrer_domain || "Direct"}
+                                    >
                                       {log.referrer_domain || "Direct"}
                                     </span>
                                   </td>
                                   <td className="p-3.5">
-                                    <span className="font-mono text-indigo-300 font-bold block text-xs">{log.user_ip}</span>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="font-mono text-indigo-300 font-bold text-xs max-w-[160px] truncate" title={log.user_ip}>
+                                        {log.user_ip}
+                                      </span>
+                                      {isIpv6 && (
+                                        <span className="text-[9px] bg-indigo-950 border border-indigo-700 text-indigo-300 px-1 py-0.2 rounded font-mono font-extrabold">
+                                          IPv6
+                                        </span>
+                                      )}
+                                    </div>
                                     {log.visitor_id && (
-                                      <span className="text-[9px] text-slate-500 font-mono tracking-wider block truncate max-w-[120px]" title={`Visitor ID: ${log.visitor_id}`}>
+                                      <span className="text-[9px] text-slate-500 font-mono tracking-wider block truncate max-w-[140px]" title={`Visitor ID: ${log.visitor_id}`}>
                                         ID: {log.visitor_id.substring(0, 12)}…
                                       </span>
                                     )}
                                   </td>
-                                  <td className="p-3.5 text-xs text-slate-200">{log.user_location_name || "Unknown"}</td>
                                   <td className="p-3.5">
-                                    <span className="bg-slate-900 border border-[#1e293b] text-slate-300 px-2 py-0.5 rounded-md text-[10px] font-bold inline-block" title={log.user_agent}>
-                                      {uaInfo.device} • {uaInfo.browser} ({uaInfo.os})
-                                    </span>
+                                    <div className="flex items-center gap-1 text-xs text-slate-200 font-medium max-w-[180px]">
+                                      <MapPin size={12} className="text-rose-400 shrink-0" />
+                                      <span className="truncate" title={log.user_location_name || "Unknown Location"}>
+                                        {log.user_location_name || "Unknown Location"}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="p-3.5">
+                                    <div className="space-y-0.5">
+                                      <span className="bg-slate-900 border border-[#1e293b] text-slate-200 px-2 py-0.5 rounded-md text-[10px] font-bold inline-block" title={log.user_agent}>
+                                        {uaInfo.device} • {uaInfo.browser}
+                                      </span>
+                                      <span className="text-[10px] text-slate-500 block">
+                                        {uaInfo.os}
+                                      </span>
+                                    </div>
                                   </td>
                                   <td className="p-3.5 text-slate-300 font-mono text-[11px] whitespace-nowrap">
                                     {formatIST(log.timestamp)}

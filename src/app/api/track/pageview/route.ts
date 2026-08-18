@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { extractClientIp, resolveLocationFromHeadersAndIp } from "@/utils/analytics";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const { eventType = "page_view", pagePath = "/", locationName, visitorId, adId } = body;
 
-    const userIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-      req.headers.get("x-real-ip") ||
-      "127.0.0.1";
+    const userIp = extractClientIp(req.headers);
     const userAgent = req.headers.get("user-agent") || "";
     const referrerDomain = body.referrer || body.referrerDomain || req.headers.get("referer") || "Direct";
+    const resolvedLocation = await resolveLocationFromHeadersAndIp(req.headers, userIp, locationName);
 
     const client = await pool.connect();
     try {
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
           referrerDomain,
           userIp,
           userAgent,
-          locationName || null,
+          resolvedLocation,
         ]
       );
       return NextResponse.json({ success: true });
