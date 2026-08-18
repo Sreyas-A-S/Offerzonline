@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const adIdFilter = searchParams.get("ad_id");
-    const timeframe = searchParams.get("timeframe") || "all"; // all, 24h, 7d, 30d, custom
+    const timeframe = searchParams.get("timeframe") || "24h"; // default to 24h (today's data)
     const startDate = searchParams.get("start_date");
     const endDate = searchParams.get("end_date");
     const categoryId = searchParams.get("category_id");
