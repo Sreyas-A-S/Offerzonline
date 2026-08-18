@@ -403,6 +403,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const soft = searchParams.get("soft") === "true";
 
     if (!id) {
       return NextResponse.json({ error: "Ad ID required" }, { status: 400 });
@@ -411,16 +412,21 @@ export async function DELETE(req: NextRequest) {
     try {
       const client = await pool.connect();
       try {
-        await client.query(
-          `UPDATE ads SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-          [id]
-        );
+        if (soft) {
+          await client.query(
+            `UPDATE ads SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [id]
+          );
+        } else {
+          await client.query(`DELETE FROM ads WHERE id = $1`, [id]);
+        }
         return NextResponse.json({ success: true });
       } finally {
         client.release();
       }
-    } catch (dbErr) {
-      MOCK_STORED_ADS = MOCK_STORED_ADS.map((a) => (a.id.toString() === id.toString() ? { ...a, is_active: false } : a));
+    } catch (dbErr: any) {
+      console.warn("Ads DELETE DB error, falling back:", dbErr.message);
+      MOCK_STORED_ADS = MOCK_STORED_ADS.filter((a) => a.id.toString() !== id.toString());
       return NextResponse.json({ success: true });
     }
   } catch (error: any) {

@@ -527,24 +527,29 @@ export default function AdminDashboard() {
     setShowCreateForm(true);
   };
 
-  // Soft Delete Ad (Triggers Cloudflare purge)
-  const handleDeleteAd = async (id: number) => {
-    if (!confirm("Are you sure you want to deactivate and hide this campaign?")) return;
+  // Permanent Delete Ad
+  const handleDeleteAd = async (id: number, title?: string) => {
+    const name = title ? `"${title}"` : "this campaign";
+    if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return;
 
     try {
       const res = await fetch(`/api/admin/ads?id=${id}`, { method: "DELETE" });
       const result = await res.json();
       if (result.success) {
-        setMessage({ type: "success", text: "Campaign deactivated and hidden!" });
+        setMessage({ type: "success", text: `Ad ${name} deleted successfully!` });
         fetchDashboardData();
+      } else {
+        setMessage({ type: "error", text: result.error || "Delete failed" });
       }
     } catch (err: any) {
-      setMessage({ type: "error", text: "Deactivate failed" });
+      setMessage({ type: "error", text: "Delete request error" });
     }
   };
 
-  const handleReactivateAd = async (ad: any) => {
+  // Toggle Hide / Deactivate Ad
+  const handleToggleHideAd = async (ad: any) => {
     try {
+      const nextActive = !ad.is_active;
       const res = await fetch("/api/admin/ads", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -556,13 +561,13 @@ export default function AdminDashboard() {
           mediaType: ad.media_type || ad.mediaType,
           adFormat: ad.ad_format || ad.adFormat,
           targetUrl: ad.target_url || ad.targetUrl,
-          latitude: parseFloat(ad.latitude),
-          longitude: parseFloat(ad.longitude),
+          latitude: ad.latitude !== null && ad.latitude !== undefined ? parseFloat(ad.latitude) : null,
+          longitude: ad.longitude !== null && ad.longitude !== undefined ? parseFloat(ad.longitude) : null,
           radiusKm: parseInt((ad.radius_km || ad.radiusKm || 10).toString(), 10),
           weightPriority: parseInt((ad.weight_priority || ad.weightPriority || 5).toString(), 10),
           description: ad.description || null,
           expiresAt: ad.expires_at || null,
-          isActive: true,
+          isActive: nextActive,
           storeName: ad.store_name || ad.storeName || null,
           storeLogo: ad.store_logo || ad.storeLogo || null,
           storePhone: ad.store_phone || ad.storePhone || null,
@@ -571,17 +576,22 @@ export default function AdminDashboard() {
           promoPrice: ad.promo_price || ad.promoPrice || null,
           discountValue: ad.discount_value || ad.discountValue || null,
           terms: ad.terms || null,
+          isOnloadPopup: ad.is_onload_popup || false,
+          isRecommended: ad.is_recommended || false,
         }),
       });
       const result = await res.json();
       if (result.success) {
-        setMessage({ type: "success", text: "Campaign reactivated successfully!" });
+        setMessage({
+          type: "success",
+          text: nextActive ? `Campaign "${ad.title}" activated!` : `Campaign "${ad.title}" hidden / deactivated!`,
+        });
         fetchDashboardData();
       } else {
-        setMessage({ type: "error", text: result.error || "Failed to reactivate campaign" });
+        setMessage({ type: "error", text: result.error || "Failed to update campaign state" });
       }
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Reactivate failed" });
+      setMessage({ type: "error", text: err.message || "Action failed" });
     }
   };
 
@@ -1803,7 +1813,7 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => openEditAdForm(ad)}
                               className="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 px-2.5 py-1.5 rounded-xl transition border border-indigo-800/60 flex items-center gap-1 text-xs font-bold cursor-pointer"
@@ -1820,28 +1830,35 @@ export default function AdminDashboard() {
                             </button>
                             <button
                               onClick={() => setEmbedAd(ad)}
-                              className="text-indigo-400 hover:text-indigo-300 p-2.5 rounded-xl hover:bg-indigo-950/20 transition border border-transparent hover:border-indigo-900/40 cursor-pointer"
+                              className="text-indigo-400 hover:text-indigo-300 p-2 rounded-xl hover:bg-indigo-950/20 transition border border-transparent hover:border-indigo-900/40 cursor-pointer"
                               title="Get embed tag script code"
                             >
                               <Code size={14} />
                             </button>
                             {ad.is_active ? (
                               <button
-                                onClick={() => handleDeleteAd(ad.id)}
-                                className="text-rose-455 hover:text-rose-355 p-2.5 rounded-xl hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40 cursor-pointer flex items-center gap-1"
+                                onClick={() => handleToggleHideAd(ad)}
+                                className="text-amber-400 hover:text-amber-300 p-2 rounded-xl hover:bg-amber-950/20 transition border border-transparent hover:border-amber-900/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
                                 title="Hide / Deactivate Campaign"
                               >
                                 <EyeOff size={14} /> Hide
                               </button>
                             ) : (
                               <button
-                                onClick={() => handleReactivateAd(ad)}
-                                className="text-emerald-400 hover:text-emerald-300 p-2.5 rounded-xl hover:bg-emerald-955/20 transition border border-transparent hover:border-emerald-900/40 cursor-pointer flex items-center gap-1"
+                                onClick={() => handleToggleHideAd(ad)}
+                                className="text-emerald-400 hover:text-emerald-300 p-2 rounded-xl hover:bg-emerald-955/20 transition border border-transparent hover:border-emerald-900/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
                                 title="Show / Reactivate Campaign"
                               >
                                 <Eye size={14} /> Show
                               </button>
                             )}
+                            <button
+                              onClick={() => handleDeleteAd(ad.id, ad.title)}
+                              className="text-rose-455 hover:text-rose-355 p-2 rounded-xl hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
+                              title="Delete Ad Campaign Permanently"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
                           </div>
                         </td>
                       </tr>
