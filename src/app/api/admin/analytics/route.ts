@@ -31,12 +31,12 @@ export async function GET(req: NextRequest) {
         logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 29`);
       } else if (timeframe === "custom") {
         if (startDate) {
-          logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp`);
-          logParams.push(`${startDate} 00:00:00`);
+          logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date >= $${paramIdx++}::date`);
+          logParams.push(startDate);
         }
         if (endDate) {
-          logConditions.push(`l.timestamp <= $${paramIdx++}::timestamp`);
-          logParams.push(`${endDate} 23:59:59`);
+          logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date <= $${paramIdx++}::date`);
+          logParams.push(endDate);
         }
       }
 
@@ -136,19 +136,21 @@ export async function GET(req: NextRequest) {
 
       // Time condition snippet for ad breakdown subqueries
       let timeSnippet = "";
-      if (timeframe === "24h") {
-        timeSnippet = "AND timestamp >= NOW() - INTERVAL '24 hours'";
+      if (timeframe === "today" || timeframe === "24h") {
+        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date";
+      } else if (timeframe === "yesterday") {
+        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 1";
       } else if (timeframe === "7d") {
-        timeSnippet = "AND timestamp >= NOW() - INTERVAL '7 days'";
+        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 6";
       } else if (timeframe === "30d") {
-        timeSnippet = "AND timestamp >= NOW() - INTERVAL '30 days'";
+        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 29";
       } else if (timeframe === "custom") {
         if (startDate && endDate) {
-          timeSnippet = `AND timestamp >= '${startDate} 00:00:00' AND timestamp <= '${endDate} 23:59:59'`;
+          timeSnippet = `AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= '${startDate}'::date AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date <= '${endDate}'::date`;
         } else if (startDate) {
-          timeSnippet = `AND timestamp >= '${startDate} 00:00:00'`;
+          timeSnippet = `AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= '${startDate}'::date`;
         } else if (endDate) {
-          timeSnippet = `AND timestamp <= '${endDate} 23:59:59'`;
+          timeSnippet = `AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date <= '${endDate}'::date`;
         }
       }
 
