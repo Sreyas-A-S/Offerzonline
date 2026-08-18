@@ -73,7 +73,55 @@ To tell Cloudflare *what* to cache at the edge:
 
 *Now, ad requests will be cached at the edge, and the Admin Panel will trigger a purge event on `/api/ads` endpoints automatically whenever you add or deactivate campaigns!*
 
+---
 
+## 4. Live API Health & Instant Campaign Verification (No Build Needed)
+
+You can verify whether live campaigns from PostgreSQL are being served without needing to rebuild Docker:
+
+### Base URL Configuration
+In your `.env` or `.env.local`:
+```env
+# Production or Local Base URL
+NEXT_PUBLIC_SITE_URL="https://offerzonline.com"
+```
+
+### Direct Browser / Postman / cURL Test Endpoints
+Replace `https://offerzonline.com` with your current deployment URL:
+
+1. **Verify Live Public Ads JSON:**
+   ```
+   https://offerzonline.com/api/ads/serve
+   ```
+   *Expected response:*
+   ```json
+   {
+     "ads": [
+       {
+         "id": 1,
+         "title": "Your Active Campaign Title",
+         "is_active": true
+       }
+     ]
+   }
+   ```
+
+2. **Verify Admin Analytics & Today (IST) Counts:**
+   ```
+   https://offerzonline.com/api/admin/analytics?timeframe=today
+   ```
+
+3. **Database Health Check & Auto-Table Sync:**
+   ```
+   https://offerzonline.com/api/admin/restore
+   ```
+
+---
+
+## 5. Deployment Commands
+
+### Standard Update (When Code Changes)
+```bash
 git pull
 docker compose build app
 docker compose up -d app
