@@ -1646,16 +1646,6 @@ export default function AdminDashboard() {
                   <p className="text-xs text-slate-400">Detailed records of IP addresses, user agents, detected locations, and events</p>
                 </div>
                 <div className="flex items-center gap-2 self-start sm:self-auto">
-                  {recentAuditLogs.length > 0 && (
-                    <button
-                      onClick={handleClearAllLogs}
-                      disabled={isClearingAllLogs}
-                      className="bg-rose-950/50 hover:bg-rose-900 border border-rose-800/60 text-rose-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
-                      title="Permanently clear all recorded traffic logs"
-                    >
-                      <Trash2 size={13} /> {isClearingAllLogs ? "Clearing..." : "Clear All Logs"}
-                    </button>
-                  )}
                   <button
                     onClick={fetchDashboardData}
                     className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
