@@ -152,39 +152,7 @@ export async function POST(req: NextRequest) {
       }
     } catch (dbErr: any) {
       console.error("DB insert error:", dbErr.message);
-      // Mock creation fallback
-      const catObj = MOCK_CATEGORIES.find((c) => c.id === parseInt(categoryId, 10));
-      const newMockAd = {
-        id: Date.now(),
-        title,
-        category_id: categoryId,
-        category_name: catObj ? catObj.name : "General",
-        media_url: mediaUrl,
-        media_type: mediaType,
-        ad_format: adFormat,
-        target_url: targetUrl,
-        latitude,
-        longitude,
-        radius_km: radiusKm,
-        weight_priority: weightPriority || 1,
-        description: description || null,
-        expires_at: expiresAt || null,
-        store_name: storeName || null,
-        store_logo: storeLogo || null,
-        store_phone: storePhone || null,
-        store_address: storeAddress || null,
-        original_price: originalPrice || null,
-        promo_price: promoPrice || null,
-        discount_value: discountValue || null,
-        terms: terms || null,
-        distance_km: 0.5,
-        views: 0,
-        clicks: 0,
-        ctr: "0.00",
-        is_active: true,
-      };
-      MOCK_STORED_ADS.unshift(newMockAd);
-      return NextResponse.json({ success: true, ad: newMockAd });
+      return NextResponse.json({ error: "Unable to save ad to the database." }, { status: 503 });
     }
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -338,35 +306,7 @@ export async function PUT(req: NextRequest) {
       }
     } catch (dbErr: any) {
       console.error("DB update error:", dbErr.message);
-      MOCK_STORED_ADS = MOCK_STORED_ADS.map((a) =>
-        a.id.toString() === id.toString()
-          ? {
-              ...a,
-              title,
-              category_id: categoryId,
-              media_url: mediaUrl,
-              media_type: mediaType,
-              ad_format: adFormat,
-              target_url: targetUrl,
-              latitude,
-              longitude,
-              radius_km: radiusKm,
-              weight_priority: weightPriority,
-              description,
-              expires_at: expiresAt,
-              store_name: storeName || null,
-              store_logo: storeLogo || null,
-              store_phone: storePhone || null,
-              store_address: storeAddress || null,
-              original_price: originalPrice || null,
-              promo_price: promoPrice || null,
-              discount_value: discountValue || null,
-              terms: terms || null,
-              is_active: isActive !== undefined ? isActive : a.is_active,
-            }
-          : a
-      );
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ error: "Unable to update ad in the database." }, { status: 503 });
     }
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -405,9 +345,8 @@ export async function DELETE(req: NextRequest) {
         client.release();
       }
     } catch (dbErr: any) {
-      console.warn("Ads DELETE DB error, falling back:", dbErr.message);
-      MOCK_STORED_ADS = MOCK_STORED_ADS.filter((a) => a.id.toString() !== id.toString());
-      return NextResponse.json({ success: true });
+      console.error("Ads DELETE DB error:", dbErr.message);
+      return NextResponse.json({ error: "Unable to delete ad from the database." }, { status: 503 });
     }
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
