@@ -118,15 +118,26 @@ Replace `https://offerzonline.com` with your current deployment URL:
 
 ---
 
-## 5. Deployment Commands
+## 5. Instant 1-Command Server Deployment
 
-### Standard Update (When Code Changes)
+Instead of typing multiple commands every time, run the automated script on your server:
+
+### Option A: Using the Deploy Script (Recommended)
 ```bash
-git pull
-docker compose build app
-docker compose up -d app
+./deploy.sh
+```
+*(If permission needed on first run: `chmod +x deploy.sh`)*
 
+---
 
-git pull
-docker compose restart app
-docker compose up -d app
+### Option B: One-Liner Terminal Command
+```bash
+git pull && docker compose build app && docker compose up -d app
+```
+
+---
+
+### Option C: Quick Restart (When Only Config or DB Changed - 2 Seconds)
+```bash
+git pull && docker compose restart app
+```
