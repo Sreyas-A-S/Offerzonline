@@ -32,8 +32,8 @@ export const ads = pgTable("ads", {
   mediaType: varchar("media_type", { length: 50 }).notNull(), // 'image' | 'gif' | 'video'
   adFormat: varchar("ad_format", { length: 50 }).notNull(), // '300x250' | '728x90' | '1080x1920' | 'responsive'
   targetUrl: text("target_url").notNull(),
-  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
-  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
   radiusKm: integer("radius_km").notNull().default(5),
   weightPriority: integer("weight_priority").notNull().default(1),
   isActive: boolean("is_active").notNull().default(true),

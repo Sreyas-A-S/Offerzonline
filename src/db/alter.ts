@@ -59,6 +59,11 @@ async function runAlterations() {
       }
     }
 
+    await client.query(`
+      ALTER TABLE ads ALTER COLUMN latitude DROP NOT NULL;
+      ALTER TABLE ads ALTER COLUMN longitude DROP NOT NULL;
+    `);
+
     // Backfill missing UUIDs for existing rows
     await client.query(`
       CREATE EXTENSION IF NOT EXISTS "pgcrypto";
