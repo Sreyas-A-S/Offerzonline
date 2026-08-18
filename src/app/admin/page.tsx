@@ -1039,6 +1039,7 @@ export default function AdminDashboard() {
                       <th className="p-3.5 text-center">Clicks</th>
                       <th className="p-3.5 text-center">Unique Users</th>
                       <th className="p-3.5 text-center">CTR %</th>
+                      <th className="p-3.5 text-center">Top Referrer</th>
                       <th className="p-3.5 text-right">Detailed Log Report</th>
                     </tr>
                   </thead>
@@ -1067,6 +1068,11 @@ export default function AdminDashboard() {
                                 <td className="p-3.5 text-center font-bold text-purple-300">{report.clicks}</td>
                                 <td className="p-3.5 text-center font-bold text-emerald-300">{report.unique_users}</td>
                                 <td className="p-3.5 text-center font-black text-amber-400">{report.ctr}%</td>
+                                <td className="p-3.5 text-center font-mono text-[11px]">
+                                  <span className="bg-purple-950/40 border border-purple-800/40 text-purple-300 px-2.5 py-1 rounded-full max-w-[130px] truncate inline-block" title={report.top_referrer || "Direct"}>
+                                    {report.top_referrer || "Direct"}
+                                  </span>
+                                </td>
                                 <td className="p-3.5 text-right">
                                   <button
                                     onClick={() => openAdReportModal(report)}
@@ -1082,7 +1088,7 @@ export default function AdminDashboard() {
                       } else {
                         return (
                           <tr>
-                            <td colSpan={7} className="p-8 text-center text-slate-500 font-semibold">
+                            <td colSpan={8} className="p-8 text-center text-slate-500 font-semibold">
                               No ad campaign breakdown data available yet.
                             </td>
                           </tr>
@@ -1717,6 +1723,7 @@ export default function AdminDashboard() {
                       <th className="px-6 py-4">Impressions</th>
                       <th className="px-6 py-4">Clicks</th>
                       <th className="px-6 py-4">CTR</th>
+                      <th className="px-6 py-4">Top Referrer</th>
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4">Action</th>
                     </tr>
@@ -1833,6 +1840,11 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 text-slate-300">{ad.views}</td>
                         <td className="px-6 py-4 text-slate-300">{ad.clicks}</td>
                         <td className="px-6 py-4 font-bold text-indigo-400">{ad.ctr}%</td>
+                        <td className="px-6 py-4">
+                          <span className="bg-purple-950/50 border border-purple-800/60 text-purple-300 text-xs px-2.5 py-1 rounded-full font-mono font-medium max-w-[130px] truncate block" title={ad.top_referrer || "Direct"}>
+                            {ad.top_referrer || "Direct"}
+                          </span>
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1.5 items-start">
                             {ad.is_active ? (
@@ -2475,7 +2487,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Impressions</span>
                 <span className="text-2xl font-black text-white">{selectedAdReport.impressions || selectedAdReport.views || 0}</span>
@@ -2491,6 +2503,12 @@ export default function AdminDashboard() {
               <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">CTR %</span>
                 <span className="text-2xl font-black text-amber-400">{selectedAdReport.ctr}%</span>
+              </div>
+              <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl col-span-2 sm:col-span-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Top Referrer</span>
+                <span className="text-xs font-black text-purple-400 truncate block mt-2 font-mono" title={selectedAdReport.top_referrer || "Direct"}>
+                  {selectedAdReport.top_referrer || "Direct"}
+                </span>
               </div>
             </div>
 

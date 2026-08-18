@@ -89,6 +89,14 @@ export async function GET(req: NextRequest) {
           (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression') as impressions,
           (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'click') as clicks,
           (SELECT COUNT(DISTINCT COALESCE(visitor_id, user_ip))::int FROM analytics_logs WHERE ad_id = a.id) as unique_users,
+          COALESCE((
+            SELECT COALESCE(NULLIF(referrer_domain, ''), 'Direct')
+            FROM analytics_logs
+            WHERE ad_id = a.id
+            GROUP BY referrer_domain
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+          ), 'Direct') as top_referrer,
           CASE 
             WHEN (SELECT COUNT(*) FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression') > 0 
             THEN ROUND(((SELECT COUNT(*) FROM analytics_logs WHERE ad_id = a.id AND event_type = 'click')::numeric / (SELECT COUNT(*) FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression')::numeric) * 100, 2)

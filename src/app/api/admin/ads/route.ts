@@ -69,7 +69,15 @@ export async function GET(req: NextRequest) {
           SELECT 
             a.*,
             (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'impression') as views,
-            (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'click') as clicks
+            (SELECT COUNT(*)::int FROM analytics_logs WHERE ad_id = a.id AND event_type = 'click') as clicks,
+            COALESCE((
+              SELECT COALESCE(NULLIF(referrer_domain, ''), 'Direct')
+              FROM analytics_logs
+              WHERE ad_id = a.id
+              GROUP BY referrer_domain
+              ORDER BY COUNT(*) DESC
+              LIMIT 1
+            ), 'Direct') as top_referrer
           FROM ads a
         ) a
         LEFT JOIN categories c ON a.category_id = c.id
