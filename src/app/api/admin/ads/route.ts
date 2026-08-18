@@ -306,7 +306,7 @@ export async function PUT(req: NextRequest) {
       }
     } catch (dbErr: any) {
       console.error("DB update error:", dbErr.message);
-      return NextResponse.json({ error: "Unable to update ad in the database." }, { status: 503 });
+      return NextResponse.json({ error: "Unable to update ad in the database.", details: dbErr.message }, { status: 503 });
     }
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
