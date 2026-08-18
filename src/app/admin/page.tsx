@@ -1725,12 +1725,12 @@ export default function AdminDashboard() {
                       <th className="px-6 py-4">CTR</th>
                       <th className="px-6 py-4">Top Referrer</th>
                       <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Action</th>
+                      <th className="px-6 py-4 sticky right-0 bg-[#0f172a] shadow-[-12px_0_15px_-4px_rgba(0,0,0,0.7)] z-20">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e293b]">
                     {currentAds.map((ad) => (
-                      <tr key={ad.id} className="hover:bg-slate-900/30 transition">
+                      <tr key={ad.id} className="group hover:bg-slate-900/30 transition">
                         <td className="px-6 py-4">
                           <button 
                             onClick={(e) => {
@@ -1863,33 +1863,33 @@ export default function AdminDashboard() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-[#0f172a] group-hover:bg-[#162038] transition-colors shadow-[-12px_0_15px_-4px_rgba(0,0,0,0.7)] z-10">
+                          <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => openEditAdForm(ad)}
-                              className="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 px-3 py-1.5 rounded-xl transition border border-indigo-800 flex items-center gap-1 text-xs font-bold cursor-pointer shadow-sm"
+                              className="bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 px-2.5 py-1.5 rounded-xl transition border border-indigo-800/80 flex items-center gap-1 text-xs font-bold cursor-pointer shadow-sm active:scale-95"
                               title="Edit Ad Campaign Details"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => openAdReportModal(ad)}
-                              className="bg-purple-950/80 hover:bg-purple-900 text-purple-300 px-3 py-1.5 rounded-xl transition border border-purple-800 flex items-center gap-1 text-xs font-bold cursor-pointer shadow-sm"
+                              className="bg-purple-950/90 hover:bg-purple-900 text-purple-300 px-2.5 py-1.5 rounded-xl transition border border-purple-800/80 flex items-center gap-1 text-xs font-bold cursor-pointer shadow-sm active:scale-95"
                               title="View Ad Performance Report"
                             >
                               <BarChart2 size={13} /> Report
                             </button>
                             <button
                               onClick={() => setEmbedAd(ad)}
-                              className="bg-slate-900 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 px-2.5 py-1.5 rounded-xl transition border border-[#1e293b] cursor-pointer shadow-sm"
+                              className="bg-slate-900 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 px-2 py-1.5 rounded-xl transition border border-[#1e293b] cursor-pointer shadow-sm active:scale-95"
                               title="Get embed tag script code"
                             >
-                              <Code size={14} />
+                              <Code size={13} />
                             </button>
                             {ad.is_active ? (
                               <button
                                 onClick={() => handleToggleHideAd(ad)}
-                                className="bg-amber-950/50 hover:bg-amber-900/70 text-amber-300 px-3 py-1.5 rounded-xl transition border border-amber-800/60 cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-sm"
+                                className="bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 px-2.5 py-1.5 rounded-xl transition border border-amber-800/60 cursor-pointer flex items-center gap-1 text-xs font-bold shadow-sm active:scale-95"
                                 title="Hide / Deactivate Campaign"
                               >
                                 <EyeOff size={13} /> Hide
@@ -1897,7 +1897,7 @@ export default function AdminDashboard() {
                             ) : (
                               <button
                                 onClick={() => handleToggleHideAd(ad)}
-                                className="bg-emerald-950/50 hover:bg-emerald-900/70 text-emerald-300 px-3 py-1.5 rounded-xl transition border border-emerald-800/60 cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-sm"
+                                className="bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 px-2.5 py-1.5 rounded-xl transition border border-emerald-800/60 cursor-pointer flex items-center gap-1 text-xs font-bold shadow-sm active:scale-95"
                                 title="Show / Reactivate Campaign"
                               >
                                 <Eye size={13} /> Show
@@ -1905,7 +1905,7 @@ export default function AdminDashboard() {
                             )}
                             <button
                               onClick={() => handleDeleteAd(ad.id, ad.title)}
-                              className="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-xl transition border border-rose-500 cursor-pointer flex items-center gap-1.5 text-xs font-black shadow-md active:scale-95"
+                              className="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-xl transition border border-rose-500 cursor-pointer flex items-center gap-1 text-xs font-bold shadow-md active:scale-95"
                               title="Delete Ad Campaign Permanently"
                             >
                               <Trash2 size={13} /> Delete

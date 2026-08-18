@@ -28,6 +28,7 @@ let MOCK_STORED_ADS: any[] = [
     views: 142,
     clicks: 18,
     ctr: 12.68,
+    top_referrer: "Direct",
     is_active: true,
   },
   {
@@ -47,6 +48,7 @@ let MOCK_STORED_ADS: any[] = [
     views: 98,
     clicks: 11,
     ctr: 11.22,
+    top_referrer: "Direct",
     is_active: true,
   },
 ];
@@ -58,6 +60,7 @@ export async function GET(req: NextRequest) {
       const result = await client.query(`
         SELECT 
           a.*,
+          a.top_referrer,
           c.name as category_name,
           views,
           clicks,
