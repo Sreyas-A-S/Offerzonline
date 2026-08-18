@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
-import { MapPin, Flame, Eye, MousePointerClick, Layers, Globe, Sparkles, Navigation } from "lucide-react";
+import { MapPin, Flame, Eye, MousePointerClick, Globe, Navigation, Layers, ZoomIn, ZoomOut } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
 interface HeatmapPoint {
@@ -29,15 +29,64 @@ interface TrafficHeatmapProps {
   topLocations?: TopLocation[];
 }
 
-// Inner Leaflet Map Component (CSR only)
+/**
+ * Creates a pre-rendered 256x1 gradient palette image data array for thermal color mapping
+ */
+function createGradientPalette(): Uint8ClampedArray {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 1;
+  const ctx = canvas.getContext("2d")!;
+
+  // Smooth Thermal Gradient: Transparent Blue -> Cyan -> Emerald -> Yellow -> Orange -> Crimson
+  const grad = ctx.createLinearGradient(0, 0, 256, 1);
+  grad.addColorStop(0.0, "rgba(0, 0, 255, 0)");
+  grad.addColorStop(0.2, "rgba(0, 180, 255, 0.4)");
+  grad.addColorStop(0.4, "rgba(0, 255, 200, 0.7)");
+  grad.addColorStop(0.6, "rgba(74, 222, 128, 0.85)");
+  grad.addColorStop(0.75, "rgba(250, 204, 21, 0.95)");
+  grad.addColorStop(0.9, "rgba(249, 115, 22, 1)");
+  grad.addColorStop(1.0, "rgba(239, 68, 68, 1)");
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 1);
+  return ctx.getImageData(0, 0, 256, 1).data;
+}
+
+/**
+ * Generates an offscreen radial brush with Gaussian alpha falloff
+ */
+function createBrush(radius: number, blur: number): HTMLCanvasElement {
+  const brush = document.createElement("canvas");
+  const r = radius + blur;
+  brush.width = r * 2;
+  brush.height = r * 2;
+  const ctx = brush.getContext("2d")!;
+
+  ctx.shadowOffsetX = r * 2;
+  ctx.shadowOffsetY = r * 2;
+  ctx.shadowBlur = blur;
+  ctx.shadowColor = "black";
+
+  ctx.beginPath();
+  ctx.arc(-r, -r, radius, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.fill();
+
+  return brush;
+}
+
+// Inner Leaflet Map with Canvas Thermal Blending Engine
 function InnerLeafletHeatmap({ points, selectedPoint, onSelectPoint }: { 
   points: HeatmapPoint[]; 
   selectedPoint: HeatmapPoint | null;
   onSelectPoint: (pt: HeatmapPoint) => void;
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapInstanceRef = useRef<any>(null);
-  const layerGroupRef = useRef<any>(null);
+  const markersLayerRef = useRef<any>(null);
+  const paletteRef = useRef<Uint8ClampedArray | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -47,7 +96,6 @@ function InnerLeafletHeatmap({ points, selectedPoint, onSelectPoint }: {
       const L = (await import("leaflet")).default;
 
       if (!mapInstanceRef.current && isMounted) {
-        // Calculate center based on points or default to Kerala/India center
         const defaultCenter: [number, number] = points.length > 0 
           ? [points[0].lat, points[0].lng] 
           : [9.9312, 76.2673];
@@ -56,9 +104,10 @@ function InnerLeafletHeatmap({ points, selectedPoint, onSelectPoint }: {
           center: defaultCenter,
           zoom: points.length > 0 ? 8 : 6,
           zoomControl: false,
+          fadeAnimation: true,
         });
 
-        // Dark Matter tiles for ultra-premium dashboard aesthetic
+        // Dark Matter map tiles for high-contrast thermal glow
         L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
           attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
           maxZoom: 19,
@@ -66,62 +115,115 @@ function InnerLeafletHeatmap({ points, selectedPoint, onSelectPoint }: {
         }).addTo(map);
 
         L.control.zoom({ position: "bottomright" }).addTo(map);
+
+        // Marker layer for crisp interactive pins
+        const markersLayer = L.layerGroup().addTo(map);
+        markersLayerRef.current = markersLayer;
         mapInstanceRef.current = map;
-        layerGroupRef.current = L.layerGroup().addTo(map);
+
+        if (!paletteRef.current) {
+          paletteRef.current = createGradientPalette();
+        }
       }
 
-      // Render glowing thermal density circles
-      if (mapInstanceRef.current && layerGroupRef.current && isMounted) {
-        layerGroupRef.current.clearLayers();
+      // Draw the true continuous thermal canvas heatmap
+      function redrawHeatmap() {
+        const map = mapInstanceRef.current;
+        const canvas = canvasRef.current;
+        if (!map || !canvas || !paletteRef.current) return;
+
+        const size = map.getSize();
+        canvas.width = size.x;
+        canvas.height = size.y;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (points.length === 0) return;
+
+        // Dynamic brush radius scaled to zoom level
+        const zoom = map.getZoom();
+        const baseRadius = Math.max(Math.min(zoom * 6, 65), 25);
+        const blur = Math.max(baseRadius * 0.7, 15);
+        const brush = createBrush(baseRadius, blur);
+
         const maxHits = Math.max(...points.map((p) => p.count), 1);
 
+        // 1. Draw grayscale alpha masks for all hit points
         points.forEach((pt) => {
-          const intensity = pt.count / maxHits;
-          const radiusMeters = Math.min(Math.max(pt.count * 8000, 15000), 75000);
+          const containerPt = map.latLngToContainerPoint([pt.lat, pt.lng]);
+          // Clip off-screen points
+          if (
+            containerPt.x < -baseRadius * 2 ||
+            containerPt.y < -baseRadius * 2 ||
+            containerPt.x > canvas.width + baseRadius * 2 ||
+            containerPt.y > canvas.height + baseRadius * 2
+          ) {
+            return;
+          }
 
-          // 1. Outer Heat Gradient Glow
-          const outerGlow = L.circle([pt.lat, pt.lng], {
-            radius: radiusMeters * 1.5,
-            fillColor: intensity > 0.6 ? "#ef4444" : intensity > 0.3 ? "#f59e0b" : "#6366f1",
-            fillOpacity: 0.18,
-            stroke: false,
-          });
+          // Non-linear intensity scaling so lower numbers are visible and hot spots peak
+          const normalized = Math.min(Math.max(pt.count / maxHits, 0.25), 1.0);
+          ctx.globalAlpha = Math.min(0.2 + normalized * 0.7, 0.95);
 
-          // 2. Inner Intense Core
-          const innerCore = L.circle([pt.lat, pt.lng], {
-            radius: radiusMeters * 0.7,
-            fillColor: intensity > 0.6 ? "#dc2626" : intensity > 0.3 ? "#d97706" : "#4f46e5",
-            fillOpacity: 0.45,
-            color: intensity > 0.6 ? "#f87171" : intensity > 0.3 ? "#fbbf24" : "#818cf8",
-            weight: 2,
-          });
+          const drawX = containerPt.x - (baseRadius + blur);
+          const drawY = containerPt.y - (baseRadius + blur);
+          ctx.drawImage(brush, drawX, drawY);
+        });
 
-          // 3. Pulse Center Marker
+        // 2. Colorize alpha channel using gradient palette lookup
+        const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = image.data;
+        const palette = paletteRef.current;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const alpha = data[i + 3];
+          if (alpha > 0) {
+            const paletteIndex = alpha * 4;
+            data[i] = palette[paletteIndex];         // R
+            data[i + 1] = palette[paletteIndex + 1]; // G
+            data[i + 2] = palette[paletteIndex + 2]; // B
+            data[i + 3] = Math.min(alpha * 1.35, 230); // Smooth transparency
+          }
+        }
+
+        ctx.putImageData(image, 0, 0);
+      }
+
+      // Update interactive pins overlay
+      function updateMarkers() {
+        const map = mapInstanceRef.current;
+        const markersLayer = markersLayerRef.current;
+        if (!map || !markersLayer) return;
+
+        markersLayer.clearLayers();
+
+        points.forEach((pt) => {
           const markerIcon = L.divIcon({
-            className: "custom-heat-pin",
+            className: "proper-heat-pin",
             html: `
-              <div style="position:relative; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
-                <div style="position:absolute; width:100%; height:100%; border-radius:50%; background:${intensity > 0.6 ? 'rgba(239,68,68,0.6)' : 'rgba(99,102,241,0.6)'}; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
-                <div style="position:relative; width:18px; height:18px; border-radius:50%; background:${intensity > 0.6 ? '#ef4444' : '#6366f1'}; border:2px solid #ffffff; box-shadow:0 0 10px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:9px; font-weight:900;">
-                  ${pt.count}
-                </div>
+              <div style="position:relative; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                <div style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(255,255,255,0.4); animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;"></div>
+                <div style="width:12px; height:12px; border-radius:50%; background:#ffffff; border:2.5px solid #0f172a; box-shadow:0 0 12px rgba(255,255,255,0.8);"></div>
               </div>
             `,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
           });
 
           const pinMarker = L.marker([pt.lat, pt.lng], { icon: markerIcon });
 
           pinMarker.bindPopup(`
-            <div style="color:#0f172a; font-family:sans-serif; min-width:160px; padding:4px;">
-              <div style="font-weight:bold; font-size:13px; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+            <div style="color:#0f172a; font-family:sans-serif; min-width:170px; padding:6px 2px;">
+              <div style="font-weight:800; font-size:13px; margin-bottom:4px; display:flex; align-items:center; gap:5px;">
                 📍 ${pt.locationName}
               </div>
-              <div style="background:#f1f5f9; padding:6px 8px; border-radius:8px; font-size:11px; margin-bottom:6px;">
-                <strong>${pt.count} Total Hits</strong>
+              <div style="background:#f1f5f9; padding:6px 8px; border-radius:8px; font-size:11px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#475569;">Total Activity:</span>
+                <strong style="color:#0f172a; font-size:12px;">${pt.count} hits</strong>
               </div>
-              <div style="display:flex; justify-content:space-between; font-size:10px; color:#475569;">
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:#64748b;">
                 <span>Page Views: <strong>${pt.pageViews || 0}</strong></span>
                 <span>Clicks: <strong>${pt.clicks || 0}</strong></span>
               </div>
@@ -129,17 +231,23 @@ function InnerLeafletHeatmap({ points, selectedPoint, onSelectPoint }: {
           `);
 
           pinMarker.on("click", () => onSelectPoint(pt));
-
-          outerGlow.addTo(layerGroupRef.current);
-          innerCore.addTo(layerGroupRef.current);
-          pinMarker.addTo(layerGroupRef.current);
+          pinMarker.addTo(markersLayer);
         });
 
-        // Fit map bounds if multiple points exist
         if (points.length > 1) {
           const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
-          mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 11 });
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 11 });
         }
+      }
+
+      const map = mapInstanceRef.current;
+      if (map) {
+        map.on("move", redrawHeatmap);
+        map.on("zoom", redrawHeatmap);
+        map.on("resize", redrawHeatmap);
+        map.on("viewreset", redrawHeatmap);
+        redrawHeatmap();
+        updateMarkers();
       }
     }
 
@@ -147,10 +255,16 @@ function InnerLeafletHeatmap({ points, selectedPoint, onSelectPoint }: {
 
     return () => {
       isMounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.off("move");
+        mapInstanceRef.current.off("zoom");
+        mapInstanceRef.current.off("resize");
+        mapInstanceRef.current.off("viewreset");
+      }
     };
   }, [points]);
 
-  // Recenter map when selectedPoint changes
+  // Recenter map on selected location
   useEffect(() => {
     if (selectedPoint && mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([selectedPoint.lat, selectedPoint.lng], 11, {
@@ -159,15 +273,24 @@ function InnerLeafletHeatmap({ points, selectedPoint, onSelectPoint }: {
     }
   }, [selectedPoint]);
 
-  return <div ref={mapContainerRef} className="w-full h-full min-h-[380px] rounded-2xl relative z-0" />;
+  return (
+    <div className="relative w-full h-full min-h-[400px]">
+      <div ref={mapContainerRef} className="w-full h-full min-h-[400px] rounded-2xl relative z-0" />
+      {/* Thermal Canvas Overlay Layer */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 pointer-events-none z-[400] rounded-2xl"
+      />
+    </div>
+  );
 }
 
-// Dynamically import InnerLeafletHeatmap to prevent SSR errors
+// Dynamically import to protect Next.js SSR
 const LeafletHeatmap = dynamic(() => Promise.resolve(InnerLeafletHeatmap), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-80 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-500 animate-pulse text-xs font-semibold">
-      Loading Traffic Heatmap...
+    <div className="w-full h-96 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-500 animate-pulse text-xs font-semibold">
+      Loading Thermal Heatmap...
     </div>
   ),
 });
@@ -187,24 +310,24 @@ export function TrafficHeatmap({ points = [], topLocations = [] }: TrafficHeatma
           <div>
             <h3 className="font-bold text-lg text-white tracking-tight flex items-center gap-2">
               Geographic Traffic Heatmap
-              <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-black uppercase px-2 py-0.5 rounded-full font-mono">
-                Live Thermal View
+              <span className="bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full font-mono">
+                Continuous Thermal Blur
               </span>
             </h3>
-            <p className="text-xs text-slate-400">Visual density of where your website visitors and ad interactions originate</p>
+            <p className="text-xs text-slate-400">Continuous heat density representation of visitor hits and ad engagement</p>
           </div>
         </div>
 
         {/* Global Summary Badge */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="bg-[#0b0f19] border border-[#1e293b] px-3.5 py-1.5 rounded-2xl flex items-center gap-2 text-xs">
             <Globe size={14} className="text-indigo-400" />
-            <span className="text-slate-400 font-medium">Mapped Locations:</span>
+            <span className="text-slate-400 font-medium">Active Clusters:</span>
             <span className="font-extrabold text-white">{points.length}</span>
           </div>
           <div className="bg-rose-950/30 border border-rose-800/40 px-3.5 py-1.5 rounded-2xl flex items-center gap-2 text-xs">
-            <Flame size={14} className="text-rose-400" />
-            <span className="text-rose-300 font-medium">Total Geo Hits:</span>
+            <Flame size={14} className="text-rose-400 animate-pulse" />
+            <span className="text-rose-300 font-medium">Mapped Hits:</span>
             <span className="font-black text-rose-200 font-mono">{totalHits}</span>
           </div>
         </div>
@@ -212,30 +335,21 @@ export function TrafficHeatmap({ points = [], topLocations = [] }: TrafficHeatma
 
       {/* Map & Leaderboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        {/* Interactive Heatmap Canvas */}
-        <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-[#1e293b] bg-[#0b0f19] relative min-h-[380px] shadow-inner">
+        {/* Continuous Canvas Heatmap Canvas */}
+        <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-[#1e293b] bg-[#0b0f19] relative min-h-[400px] shadow-inner">
           <LeafletHeatmap 
             points={points} 
             selectedPoint={selectedPoint} 
             onSelectPoint={(pt) => setSelectedPoint(pt)} 
           />
 
-          {/* Map Overlay Heat Indicator */}
-          <div className="absolute top-3 left-3 bg-[#0b0f19]/90 backdrop-blur-md border border-[#1e293b] px-3 py-1.5 rounded-xl text-[11px] text-slate-300 flex items-center gap-2 pointer-events-none z-[1000] shadow-md">
-            <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1]"></span>
-              <span className="text-[10px] text-slate-400">Low</span>
+          {/* Smooth Continuous Gradient Spectrum Key */}
+          <div className="absolute top-3 left-3 bg-[#0b0f19]/90 backdrop-blur-md border border-[#1e293b] px-3.5 py-2 rounded-xl text-[11px] text-slate-300 z-[1000] shadow-xl pointer-events-none space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+              <span>Low Density</span>
+              <span className="text-rose-400 font-black">Peak Hotspot</span>
             </div>
-            <span className="text-slate-600">→</span>
-            <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
-              <span className="text-[10px] text-slate-400">Moderate</span>
-            </div>
-            <span className="text-slate-600">→</span>
-            <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444] animate-pulse"></span>
-              <span className="text-[10px] font-bold text-rose-300">High Density</span>
-            </div>
+            <div className="w-48 h-2 rounded-full bg-gradient-to-r from-blue-500 via-emerald-400 via-yellow-400 to-red-500 shadow-sm" />
           </div>
         </div>
 
@@ -245,14 +359,14 @@ export function TrafficHeatmap({ points = [], topLocations = [] }: TrafficHeatma
             <div className="flex items-center justify-between border-b border-[#1e293b] pb-3 mb-3">
               <h4 className="font-bold text-sm text-white flex items-center gap-2">
                 <MapPin size={14} className="text-rose-400" />
-                Top Origin Cities
+                Top Geographic Origins
               </h4>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-                {topLocations.length} Locations
+                {topLocations.length} Regions
               </span>
             </div>
 
-            <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[310px] overflow-y-auto pr-1">
               {topLocations.length > 0 ? (
                 topLocations.map((loc, idx) => {
                   const pct = totalHits > 0 ? Math.round((loc.count / totalHits) * 100) : 0;
@@ -280,10 +394,10 @@ export function TrafficHeatmap({ points = [], topLocations = [] }: TrafficHeatma
                         </span>
                       </div>
 
-                      {/* Percentage Bar */}
+                      {/* Heat Density Gradient Bar */}
                       <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
                         <div
-                          className="bg-gradient-to-r from-indigo-500 via-amber-500 to-rose-500 h-full rounded-full transition-all duration-500"
+                          className="bg-gradient-to-r from-blue-500 via-emerald-400 via-yellow-400 to-red-500 h-full rounded-full transition-all duration-500"
                           style={{ width: `${Math.max(pct, 4)}%` }}
                         />
                       </div>
@@ -310,7 +424,7 @@ export function TrafficHeatmap({ points = [], topLocations = [] }: TrafficHeatma
           </div>
 
           <div className="text-[10px] text-slate-500 border-t border-[#1e293b] pt-3 flex items-center justify-between">
-            <span>Click any location to zoom & center map</span>
+            <span>Click any city to focus thermal view</span>
             <Navigation size={12} className="text-indigo-400" />
           </div>
         </div>
