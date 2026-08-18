@@ -1812,25 +1812,25 @@ export default function AdminDashboard() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() => openEditAdForm(ad)}
-                              className="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 px-2.5 py-1.5 rounded-xl transition border border-indigo-800/60 flex items-center gap-1 text-xs font-bold cursor-pointer"
+                              className="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 px-3 py-1.5 rounded-xl transition border border-indigo-800 flex items-center gap-1 text-xs font-bold cursor-pointer shadow-sm"
                               title="Edit Ad Campaign Details"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => openAdReportModal(ad)}
-                              className="bg-purple-950/60 hover:bg-purple-900 text-purple-300 px-2.5 py-1.5 rounded-xl transition border border-purple-800/60 flex items-center gap-1 text-xs font-bold cursor-pointer"
+                              className="bg-purple-950/80 hover:bg-purple-900 text-purple-300 px-3 py-1.5 rounded-xl transition border border-purple-800 flex items-center gap-1 text-xs font-bold cursor-pointer shadow-sm"
                               title="View Ad Performance Report"
                             >
                               <BarChart2 size={13} /> Report
                             </button>
                             <button
                               onClick={() => setEmbedAd(ad)}
-                              className="text-indigo-400 hover:text-indigo-300 p-2 rounded-xl hover:bg-indigo-950/20 transition border border-transparent hover:border-indigo-900/40 cursor-pointer"
+                              className="bg-slate-900 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 px-2.5 py-1.5 rounded-xl transition border border-[#1e293b] cursor-pointer shadow-sm"
                               title="Get embed tag script code"
                             >
                               <Code size={14} />
@@ -1838,26 +1838,26 @@ export default function AdminDashboard() {
                             {ad.is_active ? (
                               <button
                                 onClick={() => handleToggleHideAd(ad)}
-                                className="text-amber-400 hover:text-amber-300 p-2 rounded-xl hover:bg-amber-950/20 transition border border-transparent hover:border-amber-900/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
+                                className="bg-amber-950/50 hover:bg-amber-900/70 text-amber-300 px-3 py-1.5 rounded-xl transition border border-amber-800/60 cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-sm"
                                 title="Hide / Deactivate Campaign"
                               >
-                                <EyeOff size={14} /> Hide
+                                <EyeOff size={13} /> Hide
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleToggleHideAd(ad)}
-                                className="text-emerald-400 hover:text-emerald-300 p-2 rounded-xl hover:bg-emerald-955/20 transition border border-transparent hover:border-emerald-900/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
+                                className="bg-emerald-950/50 hover:bg-emerald-900/70 text-emerald-300 px-3 py-1.5 rounded-xl transition border border-emerald-800/60 cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-sm"
                                 title="Show / Reactivate Campaign"
                               >
-                                <Eye size={14} /> Show
+                                <Eye size={13} /> Show
                               </button>
                             )}
                             <button
                               onClick={() => handleDeleteAd(ad.id, ad.title)}
-                              className="text-rose-455 hover:text-rose-355 p-2 rounded-xl hover:bg-rose-955/20 transition border border-transparent hover:border-rose-900/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
+                              className="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-xl transition border border-rose-500 cursor-pointer flex items-center gap-1.5 text-xs font-black shadow-md active:scale-95"
                               title="Delete Ad Campaign Permanently"
                             >
-                              <Trash2 size={14} /> Delete
+                              <Trash2 size={13} /> Delete
                             </button>
                           </div>
                         </td>
