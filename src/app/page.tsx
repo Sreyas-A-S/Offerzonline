@@ -232,6 +232,7 @@ export default function PublicDiscoveryPage() {
     // Persistent visitorId and traffic source (including QR code posters and campaigns)
     const visitorId = getOrCreateVisitorId();
     const trafficSource = getTrafficSource();
+    const storedLocation = typeof window !== "undefined" ? localStorage.getItem("offerz_user_location") || "Unknown" : "Unknown";
 
     // Log public pageview asynchronously
     fetch("/api/track/pageview", {
@@ -242,7 +243,7 @@ export default function PublicDiscoveryPage() {
         pagePath: typeof window !== "undefined" ? window.location.pathname : "/",
         visitorId,
         referrer: trafficSource,
-        locationName: userLocationName || "Unknown",
+        locationName: storedLocation,
       }),
     }).catch((e) => console.error("Pageview log error:", e));
 
