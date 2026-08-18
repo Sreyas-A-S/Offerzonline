@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { cleanReferrer, formatLocationName } from "@/utils/analytics";
+import { cleanReferrer, formatLocationName, getCoordinatesForLocation } from "@/utils/analytics";
 
 export async function GET(req: NextRequest) {
   try {
@@ -216,6 +216,44 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      // 6. Geographic Hit Distribution & Heatmap Points
+      const locationRes = await client.query(`
+        SELECT 
+          COALESCE(NULLIF(user_location_name, ''), 'Unknown Location') as location_name,
+          COUNT(*)::int as total_hits,
+          COUNT(CASE WHEN event_type = 'page_view' THEN 1 END)::int as page_views,
+          COUNT(CASE WHEN event_type = 'impression' THEN 1 END)::int as impressions,
+          COUNT(CASE WHEN event_type = 'click' THEN 1 END)::int as clicks
+        FROM analytics_logs l
+        ${logWhereSql}
+        GROUP BY location_name
+        ORDER BY total_hits DESC
+        LIMIT 50;
+      `, logParams);
+
+      const geoHeatmapPoints = locationRes.rows.map((row) => {
+        const cleanName = formatLocationName(row.location_name);
+        const coords = getCoordinatesForLocation(row.location_name);
+        return {
+          locationName: cleanName,
+          lat: coords.lat,
+          lng: coords.lng,
+          count: row.total_hits,
+          weight: Math.min(Math.max(row.total_hits, 1), 100),
+          pageViews: row.page_views,
+          impressions: row.impressions,
+          clicks: row.clicks,
+        };
+      });
+
+      const topLocations = locationRes.rows.map((row) => ({
+        locationName: formatLocationName(row.location_name),
+        count: row.total_hits,
+        pageViews: row.page_views,
+        impressions: row.impressions,
+        clicks: row.clicks,
+      }));
+
       // Available Referrers for dropdown
       const allReferrersRes = await client.query(`
         SELECT DISTINCT COALESCE(NULLIF(referrer_domain, ''), 'Direct') as referrer
@@ -232,6 +270,8 @@ export async function GET(req: NextRequest) {
         },
         hourlyStats,
         peakHour: peakHour.hits > 0 ? peakHour : null,
+        geoHeatmapPoints,
+        topLocations,
         topReferrers: topReferrersRes.rows.map((r) => ({
           ...r,
           referrer: cleanReferrer(r.referrer),

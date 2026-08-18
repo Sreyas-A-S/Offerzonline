@@ -360,3 +360,94 @@ export async function resolveLocationFromHeadersAndIp(
   return "Unknown Location";
 }
 
+/**
+ * Pre-mapped high-precision coordinates for common locations & cities
+ */
+export const KNOWN_LOCATION_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  // Kerala Cities & Districts
+  "kanayannur": { lat: 9.9700, lng: 76.3200 },
+  "kochi": { lat: 9.9312, lng: 76.2673 },
+  "ernakulam": { lat: 9.9816, lng: 76.2999 },
+  "kakkanad": { lat: 10.0159, lng: 76.3419 },
+  "aluva": { lat: 10.1076, lng: 76.3516 },
+  "thiruvananthapuram": { lat: 8.5241, lng: 76.9366 },
+  "trivandrum": { lat: 8.5241, lng: 76.9366 },
+  "kozhikode": { lat: 11.2588, lng: 75.7804 },
+  "calicut": { lat: 11.2588, lng: 75.7804 },
+  "thrissur": { lat: 10.5276, lng: 76.2144 },
+  "malappuram": { lat: 11.0510, lng: 76.0711 },
+  "kannur": { lat: 11.8745, lng: 75.3704 },
+  "kollam": { lat: 8.8932, lng: 76.6141 },
+  "palakkad": { lat: 10.7867, lng: 76.6548 },
+  "kottayam": { lat: 9.5916, lng: 76.5222 },
+  "alappuzha": { lat: 9.4981, lng: 76.3388 },
+  "alleppey": { lat: 9.4981, lng: 76.3388 },
+  "kasaragod": { lat: 12.4996, lng: 74.9869 },
+  "wayanad": { lat: 11.6854, lng: 76.1320 },
+  "idukki": { lat: 9.8494, lng: 76.9734 },
+  "pathanamthitta": { lat: 9.2648, lng: 76.7870 },
+  "kerala": { lat: 10.8505, lng: 76.2711 },
+
+  // Major Indian Cities
+  "bengaluru": { lat: 12.9716, lng: 77.5946 },
+  "bangalore": { lat: 12.9716, lng: 77.5946 },
+  "mumbai": { lat: 19.0760, lng: 72.8777 },
+  "delhi": { lat: 28.6139, lng: 77.2090 },
+  "new delhi": { lat: 28.6139, lng: 77.2090 },
+  "chennai": { lat: 13.0827, lng: 80.2707 },
+  "hyderabad": { lat: 17.3850, lng: 78.4867 },
+  "kolkata": { lat: 22.5726, lng: 88.3639 },
+  "pune": { lat: 18.5204, lng: 73.8567 },
+  "ahmedabad": { lat: 23.0225, lng: 72.5714 },
+  "jaipur": { lat: 26.9124, lng: 75.7873 },
+  "surat": { lat: 21.1702, lng: 72.8311 },
+  "lucknow": { lat: 26.8467, lng: 80.9462 },
+  "chandigarh": { lat: 30.7333, lng: 76.7794 },
+  "goa": { lat: 15.2993, lng: 74.1240 },
+  "panaji": { lat: 15.4909, lng: 73.8278 },
+  "coimbatore": { lat: 11.0168, lng: 76.9558 },
+  "madurai": { lat: 9.9252, lng: 78.1198 },
+  "mangalore": { lat: 12.9141, lng: 74.8560 },
+  "mysuru": { lat: 12.2958, lng: 76.6394 },
+  "india": { lat: 20.5937, lng: 78.9629 },
+
+  // International Hubs
+  "dubai": { lat: 25.2048, lng: 55.2708 },
+  "abu dhabi": { lat: 24.4539, lng: 54.3773 },
+  "sharjah": { lat: 25.3463, lng: 55.4209 },
+  "doha": { lat: 25.2854, lng: 51.5310 },
+  "riyadh": { lat: 24.7136, lng: 46.6753 },
+  "singapore": { lat: 1.3521, lng: 103.8198 },
+  "london": { lat: 51.5074, lng: -0.1278 },
+  "new york": { lat: 40.7128, lng: -74.0060 },
+};
+
+/**
+ * Returns accurate { lat, lng } coordinates for a given location string
+ */
+export function getCoordinatesForLocation(locationName?: string | null): { lat: number; lng: number } {
+  if (!locationName || typeof locationName !== "string") {
+    return { lat: 9.9312, lng: 76.2673 }; // Default Kochi center
+  }
+
+  // Handle JSON serialized object with lat/lng
+  if (locationName.includes('"lat"') && locationName.includes('"lng"')) {
+    try {
+      const parsed = JSON.parse(locationName);
+      if (parsed && typeof parsed.lat === "number" && typeof parsed.lng === "number") {
+        return { lat: parsed.lat, lng: parsed.lng };
+      }
+    } catch {}
+  }
+
+  const normalized = locationName.toLowerCase();
+  for (const [cityKey, coords] of Object.entries(KNOWN_LOCATION_COORDINATES)) {
+    if (normalized.includes(cityKey)) {
+      return coords;
+    }
+  }
+
+  // Default central Kerala / Kochi coordinates
+  return { lat: 9.9312, lng: 76.2673 };
+}
+

@@ -11,6 +11,7 @@ import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
 import Cropper from "react-easy-crop";
 import { parseUserAgentDetails, formatLocationName } from "@/utils/analytics";
+import { TrafficHeatmap } from "@/components/TrafficHeatmap";
 
 function SearchableSelect({
   label,
@@ -356,6 +357,8 @@ export default function AdminDashboard() {
   const [topReferrers, setTopReferrers] = useState<any[]>([]);
   const [hourlyStats, setHourlyStats] = useState<any[]>([]);
   const [peakHour, setPeakHour] = useState<any | null>(null);
+  const [geoHeatmapPoints, setGeoHeatmapPoints] = useState<any[]>([]);
+  const [topLocations, setTopLocations] = useState<any[]>([]);
   const [recentAuditLogs, setRecentAuditLogs] = useState<any[]>([]);
   const [adBreakdowns, setAdBreakdowns] = useState<any[]>([]);
   const [selectedAdReport, setSelectedAdReport] = useState<any | null>(null);
@@ -397,6 +400,8 @@ export default function AdminDashboard() {
       if (data.summary) setAnalyticsSummary(data.summary);
       if (data.hourlyStats) setHourlyStats(data.hourlyStats);
       if (data.peakHour !== undefined) setPeakHour(data.peakHour);
+      if (data.geoHeatmapPoints) setGeoHeatmapPoints(data.geoHeatmapPoints);
+      if (data.topLocations) setTopLocations(data.topLocations);
       if (data.topReferrers) setTopReferrers(data.topReferrers);
       if (data.recentLogs) setRecentAuditLogs(data.recentLogs);
       if (data.adBreakdowns) setAdBreakdowns(data.adBreakdowns);
@@ -1369,6 +1374,9 @@ export default function AdminDashboard() {
                 </span>
               </div>
             </div>
+
+            {/* Geographic Traffic Heatmap */}
+            <TrafficHeatmap points={geoHeatmapPoints} topLocations={topLocations} />
 
             {/* Performance Chart & Traffic Sources Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
