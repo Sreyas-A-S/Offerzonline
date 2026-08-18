@@ -21,29 +21,75 @@ export async function GET(req: NextRequest) {
 
     const client = await pool.connect();
     try {
+      // Precise IST calendar date boundary helpers (Asia/Kolkata UTC+5:30)
+      const now = new Date();
+      const istDateFormatter = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      const todayISTStr = istDateFormatter.format(now); // e.g. "2026-08-18"
+
+      const getUtcRangeForISTDate = (yyyyMmDd: string) => {
+        const start = new Date(`${yyyyMmDd}T00:00:00+05:30`).toISOString().replace("T", " ").replace("Z", "");
+        const end = new Date(`${yyyyMmDd}T23:59:59.999+05:30`).toISOString().replace("T", " ").replace("Z", "");
+        return { start, end };
+      };
+
+      const getDaysAgoISTDate = (daysAgo: number) => {
+        const target = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+        return istDateFormatter.format(target);
+      };
+
       // Build dynamic WHERE clauses for analytics_logs
       const logConditions: string[] = [];
       const logParams: any[] = [];
       let paramIdx = 1;
+      let timeSnippet = "";
 
       if (timeframe === "today" || timeframe === "24h") {
-        // Today starting from 00:00:00 IST to present moment
-        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date`);
+        const { start, end } = getUtcRangeForISTDate(todayISTStr);
+        logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp AND l.timestamp <= $${paramIdx++}::timestamp`);
+        logParams.push(start, end);
+        timeSnippet = `AND timestamp >= '${start}'::timestamp AND timestamp <= '${end}'::timestamp`;
       } else if (timeframe === "yesterday") {
-        // Yesterday full calendar day in IST
-        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 1`);
+        const yesterdayStr = getDaysAgoISTDate(1);
+        const { start, end } = getUtcRangeForISTDate(yesterdayStr);
+        logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp AND l.timestamp <= $${paramIdx++}::timestamp`);
+        logParams.push(start, end);
+        timeSnippet = `AND timestamp >= '${start}'::timestamp AND timestamp <= '${end}'::timestamp`;
       } else if (timeframe === "7d") {
-        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 6`);
+        const start7dStr = getDaysAgoISTDate(6);
+        const { start } = getUtcRangeForISTDate(start7dStr);
+        const { end } = getUtcRangeForISTDate(todayISTStr);
+        logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp AND l.timestamp <= $${paramIdx++}::timestamp`);
+        logParams.push(start, end);
+        timeSnippet = `AND timestamp >= '${start}'::timestamp AND timestamp <= '${end}'::timestamp`;
       } else if (timeframe === "30d") {
-        logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 29`);
+        const start30dStr = getDaysAgoISTDate(29);
+        const { start } = getUtcRangeForISTDate(start30dStr);
+        const { end } = getUtcRangeForISTDate(todayISTStr);
+        logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp AND l.timestamp <= $${paramIdx++}::timestamp`);
+        logParams.push(start, end);
+        timeSnippet = `AND timestamp >= '${start}'::timestamp AND timestamp <= '${end}'::timestamp`;
       } else if (timeframe === "custom") {
-        if (startDate) {
-          logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date >= $${paramIdx++}::date`);
-          logParams.push(startDate);
-        }
-        if (endDate) {
-          logConditions.push(`(l.timestamp AT TIME ZONE 'Asia/Kolkata')::date <= $${paramIdx++}::date`);
-          logParams.push(endDate);
+        if (startDate && endDate) {
+          const { start } = getUtcRangeForISTDate(startDate);
+          const { end } = getUtcRangeForISTDate(endDate);
+          logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp AND l.timestamp <= $${paramIdx++}::timestamp`);
+          logParams.push(start, end);
+          timeSnippet = `AND timestamp >= '${start}'::timestamp AND timestamp <= '${end}'::timestamp`;
+        } else if (startDate) {
+          const { start } = getUtcRangeForISTDate(startDate);
+          logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp`);
+          logParams.push(start);
+          timeSnippet = `AND timestamp >= '${start}'::timestamp`;
+        } else if (endDate) {
+          const { end } = getUtcRangeForISTDate(endDate);
+          logConditions.push(`l.timestamp <= $${paramIdx++}::timestamp`);
+          logParams.push(end);
+          timeSnippet = `AND timestamp <= '${end}'::timestamp`;
         }
       }
 
@@ -78,7 +124,9 @@ export async function GET(req: NextRequest) {
 
       // 2. Total Unique Visitors
       const uniqueVisitorsRes = await client.query(
-        `SELECT COUNT(DISTINCT COALESCE(l.visitor_id, l.user_ip))::int as count FROM analytics_logs l ${logWhereSql}`,
+        `SELECT COUNT(DISTINCT COALESCE(NULLIF(l.visitor_id, ''), l.user_ip))::int as count 
+         FROM analytics_logs l 
+         ${logWhereSql}`,
         logParams
       );
       const totalUniqueVisitors = uniqueVisitorsRes.rows[0]?.count || 0;
@@ -146,26 +194,6 @@ export async function GET(req: NextRequest) {
         adBreakdownParams.push(parseInt(categoryId, 10));
       }
 
-      // Time condition snippet for ad breakdown subqueries
-      let timeSnippet = "";
-      if (timeframe === "today" || timeframe === "24h") {
-        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date";
-      } else if (timeframe === "yesterday") {
-        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 1";
-      } else if (timeframe === "7d") {
-        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 6";
-      } else if (timeframe === "30d") {
-        timeSnippet = "AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 29";
-      } else if (timeframe === "custom") {
-        if (startDate && endDate) {
-          timeSnippet = `AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= '${startDate}'::date AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date <= '${endDate}'::date`;
-        } else if (startDate) {
-          timeSnippet = `AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date >= '${startDate}'::date`;
-        } else if (endDate) {
-          timeSnippet = `AND (timestamp AT TIME ZONE 'Asia/Kolkata')::date <= '${endDate}'::date`;
-        }
-      }
-
       const adBreakdownRes = await client.query(
         `SELECT 
            a.id as ad_id,
@@ -198,7 +226,7 @@ export async function GET(req: NextRequest) {
       // 5. Hourly Hit Distribution (00:00 to 23:00 IST)
       const hourlyRes = await client.query(`
         SELECT 
-          EXTRACT(HOUR FROM l.timestamp AT TIME ZONE 'Asia/Kolkata')::int as hour,
+          EXTRACT(HOUR FROM (l.timestamp AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata')::int as hour,
           COUNT(*)::int as total_hits,
           COUNT(CASE WHEN l.event_type = 'page_view' THEN 1 END)::int as page_views,
           COUNT(CASE WHEN l.event_type = 'impression' THEN 1 END)::int as impressions,
