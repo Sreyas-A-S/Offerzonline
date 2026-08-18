@@ -4,6 +4,8 @@ node_modules/
 
 # next.js build & cache
 .next/
+.next/**
+*.pack.gz
 out/
 dist/
 build/

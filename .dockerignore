@@ -1,0 +1,15 @@
+node_modules
+.next
+*.pack.gz
+.git
+.gitignore
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+scratch
+CTR_AND_CLOUDFLARE_GUIDE.md
+idea.txt
