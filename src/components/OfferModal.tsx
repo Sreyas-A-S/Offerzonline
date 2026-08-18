@@ -125,7 +125,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
 
   const handleShare = async () => {
     const shareId = getAdSlug(ad.title, ad.id);
-    const shareUrl = `${window.location.origin}/?ad=${shareId}`;
+    const shareUrl = `${window.location.origin}/offers/${shareId}`;
     if (navigator.share) {
       try {
         await navigator.share({
