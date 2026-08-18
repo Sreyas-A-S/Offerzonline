@@ -5,13 +5,13 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# Copy package files and install dependencies
+# Copy package files and install dependencies with npm cache mount
 COPY package*.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Copy source code and build
+# Copy source code and build with Next.js incremental compilation cache mount
 COPY . .
-RUN npm run build
+RUN --mount=type=cache,target=/app/.next/cache npm run build
 
 # 2. Production runner image (Lightweight standalone, ~150MB)
 FROM node:20-alpine AS runner
