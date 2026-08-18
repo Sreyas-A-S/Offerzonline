@@ -5,10 +5,11 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const adIdFilter = searchParams.get("ad_id");
-    const timeframe = searchParams.get("timeframe") || "all"; // all, 24h, 7d, 30d
+    const timeframe = searchParams.get("timeframe") || "all"; // all, 24h, 7d, 30d, custom
+    const startDate = searchParams.get("start_date");
+    const endDate = searchParams.get("end_date");
     const categoryId = searchParams.get("category_id");
     const referrerFilter = searchParams.get("referrer");
-    const eventType = searchParams.get("event_type");
 
     const client = await pool.connect();
     try {
@@ -23,6 +24,15 @@ export async function GET(req: NextRequest) {
         logConditions.push(`l.timestamp >= NOW() - INTERVAL '7 days'`);
       } else if (timeframe === "30d") {
         logConditions.push(`l.timestamp >= NOW() - INTERVAL '30 days'`);
+      } else if (timeframe === "custom") {
+        if (startDate) {
+          logConditions.push(`l.timestamp >= $${paramIdx++}::timestamp`);
+          logParams.push(`${startDate} 00:00:00`);
+        }
+        if (endDate) {
+          logConditions.push(`l.timestamp <= $${paramIdx++}::timestamp`);
+          logParams.push(`${endDate} 23:59:59`);
+        }
       }
 
       if (adIdFilter && adIdFilter !== "all") {
@@ -42,11 +52,6 @@ export async function GET(req: NextRequest) {
           logConditions.push(`l.referrer_domain ILIKE $${paramIdx++}`);
           logParams.push(`%${referrerFilter}%`);
         }
-      }
-
-      if (eventType && eventType !== "all") {
-        logConditions.push(`l.event_type = $${paramIdx++}`);
-        logParams.push(eventType);
       }
 
       const logWhereSql = logConditions.length > 0 ? `WHERE ${logConditions.join(" AND ")}` : "";
@@ -132,6 +137,14 @@ export async function GET(req: NextRequest) {
         timeSnippet = "AND timestamp >= NOW() - INTERVAL '7 days'";
       } else if (timeframe === "30d") {
         timeSnippet = "AND timestamp >= NOW() - INTERVAL '30 days'";
+      } else if (timeframe === "custom") {
+        if (startDate && endDate) {
+          timeSnippet = `AND timestamp >= '${startDate} 00:00:00' AND timestamp <= '${endDate} 23:59:59'`;
+        } else if (startDate) {
+          timeSnippet = `AND timestamp >= '${startDate} 00:00:00'`;
+        } else if (endDate) {
+          timeSnippet = `AND timestamp <= '${endDate} 23:59:59'`;
+        }
       }
 
       const adBreakdownRes = await client.query(

@@ -5,12 +5,143 @@ import {
   Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
   Menu, X, Layers, BarChart2, Code, Copy, Check, Globe, Filter, Calendar,
-  RotateCcw, SlidersHorizontal
+  RotateCcw, SlidersHorizontal, Search, ChevronDown
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import Cropper from "react-easy-crop";
 import { parseUserAgentDetails } from "@/utils/analytics";
+
+function SearchableSelect({
+  label,
+  icon,
+  value,
+  onChange,
+  options,
+  placeholder = "Search...",
+  allLabel = "All",
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  value: string;
+  onChange: (val: string) => void;
+  options: { value: string; label: string; subLabel?: string }[];
+  placeholder?: string;
+  allLabel?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  const selectedOption = options.find((o) => o.value.toString() === value.toString());
+  const displayLabel = value === "all" ? allLabel : (selectedOption?.label || value);
+
+  const filteredOptions = options.filter(
+    (o) =>
+      o.label.toLowerCase().includes(query.toLowerCase()) ||
+      (o.subLabel && o.subLabel.toLowerCase().includes(query.toLowerCase()))
+  );
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+        {icon} {label}
+      </label>
+      
+      <button
+        type="button"
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setQuery("");
+        }}
+        className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 hover:border-indigo-500/50 transition cursor-pointer text-left shadow-sm"
+      >
+        <span className="truncate block font-medium">{displayLabel}</span>
+        <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-1.5 bg-[#0f172a] border border-[#1e293b] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 max-h-64 flex flex-col">
+          <div className="p-2 border-b border-[#1e293b] bg-[#0b0f19]">
+            <div className="flex items-center gap-2 bg-[#131b2e] border border-[#1e293b] rounded-xl px-2.5 py-1.5 text-xs text-white">
+              <Search size={13} className="text-slate-400 shrink-0" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={placeholder}
+                autoFocus
+                className="w-full bg-transparent focus:outline-none text-xs text-white placeholder:text-slate-500 font-medium"
+              />
+              {query && (
+                <button type="button" onClick={() => setQuery("")} className="text-slate-400 hover:text-white">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="overflow-y-auto p-1.5 space-y-0.5 max-h-48 divide-y divide-transparent">
+            <button
+              type="button"
+              onClick={() => {
+                onChange("all");
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer ${
+                value === "all" ? "bg-indigo-600 text-white font-bold" : "text-slate-300 hover:bg-slate-800"
+              }`}
+            >
+              <span>{allLabel}</span>
+              {value === "all" && <Check size={13} />}
+            </button>
+
+            {filteredOptions.map((opt) => {
+              const isSelected = value.toString() === opt.value.toString();
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between gap-2 transition cursor-pointer ${
+                    isSelected ? "bg-indigo-600 text-white font-bold" : "text-slate-300 hover:bg-slate-800"
+                  }`}
+                >
+                  <div className="truncate">
+                    <span className="block truncate font-medium">{opt.label}</span>
+                    {opt.subLabel && <span className="text-[10px] text-slate-400 block truncate">{opt.subLabel}</span>}
+                  </div>
+                  {isSelected && <Check size={13} className="shrink-0" />}
+                </button>
+              );
+            })}
+
+            {filteredOptions.length === 0 && (
+              <div className="p-3 text-center text-xs text-slate-500 font-medium">
+                No matching results
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Predefined allowed resolutions configuration
 const RESOLUTIONS = [
@@ -231,28 +362,33 @@ export default function AdminDashboard() {
 
   // Multi-Filter States for Analytics
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState("all");
+  const [analyticsStartDate, setAnalyticsStartDate] = useState("");
+  const [analyticsEndDate, setAnalyticsEndDate] = useState("");
   const [analyticsCategory, setAnalyticsCategory] = useState("all");
   const [analyticsAd, setAnalyticsAd] = useState("all");
   const [analyticsReferrer, setAnalyticsReferrer] = useState("all");
-  const [analyticsEventType, setAnalyticsEventType] = useState("all");
   const [availableReferrers, setAvailableReferrers] = useState<string[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const fetchFilteredAnalytics = async (
     timeframe = analyticsTimeframe,
+    startDate = analyticsStartDate,
+    endDate = analyticsEndDate,
     category = analyticsCategory,
     ad = analyticsAd,
-    referrer = analyticsReferrer,
-    eventType = analyticsEventType
+    referrer = analyticsReferrer
   ) => {
     setAnalyticsLoading(true);
     try {
       const params = new URLSearchParams();
       if (timeframe && timeframe !== "all") params.append("timeframe", timeframe);
+      if (timeframe === "custom") {
+        if (startDate) params.append("start_date", startDate);
+        if (endDate) params.append("end_date", endDate);
+      }
       if (category && category !== "all") params.append("category_id", category);
       if (ad && ad !== "all") params.append("ad_id", ad);
       if (referrer && referrer !== "all") params.append("referrer", referrer);
-      if (eventType && eventType !== "all") params.append("event_type", eventType);
 
       const res = await fetch(`/api/admin/analytics?${params.toString()}`);
       const data = await res.json();
@@ -270,11 +406,12 @@ export default function AdminDashboard() {
 
   const resetAnalyticsFilters = () => {
     setAnalyticsTimeframe("all");
+    setAnalyticsStartDate("");
+    setAnalyticsEndDate("");
     setAnalyticsCategory("all");
     setAnalyticsAd("all");
     setAnalyticsReferrer("all");
-    setAnalyticsEventType("all");
-    fetchFilteredAnalytics("all", "all", "all", "all", "all");
+    fetchFilteredAnalytics("all", "", "", "all", "all", "all");
   };
 
   const fetchDashboardData = async () => {
@@ -300,10 +437,11 @@ export default function AdminDashboard() {
 
       await fetchFilteredAnalytics(
         analyticsTimeframe,
+        analyticsStartDate,
+        analyticsEndDate,
         analyticsCategory,
         analyticsAd,
-        analyticsReferrer,
-        analyticsEventType
+        analyticsReferrer
       );
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -974,20 +1112,20 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Reset / Quick status */}
-                {(analyticsTimeframe !== "all" || analyticsCategory !== "all" || analyticsAd !== "all" || analyticsReferrer !== "all" || analyticsEventType !== "all") && (
+                {(analyticsTimeframe !== "all" || analyticsStartDate || analyticsEndDate || analyticsCategory !== "all" || analyticsAd !== "all" || analyticsReferrer !== "all") && (
                   <button
                     onClick={resetAnalyticsFilters}
-                    className="self-start md:self-auto text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-800/40 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="self-start md:self-auto text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-800/40 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
                   >
                     <RotateCcw size={12} /> Reset Filters
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                {/* 1. Timeframe Filter */}
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+                {/* 1. Timeframe Filter with Custom Date Range */}
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl space-y-2">
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                     <Calendar size={11} className="text-indigo-400" /> Timeframe
                   </label>
                   <select
@@ -995,20 +1133,53 @@ export default function AdminDashboard() {
                     onChange={(e) => {
                       const val = e.target.value;
                       setAnalyticsTimeframe(val);
-                      fetchFilteredAnalytics(val, analyticsCategory, analyticsAd, analyticsReferrer, analyticsEventType);
+                      fetchFilteredAnalytics(val, analyticsStartDate, analyticsEndDate, analyticsCategory, analyticsAd, analyticsReferrer);
                     }}
-                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500 cursor-pointer"
                   >
                     <option value="all">All Time</option>
                     <option value="24h">Last 24 Hours (Today)</option>
                     <option value="7d">Last 7 Days</option>
                     <option value="30d">Last 30 Days</option>
+                    <option value="custom">📅 Custom Date Range</option>
                   </select>
+
+                  {/* Custom Date Range Inputs */}
+                  {analyticsTimeframe === "custom" && (
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#1e293b] animate-in fade-in zoom-in-95">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">From</label>
+                        <input
+                          type="date"
+                          value={analyticsStartDate}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAnalyticsStartDate(val);
+                            fetchFilteredAnalytics("custom", val, analyticsEndDate, analyticsCategory, analyticsAd, analyticsReferrer);
+                          }}
+                          className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">To</label>
+                        <input
+                          type="date"
+                          value={analyticsEndDate}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAnalyticsEndDate(val);
+                            fetchFilteredAnalytics("custom", analyticsStartDate, val, analyticsCategory, analyticsAd, analyticsReferrer);
+                          }}
+                          className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. Category Filter */}
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl space-y-2">
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                     <Layers size={11} className="text-indigo-400" /> Category
                   </label>
                   <select
@@ -1016,9 +1187,9 @@ export default function AdminDashboard() {
                     onChange={(e) => {
                       const val = e.target.value;
                       setAnalyticsCategory(val);
-                      fetchFilteredAnalytics(analyticsTimeframe, val, analyticsAd, analyticsReferrer, analyticsEventType);
+                      fetchFilteredAnalytics(analyticsTimeframe, analyticsStartDate, analyticsEndDate, val, analyticsAd, analyticsReferrer);
                     }}
-                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500 cursor-pointer"
                   >
                     <option value="all">All Categories</option>
                     {categories.map((cat) => (
@@ -1027,68 +1198,45 @@ export default function AdminDashboard() {
                   </select>
                 </div>
 
-                {/* 3. Campaign / Ad Filter */}
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
-                    <Store size={11} className="text-indigo-400" /> Campaign
-                  </label>
-                  <select
+                {/* 3. Searchable Campaign Select */}
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl">
+                  <SearchableSelect
+                    label="Campaign"
+                    icon={<Store size={11} className="text-indigo-400" />}
                     value={analyticsAd}
-                    onChange={(e) => {
-                      const val = e.target.value;
+                    allLabel="All Campaigns"
+                    placeholder="Type to search campaign..."
+                    options={ads.map((ad) => ({
+                      value: ad.id.toString(),
+                      label: ad.title,
+                      subLabel: ad.category_name || "Uncategorized",
+                    }))}
+                    onChange={(val) => {
                       setAnalyticsAd(val);
-                      fetchFilteredAnalytics(analyticsTimeframe, analyticsCategory, val, analyticsReferrer, analyticsEventType);
+                      fetchFilteredAnalytics(analyticsTimeframe, analyticsStartDate, analyticsEndDate, analyticsCategory, val, analyticsReferrer);
                     }}
-                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer truncate"
-                  >
-                    <option value="all">All Campaigns</option>
-                    {ads.map((ad) => (
-                      <option key={ad.id} value={ad.id}>{ad.title}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
-                {/* 4. Traffic Referrer Filter */}
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
-                    <Globe size={11} className="text-indigo-400" /> Traffic Source
-                  </label>
-                  <select
+                {/* 4. Searchable Traffic Source / Referrer Select */}
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl">
+                  <SearchableSelect
+                    label="Traffic Source"
+                    icon={<Globe size={11} className="text-indigo-400" />}
                     value={analyticsReferrer}
-                    onChange={(e) => {
-                      const val = e.target.value;
+                    allLabel="All Traffic Sources"
+                    placeholder="Type to search source..."
+                    options={[
+                      { value: "Direct", label: "Direct / Bookmark" },
+                      ...availableReferrers
+                        .filter((r) => r !== "Direct" && r !== "Direct / Bookmark")
+                        .map((ref) => ({ value: ref, label: ref })),
+                    ]}
+                    onChange={(val) => {
                       setAnalyticsReferrer(val);
-                      fetchFilteredAnalytics(analyticsTimeframe, analyticsCategory, analyticsAd, val, analyticsEventType);
+                      fetchFilteredAnalytics(analyticsTimeframe, analyticsStartDate, analyticsEndDate, analyticsCategory, analyticsAd, val);
                     }}
-                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
-                  >
-                    <option value="all">All Traffic Sources</option>
-                    <option value="Direct">Direct / Bookmark</option>
-                    {availableReferrers.filter(r => r !== "Direct" && r !== "Direct / Bookmark").map((ref, idx) => (
-                      <option key={idx} value={ref}>{ref}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 5. Event Type Filter */}
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
-                    <MousePointerClick size={11} className="text-indigo-400" /> Audit Event Type
-                  </label>
-                  <select
-                    value={analyticsEventType}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAnalyticsEventType(val);
-                      fetchFilteredAnalytics(analyticsTimeframe, analyticsCategory, analyticsAd, analyticsReferrer, val);
-                    }}
-                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
-                  >
-                    <option value="all">All Events</option>
-                    <option value="impression">Impressions Only</option>
-                    <option value="click">Clicks Only</option>
-                    <option value="page_view">Page Views Only</option>
-                  </select>
+                  />
                 </div>
               </div>
             </div>
