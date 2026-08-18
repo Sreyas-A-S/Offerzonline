@@ -72,3 +72,8 @@ To tell Cloudflare *what* to cache at the edge:
 5. Click **Deploy**.
 
 *Now, ad requests will be cached at the edge, and the Admin Panel will trigger a purge event on `/api/ads` endpoints automatically whenever you add or deactivate campaigns!*
+
+
+git pull
+docker compose build app
+docker compose up -d app
