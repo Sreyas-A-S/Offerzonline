@@ -383,7 +383,7 @@ export default function PublicDiscoveryPage() {
       
       // If a specific ad ID or UUID is in the URL, prioritize that (bypasses snooze)
       if (shareAdId) {
-        const found = ads.find((a) => getAdSlug(a.title) === shareAdId || a.uuid === shareAdId || a.id.toString() === shareAdId);
+        const found = ads.find((a) => getAdSlug(a.title, a.id) === shareAdId || getAdSlug(a.title) === shareAdId || a.uuid === shareAdId || a.id.toString() === shareAdId);
         if (found) {
           setSelectedAd(found);
           setHasAutoOpened(true);
