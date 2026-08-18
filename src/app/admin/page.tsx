@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { 
   Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
-  Menu, X, Layers, BarChart2, Code, Copy, Check, Globe
+  Menu, X, Layers, BarChart2, Code, Copy, Check, Globe, Filter, Calendar,
+  RotateCcw, SlidersHorizontal
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -227,6 +228,54 @@ export default function AdminDashboard() {
   const [adReportLogs, setAdReportLogs] = useState<any[]>([]);
   const [adReportLoading, setAdReportLoading] = useState(false);
 
+  // Multi-Filter States for Analytics
+  const [analyticsTimeframe, setAnalyticsTimeframe] = useState("all");
+  const [analyticsCategory, setAnalyticsCategory] = useState("all");
+  const [analyticsAd, setAnalyticsAd] = useState("all");
+  const [analyticsReferrer, setAnalyticsReferrer] = useState("all");
+  const [analyticsEventType, setAnalyticsEventType] = useState("all");
+  const [availableReferrers, setAvailableReferrers] = useState<string[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const fetchFilteredAnalytics = async (
+    timeframe = analyticsTimeframe,
+    category = analyticsCategory,
+    ad = analyticsAd,
+    referrer = analyticsReferrer,
+    eventType = analyticsEventType
+  ) => {
+    setAnalyticsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (timeframe && timeframe !== "all") params.append("timeframe", timeframe);
+      if (category && category !== "all") params.append("category_id", category);
+      if (ad && ad !== "all") params.append("ad_id", ad);
+      if (referrer && referrer !== "all") params.append("referrer", referrer);
+      if (eventType && eventType !== "all") params.append("event_type", eventType);
+
+      const res = await fetch(`/api/admin/analytics?${params.toString()}`);
+      const data = await res.json();
+      if (data.summary) setAnalyticsSummary(data.summary);
+      if (data.topReferrers) setTopReferrers(data.topReferrers);
+      if (data.recentLogs) setRecentAuditLogs(data.recentLogs);
+      if (data.adBreakdowns) setAdBreakdowns(data.adBreakdowns);
+      if (data.availableReferrers) setAvailableReferrers(data.availableReferrers);
+    } catch (err) {
+      console.error("Filtered analytics error:", err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const resetAnalyticsFilters = () => {
+    setAnalyticsTimeframe("all");
+    setAnalyticsCategory("all");
+    setAnalyticsAd("all");
+    setAnalyticsReferrer("all");
+    setAnalyticsEventType("all");
+    fetchFilteredAnalytics("all", "all", "all", "all", "all");
+  };
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -248,20 +297,13 @@ export default function AdminDashboard() {
         setSiteLogo(settingsData.settings.logo);
       }
 
-      const analyticsRes = await fetch("/api/admin/analytics");
-      const analyticsData = await analyticsRes.json();
-      if (analyticsData.summary) {
-        setAnalyticsSummary(analyticsData.summary);
-      }
-      if (analyticsData.topReferrers) {
-        setTopReferrers(analyticsData.topReferrers);
-      }
-      if (analyticsData.recentLogs) {
-        setRecentAuditLogs(analyticsData.recentLogs);
-      }
-      if (analyticsData.adBreakdowns) {
-        setAdBreakdowns(analyticsData.adBreakdowns);
-      }
+      await fetchFilteredAnalytics(
+        analyticsTimeframe,
+        analyticsCategory,
+        analyticsAd,
+        analyticsReferrer,
+        analyticsEventType
+      );
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
@@ -914,6 +956,142 @@ export default function AdminDashboard() {
 
         {activeTab === "overview" && (
           <div className="space-y-8">
+            {/* Interactive Multi-Filter Control Toolbar */}
+            <div className="bg-[#131b2e] border border-[#1e293b] p-5 sm:p-6 rounded-[2.5rem] shadow-sm space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#1e293b] pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <SlidersHorizontal size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-white tracking-tight flex items-center gap-2">
+                      Filter-Wise Statistics
+                      {analyticsLoading && <RefreshCw size={13} className="animate-spin text-indigo-400" />}
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Filter metrics, charts, performance reports & audit logs across multiple dimensions</p>
+                  </div>
+                </div>
+
+                {/* Reset / Quick status */}
+                {(analyticsTimeframe !== "all" || analyticsCategory !== "all" || analyticsAd !== "all" || analyticsReferrer !== "all" || analyticsEventType !== "all") && (
+                  <button
+                    onClick={resetAnalyticsFilters}
+                    className="self-start md:self-auto text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-800/40 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <RotateCcw size={12} /> Reset Filters
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {/* 1. Timeframe Filter */}
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                    <Calendar size={11} className="text-indigo-400" /> Timeframe
+                  </label>
+                  <select
+                    value={analyticsTimeframe}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAnalyticsTimeframe(val);
+                      fetchFilteredAnalytics(val, analyticsCategory, analyticsAd, analyticsReferrer, analyticsEventType);
+                    }}
+                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="24h">Last 24 Hours (Today)</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                  </select>
+                </div>
+
+                {/* 2. Category Filter */}
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                    <Layers size={11} className="text-indigo-400" /> Category
+                  </label>
+                  <select
+                    value={analyticsCategory}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAnalyticsCategory(val);
+                      fetchFilteredAnalytics(analyticsTimeframe, val, analyticsAd, analyticsReferrer, analyticsEventType);
+                    }}
+                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="all">All Categories</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 3. Campaign / Ad Filter */}
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                    <Store size={11} className="text-indigo-400" /> Campaign
+                  </label>
+                  <select
+                    value={analyticsAd}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAnalyticsAd(val);
+                      fetchFilteredAnalytics(analyticsTimeframe, analyticsCategory, val, analyticsReferrer, analyticsEventType);
+                    }}
+                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer truncate"
+                  >
+                    <option value="all">All Campaigns</option>
+                    {ads.map((ad) => (
+                      <option key={ad.id} value={ad.id}>{ad.title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 4. Traffic Referrer Filter */}
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                    <Globe size={11} className="text-indigo-400" /> Traffic Source
+                  </label>
+                  <select
+                    value={analyticsReferrer}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAnalyticsReferrer(val);
+                      fetchFilteredAnalytics(analyticsTimeframe, analyticsCategory, analyticsAd, val, analyticsEventType);
+                    }}
+                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="all">All Traffic Sources</option>
+                    <option value="Direct">Direct / Bookmark</option>
+                    {availableReferrers.filter(r => r !== "Direct" && r !== "Direct / Bookmark").map((ref, idx) => (
+                      <option key={idx} value={ref}>{ref}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 5. Event Type Filter */}
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                    <MousePointerClick size={11} className="text-indigo-400" /> Audit Event Type
+                  </label>
+                  <select
+                    value={analyticsEventType}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAnalyticsEventType(val);
+                      fetchFilteredAnalytics(analyticsTimeframe, analyticsCategory, analyticsAd, analyticsReferrer, val);
+                    }}
+                    className="w-full bg-[#0b0f19] border border-[#1e293b] text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="all">All Events</option>
+                    <option value="impression">Impressions Only</option>
+                    <option value="click">Clicks Only</option>
+                    <option value="page_view">Page Views Only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
@@ -940,16 +1118,18 @@ export default function AdminDashboard() {
                   <span>Ad Impressions</span>
                   <Eye size={18} className="text-indigo-400" />
                 </div>
-                <h3 className="text-4xl font-extrabold text-white">{totalViews}</h3>
+                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalAdImpressions}</h3>
               </div>
 
               <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl" />
                 <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>Ad Clicks (CTR {avgCtr}%)</span>
+                  <span>
+                    Ad Clicks (CTR {analyticsSummary.totalAdImpressions > 0 ? ((analyticsSummary.totalAdClicks / analyticsSummary.totalAdImpressions) * 100).toFixed(2) : "0.00"}%)
+                  </span>
                   <MousePointerClick size={18} className="text-emerald-400" />
                 </div>
-                <h3 className="text-4xl font-extrabold text-white">{totalClicks}</h3>
+                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalAdClicks}</h3>
               </div>
             </div>
 
@@ -959,7 +1139,7 @@ export default function AdminDashboard() {
                 <h3 className="font-bold text-lg text-white mb-6 tracking-tight">Ad Performance Comparison</h3>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={ads}>
+                    <BarChart data={adBreakdowns.length > 0 ? adBreakdowns.map(a => ({ title: a.title, views: a.impressions, clicks: a.clicks })) : ads}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                       <XAxis dataKey="title" stroke="#94a3b8" fontSize={11} tickLine={false} />
                       <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
