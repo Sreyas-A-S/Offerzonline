@@ -369,25 +369,6 @@ export default function AdminDashboard() {
   const [analyticsReferrer, setAnalyticsReferrer] = useState("all");
   const [availableReferrers, setAvailableReferrers] = useState<string[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [cleaningLogs, setCleaningLogs] = useState(false);
-
-  const handleCleanOrphanedLogs = async () => {
-    setCleaningLogs(true);
-    try {
-      const res = await fetch("/api/admin/analytics/cleanup", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
-        setMessage({ type: "success", text: data.message || `Cleaned up ${data.deletedCount} orphaned logs.` });
-        fetchDashboardData();
-      } else {
-        setMessage({ type: "error", text: data.error || "Cleanup failed" });
-      }
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message });
-    } finally {
-      setCleaningLogs(false);
-    }
-  };
 
   const fetchFilteredAnalytics = async (
     timeframe = analyticsTimeframe,
@@ -1503,23 +1484,12 @@ export default function AdminDashboard() {
                   <h3 className="font-bold text-lg text-white tracking-tight">Real-Time Traffic Audit Log</h3>
                   <p className="text-xs text-slate-400">Detailed records of IP addresses, user agents, detected locations, and events</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCleanOrphanedLogs}
-                    disabled={cleaningLogs}
-                    className="bg-rose-950/40 hover:bg-rose-900/50 border border-rose-800/40 text-rose-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
-                    title="Delete analytics logs for ads that no longer exist"
-                  >
-                    <Trash2 size={13} className={cleaningLogs ? "animate-spin" : ""} />
-                    {cleaningLogs ? "Cleaning..." : "Purge Orphaned Logs"}
-                  </button>
-                  <button
-                    onClick={fetchDashboardData}
-                    className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    <RefreshCw size={13} /> Refresh
-                  </button>
-                </div>
+                <button
+                  onClick={fetchDashboardData}
+                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <RefreshCw size={13} /> Refresh
+                </button>
               </div>
 
               <div className="overflow-x-auto rounded-2xl border border-[#1e293b] bg-[#0b0f19]">
