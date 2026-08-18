@@ -601,7 +601,7 @@ export default function PublicDiscoveryPage() {
                     type="button"
                     style={{ animationDelay: `${idx * 20}ms` }}
                     onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-300 shrink-0 cursor-pointer border ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-300 shrink-0 cursor-pointer border animate-in fade-in zoom-in-95 duration-500 ${
                       isSelected 
                         ? "bg-slate-900 text-white border-slate-900 shadow-md scale-102" 
                         : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200/85 hover:scale-102"
