@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
