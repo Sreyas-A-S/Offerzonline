@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MapPin, ArrowUpRight, Heart } from "lucide-react";
 import Image from "next/image";
+import { getOrCreateVisitorId, cleanReferrer } from "@/utils/analytics";
 
 interface AdCardProps {
   ad: {
@@ -84,12 +85,16 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
           const adIds = [...queue];
           win.__impressionQueue = [];
           
+          const visitorId = getOrCreateVisitorId();
+          const cleanRef = cleanReferrer(typeof document !== "undefined" ? document.referrer : "");
+
           fetch("/api/track/impression", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               adIds,
-              referrer: document.referrer,
+              visitorId,
+              referrer: cleanRef,
               userLocation: userLocationName || "Unknown",
             }),
           }).catch((err) => console.error("Batch impression error:", err));
@@ -192,7 +197,7 @@ export function AdCard({ ad, userLocationName, onSelect, isSaved, onToggleSave, 
 
           {/* Floating Action Arrow redirect icon */}
           <a
-            href={`/api/track/click?ad_id=${ad.id}`}
+            href={`/api/track/click?ad_id=${ad.id}&visitor_id=${typeof window !== "undefined" ? getOrCreateVisitorId() : ""}&referrer=${typeof document !== "undefined" ? encodeURIComponent(cleanReferrer(document.referrer)) : "Direct"}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}

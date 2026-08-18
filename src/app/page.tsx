@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import gsap from "gsap";
+import { getOrCreateVisitorId, cleanReferrer } from "@/utils/analytics";
 
 // Category Visual Metadata inspired by the reference design with 3D cutouts & sub-tags
 const CATEGORY_CUTOUT_CARDS: Record<string, { 
@@ -228,12 +229,9 @@ export default function PublicDiscoveryPage() {
     }
     loadBrandLogo();
 
-    // Persistent visitorId generation
-    let visitorId = localStorage.getItem("offerz_visitor_id");
-    if (!visitorId) {
-      visitorId = "vid_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
-      localStorage.setItem("offerz_visitor_id", visitorId);
-    }
+    // Persistent visitorId and clean referrer
+    const visitorId = getOrCreateVisitorId();
+    const referrer = cleanReferrer(typeof document !== "undefined" ? document.referrer : "");
 
     // Log public pageview asynchronously
     fetch("/api/track/pageview", {
@@ -241,9 +239,9 @@ export default function PublicDiscoveryPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         eventType: "page_view",
-        pagePath: window.location.pathname,
+        pagePath: typeof window !== "undefined" ? window.location.pathname : "/",
         visitorId,
-        referrer: document.referrer || "Direct",
+        referrer,
       }),
     }).catch((e) => console.error("Pageview log error:", e));
 

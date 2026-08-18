@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapPin, ExternalLink, X, Share2, Check, Phone, Map, ChevronDown, ChevronUp, Store } from "lucide-react";
+import { getOrCreateVisitorId, cleanReferrer } from "@/utils/analytics";
 
 interface OfferModalProps {
   ad: any;
@@ -421,7 +422,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
             {/* Action Sticky Bottom Bar */}
             <div className="pt-4 border-t border-slate-100 bg-white md:bg-transparent">
               <a
-                href={`/api/track/click?ad_id=${ad.id}`}
+                href={`/api/track/click?ad_id=${ad.id}&visitor_id=${typeof window !== "undefined" ? getOrCreateVisitorId() : ""}&referrer=${typeof document !== "undefined" ? encodeURIComponent(cleanReferrer(document.referrer)) : "Direct"}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.98] cursor-pointer"
