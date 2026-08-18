@@ -341,9 +341,15 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm("Are you sure you want to log out of the admin panel?")) {
+      try {
+        await fetch("/api/admin/logout", { method: "POST" });
+      } catch (e) {
+        // Continue logout
+      }
       sessionStorage.removeItem("admin_authenticated");
+      sessionStorage.removeItem("offerz_admin_token");
       setIsAuthenticated(false);
       setIsSidebarOpen(false);
     }
@@ -367,6 +373,8 @@ export default function AdminDashboard() {
   const [adReportLoading, setAdReportLoading] = useState(false);
   const [selectedLogDetail, setSelectedLogDetail] = useState<any | null>(null);
   const [copiedLogField, setCopiedLogField] = useState<string | null>(null);
+  const [isDeletingLog, setIsDeletingLog] = useState<number | null>(null);
+  const [isClearingAllLogs, setIsClearingAllLogs] = useState(false);
 
   // Multi-Filter States for Analytics (defaults to Today IST Calendar Day)
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState("today");
@@ -473,6 +481,59 @@ export default function AdminDashboard() {
       console.error("Failed to load ad report:", err);
     } finally {
       setAdReportLoading(false);
+    }
+  };
+
+  const handleDeleteLog = async (logId: number) => {
+    if (!confirm(`Are you sure you want to permanently delete traffic audit log #${logId}?`)) {
+      return;
+    }
+    setIsDeletingLog(logId);
+    try {
+      const res = await fetch(`/api/admin/analytics?id=${logId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRecentAuditLogs((prev) => prev.filter((l) => l.id !== logId));
+        if (selectedLogDetail?.id === logId) {
+          setSelectedLogDetail(null);
+        }
+        setMessage({ type: "success", text: `Log #${logId} deleted successfully.` });
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to delete log" });
+      }
+    } catch (err: any) {
+      console.error("Error deleting log:", err);
+      setMessage({ type: "error", text: "Network error deleting log" });
+    } finally {
+      setIsDeletingLog(null);
+    }
+  };
+
+  const handleClearAllLogs = async () => {
+    if (!confirm("Are you sure you want to permanently clear ALL traffic audit logs? This action cannot be undone.")) {
+      return;
+    }
+    setIsClearingAllLogs(true);
+    try {
+      const res = await fetch(`/api/admin/analytics?clearAll=true`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRecentAuditLogs([]);
+        setSelectedLogDetail(null);
+        setMessage({ type: "success", text: "All traffic audit logs cleared successfully." });
+        fetchFilteredAnalytics();
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to clear logs" });
+      }
+    } catch (err: any) {
+      console.error("Error clearing logs:", err);
+      setMessage({ type: "error", text: "Network error clearing logs" });
+    } finally {
+      setIsClearingAllLogs(false);
     }
   };
 
@@ -1579,17 +1640,29 @@ export default function AdminDashboard() {
 
             {/* Detailed Visitors Audit Log */}
             <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-bold text-lg text-white tracking-tight">Real-Time Traffic Audit Log</h3>
                   <p className="text-xs text-slate-400">Detailed records of IP addresses, user agents, detected locations, and events</p>
                 </div>
-                <button
-                  onClick={fetchDashboardData}
-                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  <RefreshCw size={13} /> Refresh
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  {recentAuditLogs.length > 0 && (
+                    <button
+                      onClick={handleClearAllLogs}
+                      disabled={isClearingAllLogs}
+                      className="bg-rose-950/50 hover:bg-rose-900 border border-rose-800/60 text-rose-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                      title="Permanently clear all recorded traffic logs"
+                    >
+                      <Trash2 size={13} /> {isClearingAllLogs ? "Clearing..." : "Clear All Logs"}
+                    </button>
+                  )}
+                  <button
+                    onClick={fetchDashboardData}
+                    className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <RefreshCw size={13} /> Refresh
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto rounded-2xl border border-[#1e293b] bg-[#0b0f19]">
@@ -1602,7 +1675,7 @@ export default function AdminDashboard() {
                       <th className="p-3.5">User Location</th>
                       <th className="p-3.5">Device & Browser</th>
                       <th className="p-3.5">Timestamp (IST)</th>
-                      <th className="p-3.5 text-right">Action</th>
+                      <th className="p-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
@@ -1694,15 +1767,28 @@ export default function AdminDashboard() {
                                     {formatIST(log.timestamp)}
                                   </td>
                                   <td className="p-3.5 text-right">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedLogDetail(log);
-                                      }}
-                                      className="px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 rounded-xl font-bold text-[10px] inline-flex items-center gap-1 transition shadow-sm cursor-pointer group-hover:border-indigo-500"
-                                    >
-                                      <Eye size={11} /> Details
-                                    </button>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedLogDetail(log);
+                                        }}
+                                        className="px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 rounded-xl font-bold text-[10px] inline-flex items-center gap-1 transition shadow-sm cursor-pointer group-hover:border-indigo-500"
+                                      >
+                                        <Eye size={11} /> Details
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteLog(log.id);
+                                        }}
+                                        disabled={isDeletingLog === log.id}
+                                        className="p-1 bg-rose-950/40 hover:bg-rose-900/80 border border-rose-800/40 hover:border-rose-600 text-rose-300 rounded-xl transition cursor-pointer disabled:opacity-50"
+                                        title={`Delete Log #${log.id}`}
+                                      >
+                                        {isDeletingLog === log.id ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               );
@@ -3310,7 +3396,19 @@ export default function AdminDashboard() {
             })()}
 
             {/* Modal Footer */}
-            <div className="border-t border-[#1e293b] pt-4 flex justify-end">
+            <div className="border-t border-[#1e293b] pt-4 flex items-center justify-between">
+              <button
+                onClick={() => handleDeleteLog(selectedLogDetail.id)}
+                disabled={isDeletingLog === selectedLogDetail.id}
+                className="px-4 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingLog === selectedLogDetail.id ? (
+                  <RefreshCw size={13} className="animate-spin" />
+                ) : (
+                  <Trash2 size={13} />
+                )}
+                <span>Delete Log</span>
+              </button>
               <button
                 onClick={() => setSelectedLogDetail(null)}
                 className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition cursor-pointer"

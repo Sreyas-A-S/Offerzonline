@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { isAuthenticatedAdmin } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 let MOCK_CATEGORIES = [
   { id: 1, name: "Food & Dining", slug: "food-dining", icon: null },
@@ -25,6 +29,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const { name, slug, icon } = body;
@@ -63,6 +70,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

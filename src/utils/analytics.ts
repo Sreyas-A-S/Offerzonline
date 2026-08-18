@@ -220,12 +220,32 @@ export function parseUserAgentDetails(ua: string): {
 }
 
 /**
+ * Checks whether a location string is a generic UI filter label rather than a real geographical place
+ */
+export function isGenericLocation(loc?: string | null): boolean {
+  if (!loc || typeof loc !== "string") return true;
+  const lower = loc.trim().toLowerCase();
+  return (
+    lower === "" ||
+    lower === "unknown" ||
+    lower === "unknown location" ||
+    lower === "null" ||
+    lower === "undefined" ||
+    lower.includes("all location") ||
+    lower.includes("show all deal") ||
+    lower === "current location" ||
+    lower === "nearby deals" ||
+    lower.includes("detecting location")
+  );
+}
+
+/**
  * Formats any raw location string or serialized JSON into a clean human-readable city/area name
  */
 export function formatLocationName(rawLocation?: string | null): string {
   if (!rawLocation || typeof rawLocation !== "string") return "Unknown Location";
   const trimmed = rawLocation.trim();
-  if (!trimmed || trimmed === "Unknown" || trimmed === "Unknown Location" || trimmed === "null" || trimmed === "undefined") {
+  if (isGenericLocation(trimmed)) {
     return "Unknown Location";
   }
 
@@ -235,7 +255,7 @@ export function formatLocationName(rawLocation?: string | null): string {
       const parsed = JSON.parse(trimmed);
       if (parsed && typeof parsed === "object") {
         const loc = parsed.name || parsed.city || parsed.area || parsed.location || parsed.address;
-        if (loc && typeof loc === "string" && loc.trim() !== "" && loc !== "Current Location") {
+        if (loc && typeof loc === "string" && !isGenericLocation(loc)) {
           return loc.trim();
         }
       }
@@ -246,7 +266,7 @@ export function formatLocationName(rawLocation?: string | null): string {
 
   // Strip extraneous quotes or brackets
   const cleaned = trimmed.replace(/^["']|["']$/g, "").trim();
-  return cleaned || "Unknown Location";
+  return isGenericLocation(cleaned) ? "Unknown Location" : cleaned;
 }
 
 /**
@@ -258,7 +278,7 @@ export function getStoredLocationName(): string {
     const raw = localStorage.getItem("offerz_user_location");
     if (!raw) return "Unknown";
     const formatted = formatLocationName(raw);
-    return formatted === "Unknown Location" ? "Unknown" : formatted;
+    return isGenericLocation(formatted) ? "Unknown" : formatted;
   } catch {
     return "Unknown";
   }
@@ -291,10 +311,10 @@ export async function resolveLocationFromHeadersAndIp(
   ip: string, 
   clientProvidedLocation?: string
 ): Promise<string> {
-  // If client GPS reverse geocoded location is already provided, format and use it
-  if (clientProvidedLocation) {
+  // If client GPS reverse geocoded location is already provided and is a REAL place (not a filter label like "All Locations")
+  if (clientProvidedLocation && !isGenericLocation(clientProvidedLocation)) {
     const cleanClientLoc = formatLocationName(clientProvidedLocation);
-    if (cleanClientLoc !== "Unknown Location") {
+    if (!isGenericLocation(cleanClientLoc)) {
       return cleanClientLoc;
     }
   }

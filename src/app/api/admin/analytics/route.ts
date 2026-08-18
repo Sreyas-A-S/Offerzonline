@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import { cleanReferrer, formatLocationName, getCoordinatesForLocation } from "@/utils/analytics";
+import { isAuthenticatedAdmin } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const adIdFilter = searchParams.get("ad_id");
@@ -313,5 +320,40 @@ export async function GET(req: NextRequest) {
       adBreakdowns: [],
       availableReferrers: [],
     });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const logId = searchParams.get("id");
+    const clearAll = searchParams.get("clearAll");
+
+    const client = await pool.connect();
+    try {
+      if (clearAll === "true") {
+        await client.query("DELETE FROM analytics_logs");
+        return NextResponse.json({ success: true, message: "All traffic logs cleared successfully." });
+      }
+
+      if (logId) {
+        const result = await client.query("DELETE FROM analytics_logs WHERE id = $1 RETURNING id", [parseInt(logId, 10)]);
+        if (result.rows.length === 0) {
+          return NextResponse.json({ error: "Log not found" }, { status: 404 });
+        }
+        return NextResponse.json({ success: true, message: `Log #${logId} deleted successfully.` });
+      }
+
+      return NextResponse.json({ error: "Missing log ID or clearAll parameter" }, { status: 400 });
+    } finally {
+      client.release();
+    }
+  } catch (error: any) {
+    console.error("Delete log error:", error);
+    return NextResponse.json({ error: error.message || "Failed to delete log" }, { status: 500 });
   }
 }

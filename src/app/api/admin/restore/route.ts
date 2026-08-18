@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { isAuthenticatedAdmin } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Admin authentication required." }, { status: 401 });
+  }
   try {
     const client = await pool.connect();
     try {

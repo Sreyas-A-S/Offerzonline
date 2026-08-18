@@ -197,12 +197,6 @@ export default function OffersListingPage() {
               alt="Offerzonline Logo"
               className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
             />
-            <div>
-              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                Offerzonline
-              </h1>
-              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">All Verified Offers</span>
-            </div>
           </div>
 
           {/* Mobile Location Selector */}

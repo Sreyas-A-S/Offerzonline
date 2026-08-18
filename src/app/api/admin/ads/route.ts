@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { isAuthenticatedAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const MOCK_CATEGORIES = [
-  { id: 1, name: "Retail & Shopping", slug: "retail-shopping" },
-  { id: 2, name: "Food & Dining", slug: "food-dining" },
-  { id: 3, name: "Services & Repair", slug: "services-repair" },
-  { id: 4, name: "Entertainment & Events", slug: "entertainment-events" },
-  { id: 5, name: "Health & Fitness", slug: "health-fitness" },
-  { id: 6, name: "Electronics & Tech", slug: "electronics-tech" },
-];
-
-let MOCK_STORED_ADS: any[] = [];
-
 export async function GET(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
+
   try {
     const client = await pool.connect();
     try {
@@ -56,12 +50,15 @@ export async function GET(req: NextRequest) {
       client.release();
     }
   } catch (error: any) {
-    console.warn("PostgreSQL connection fallback triggered in /api/admin/ads:", error.message);
-    return NextResponse.json({ ads: MOCK_STORED_ADS, categories: MOCK_CATEGORIES }, { status: 200 });
+    console.error("Admin ads GET query error:", error.message);
+    return NextResponse.json({ ads: [], categories: [] }, { status: 200 });
   }
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const { title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms, isOnloadPopup, isRecommended } = body;
@@ -195,6 +192,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { id, title, categoryId, mediaUrl, mediaType, adFormat, targetUrl, latitude, longitude, radiusKm, weightPriority, description, expiresAt, isActive, storeName, storeLogo, storePhone, storeAddress, originalPrice, promoPrice, discountValue, terms, isOnloadPopup, isRecommended } = body;
@@ -373,6 +374,10 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!isAuthenticatedAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

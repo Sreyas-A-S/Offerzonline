@@ -502,9 +502,6 @@ export default function PublicDiscoveryPage() {
               alt="Offerzonline Logo"
               className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-all"
             />
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight hidden sm:block">
-              Offerzonline
-            </h1>
           </div>
 
             {/* Mobile Location */}
