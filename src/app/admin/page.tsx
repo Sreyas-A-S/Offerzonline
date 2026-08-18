@@ -5,7 +5,8 @@ import {
   Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
   Menu, X, Layers, BarChart2, Code, Copy, Check, Globe, Filter, Calendar,
-  RotateCcw, SlidersHorizontal, Search, ChevronDown, Clock, Flame
+  RotateCcw, SlidersHorizontal, Search, ChevronDown, Clock, Flame,
+  Info, ExternalLink, Smartphone, Laptop
 } from "lucide-react";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
@@ -364,6 +365,8 @@ export default function AdminDashboard() {
   const [selectedAdReport, setSelectedAdReport] = useState<any | null>(null);
   const [adReportLogs, setAdReportLogs] = useState<any[]>([]);
   const [adReportLoading, setAdReportLoading] = useState(false);
+  const [selectedLogDetail, setSelectedLogDetail] = useState<any | null>(null);
+  const [copiedLogField, setCopiedLogField] = useState<string | null>(null);
 
   // Multi-Filter States for Analytics (defaults to Today IST Calendar Day)
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState("today");
@@ -1599,6 +1602,7 @@ export default function AdminDashboard() {
                       <th className="p-3.5">User Location</th>
                       <th className="p-3.5">Device & Browser</th>
                       <th className="p-3.5">Timestamp (IST)</th>
+                      <th className="p-3.5 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
@@ -1615,7 +1619,11 @@ export default function AdminDashboard() {
                               const uaInfo = parseUserAgentDetails(log.user_agent);
                               const isIpv6 = log.user_ip && log.user_ip.includes(":");
                               return (
-                                <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
+                                <tr 
+                                  key={log.id} 
+                                  onClick={() => setSelectedLogDetail(log)}
+                                  className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                                >
                                   <td className="p-3.5">
                                     <span
                                       className={`px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase ${
@@ -1685,6 +1693,17 @@ export default function AdminDashboard() {
                                   <td className="p-3.5 text-slate-300 font-mono text-[11px] whitespace-nowrap">
                                     {formatIST(log.timestamp)}
                                   </td>
+                                  <td className="p-3.5 text-right">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedLogDetail(log);
+                                      }}
+                                      className="px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 rounded-xl font-bold text-[10px] inline-flex items-center gap-1 transition shadow-sm cursor-pointer group-hover:border-indigo-500"
+                                    >
+                                      <Eye size={11} /> Details
+                                    </button>
+                                  </td>
                                 </tr>
                               );
                             })}
@@ -1693,7 +1712,7 @@ export default function AdminDashboard() {
                       } else {
                         return (
                           <tr>
-                            <td colSpan={6} className="p-8 text-center text-slate-500 font-semibold">
+                            <td colSpan={7} className="p-8 text-center text-slate-500 font-semibold">
                               No traffic logs recorded yet. Visit the public page to see real-time hits!
                             </td>
                           </tr>
@@ -3047,6 +3066,257 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Traffic Audit Log Detail Inspection Modal */}
+      {selectedLogDetail && (
+        <div 
+          onClick={() => setSelectedLogDetail(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#131b2e] border border-[#1e293b] w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] p-6 sm:p-8 overflow-y-auto space-y-6 shadow-2xl relative animate-in zoom-in-95"
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-[#1e293b] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <Info size={22} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10px] uppercase tracking-wider ${
+                        selectedLogDetail.event_type === "click"
+                          ? "bg-emerald-950 border border-emerald-800 text-emerald-300"
+                          : selectedLogDetail.event_type === "page_view"
+                          ? "bg-sky-950 border border-sky-800 text-sky-300"
+                          : "bg-indigo-950 border border-indigo-800 text-indigo-300"
+                      }`}
+                    >
+                      {selectedLogDetail.event_type}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-md text-slate-400">
+                      #LOG-{selectedLogDetail.id}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-extrabold text-white tracking-tight mt-1">
+                    Traffic Audit Record Details
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLogDetail(null)}
+                className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white border border-slate-800 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Quick Summary Grid */}
+            {(() => {
+              const ua = parseUserAgentDetails(selectedLogDetail.user_agent);
+              const isIpv6 = selectedLogDetail.user_ip && selectedLogDetail.user_ip.includes(":");
+              const loc = formatLocationName(selectedLogDetail.user_location_name);
+
+              return (
+                <div className="space-y-4">
+                  {/* Visitor & Location Card */}
+                  <div className="bg-[#0b0f19] border border-[#1e293b] p-4 sm:p-5 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <Globe size={12} className="text-indigo-400" /> Visitor & Geographic Origin
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {formatIST(selectedLogDetail.timestamp)}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {/* IP Address */}
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl flex items-center justify-between">
+                        <div>
+                          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Client IP</span>
+                          <span className="font-mono text-xs font-bold text-indigo-300 flex items-center gap-1.5 mt-0.5">
+                            {selectedLogDetail.user_ip}
+                            {isIpv6 && (
+                              <span className="text-[8px] bg-indigo-950 border border-indigo-700 text-indigo-300 px-1 py-0.2 rounded font-mono">
+                                IPv6
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedLogDetail.user_ip || "");
+                            setCopiedLogField("ip");
+                            setTimeout(() => setCopiedLogField(null), 2000);
+                          }}
+                          className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
+                          title="Copy IP"
+                        >
+                          {copiedLogField === "ip" ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+
+                      {/* Location */}
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Detected Location</span>
+                        <span className="text-xs font-bold text-slate-200 flex items-center gap-1 mt-0.5">
+                          <MapPin size={12} className="text-rose-400 shrink-0" />
+                          <span className="truncate">{loc}</span>
+                        </span>
+                      </div>
+
+                      {/* Persistent Visitor ID */}
+                      {selectedLogDetail.visitor_id && (
+                        <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl sm:col-span-2 flex items-center justify-between">
+                          <div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Persistent Visitor ID</span>
+                            <span className="font-mono text-xs text-slate-300 break-all block mt-0.5">
+                              {selectedLogDetail.visitor_id}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedLogDetail.visitor_id || "");
+                              setCopiedLogField("vid");
+                              setTimeout(() => setCopiedLogField(null), 2000);
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition shrink-0 ml-2 cursor-pointer"
+                            title="Copy Visitor UUID"
+                          >
+                            {copiedLogField === "vid" ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Device & Browser Environment */}
+                  <div className="bg-[#0b0f19] border border-[#1e293b] p-4 sm:p-5 rounded-2xl space-y-3">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-[#1e293b] pb-2">
+                      <Smartphone size={12} className="text-sky-400" /> Device, Browser & Operating System
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Hardware Device</span>
+                        <span className="text-xs font-bold text-white block mt-0.5">{ua.device}</span>
+                      </div>
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Browser App</span>
+                        <span className="text-xs font-bold text-white block mt-0.5">{ua.browser}</span>
+                      </div>
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Operating System</span>
+                        <span className="text-xs font-bold text-white block mt-0.5">{ua.os}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Traffic Channel & Landing Path */}
+                  <div className="bg-[#0b0f19] border border-[#1e293b] p-4 sm:p-5 rounded-2xl space-y-3">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-[#1e293b] pb-2">
+                      <TrendingUp size={12} className="text-amber-400" /> Traffic Channel Attribution
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Referral Channel</span>
+                        <span className="text-xs font-bold text-amber-300 font-mono block mt-0.5">
+                          {selectedLogDetail.referrer_domain || "Direct / Bookmark"}
+                        </span>
+                      </div>
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Page Path</span>
+                        <span className="text-xs font-bold text-slate-200 font-mono block mt-0.5">
+                          {selectedLogDetail.page_path || "/"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Associated Campaign (if ad impression or click) */}
+                  {selectedLogDetail.ad_title && (
+                    <div className="bg-[#0b0f19] border border-[#1e293b] p-4 sm:p-5 rounded-2xl space-y-3">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-[#1e293b] pb-2">
+                        <Store size={12} className="text-emerald-400" /> Associated Campaign
+                      </span>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white">{selectedLogDetail.ad_title}</span>
+                          {selectedLogDetail.ad_category && (
+                            <span className="text-[9px] bg-slate-900 border border-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-bold">
+                              {selectedLogDetail.ad_category}
+                            </span>
+                          )}
+                        </div>
+                        {selectedLogDetail.ad_target_url && (
+                          <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                            <span className="text-[10px] text-slate-500">CTA Target:</span>
+                            <a 
+                              href={selectedLogDetail.ad_target_url} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="text-indigo-400 hover:text-indigo-300 underline truncate max-w-xs flex items-center gap-1"
+                            >
+                              {selectedLogDetail.ad_target_url} <ExternalLink size={10} />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Raw User-Agent Details */}
+                  {selectedLogDetail.user_agent && (
+                    <div className="bg-[#0b0f19] border border-[#1e293b] p-4 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
+                          Raw Client User-Agent Header
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedLogDetail.user_agent || "");
+                            setCopiedLogField("ua");
+                            setTimeout(() => setCopiedLogField(null), 2000);
+                          }}
+                          className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-bold cursor-pointer"
+                        >
+                          {copiedLogField === "ua" ? (
+                            <>
+                              <Check size={11} className="text-emerald-400" /> Copied UA
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={11} /> Copy Raw UA
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="bg-[#131b2e] border border-[#1e293b] p-3 rounded-xl text-[10px] font-mono text-slate-400 break-all leading-relaxed select-all">
+                        {selectedLogDetail.user_agent}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Modal Footer */}
+            <div className="border-t border-[#1e293b] pt-4 flex justify-end">
+              <button
+                onClick={() => setSelectedLogDetail(null)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition cursor-pointer"
+              >
+                Close Record
+              </button>
             </div>
           </div>
         </div>

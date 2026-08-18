@@ -110,14 +110,19 @@ export async function GET(req: NextRequest) {
            l.id,
            l.ad_id,
            l.event_type,
+           l.page_path,
+           l.visitor_id,
            l.user_ip,
            l.user_agent,
            l.user_location_name,
            l.referrer_domain,
            l.timestamp,
-           a.title as ad_title
+           a.title as ad_title,
+           a.target_url as ad_target_url,
+           c.name as ad_category
          FROM analytics_logs l
          LEFT JOIN ads a ON l.ad_id = a.id
+         LEFT JOIN categories c ON a.category_id = c.id
          ${logWhereSql}
          ORDER BY l.timestamp DESC
          LIMIT 100`,
