@@ -37,9 +37,26 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
     return url;
   };
 
+  const hasValidCoords = Boolean(
+    ad &&
+    ad.latitude !== null &&
+    ad.longitude !== null &&
+    ad.latitude !== undefined &&
+    ad.longitude !== undefined &&
+    String(ad.latitude).trim() !== "" &&
+    String(ad.longitude).trim() !== "" &&
+    !isNaN(parseFloat(ad.latitude)) &&
+    !isNaN(parseFloat(ad.longitude)) &&
+    parseFloat(ad.latitude) !== 0 &&
+    parseFloat(ad.longitude) !== 0
+  );
+
   // Load user coordinates from localStorage on mount
   useEffect(() => {
-    if (!ad) return;
+    if (!ad || !hasValidCoords) {
+      setMapLoading(false);
+      return;
+    }
     setMapLoading(true);
     const saved = localStorage.getItem("offerz_user_location");
     if (saved) {
@@ -52,10 +69,10 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
         console.error("Error reading location for route:", e);
       }
     }
-  }, [ad]);
+  }, [ad, hasValidCoords]);
 
   const getMapEmbedUrl = () => {
-    if (!ad) return "";
+    if (!hasValidCoords) return "";
     const adLat = parseFloat(ad.latitude);
     const adLng = parseFloat(ad.longitude);
     if (userCoords && userCoords.lat && userCoords.lng) {
@@ -241,7 +258,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
             </div>
 
             {/* Google Maps Embed Route Map (Rendered ONLY if ad has valid GPS coordinates) */}
-            {ad.latitude !== null && ad.longitude !== null && ad.latitude !== undefined && ad.longitude !== undefined && !isNaN(parseFloat(ad.latitude)) && !isNaN(parseFloat(ad.longitude)) && parseFloat(ad.latitude) !== 0 && (
+            {hasValidCoords && (
               <div className="p-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -280,7 +297,7 @@ export function OfferModal({ ad, onClose }: OfferModalProps) {
                 <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-indigo-100">
                   {ad.category_name || "Featured Offer"}
                 </span>
-                {ad.distance_km !== undefined && ad.latitude !== null && ad.longitude !== null && ad.latitude !== undefined && ad.longitude !== undefined && parseFloat(ad.latitude) !== 0 && (
+                {hasValidCoords && ad.distance_km !== undefined && (
                   <span className="bg-slate-900 text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                     <MapPin size={10} className="text-indigo-400" />
                     {ad.distance_km} km away
