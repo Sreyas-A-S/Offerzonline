@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
            c.name as category_name
          FROM streams s
          LEFT JOIN categories c ON s.category_id = c.id
-         WHERE s.is_active = true
+         LEFT JOIN streamer_users u ON s.user_id = u.id
+         WHERE s.is_active = true 
+           AND (s.user_id IS NULL OR u.status = 'active')
          ORDER BY s.created_at ASC`
       );
 

@@ -18,7 +18,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
            c.slug as category_slug
          FROM streams s
          LEFT JOIN categories c ON s.category_id = c.id
-         WHERE ${isNumeric ? "s.id = $1" : "s.uuid = $1"}`,
+         LEFT JOIN streamer_users u ON s.user_id = u.id
+         WHERE ${isNumeric ? "s.id = $1" : "s.uuid = $1"}
+           AND (s.user_id IS NULL OR u.status = 'active')`,
         [isNumeric ? parseInt(id, 10) : id]
       );
 
@@ -30,10 +32,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
       // Fetch other active streams (up to 6) for recommendations / Up Next
       const relatedRes = await client.query(
-        `SELECT id, uuid, title, media_url, media_type, thumbnail_url, store_name, store_logo, duration_seconds, views_count
-         FROM streams 
-         WHERE id != $1 AND is_active = TRUE
-         ORDER BY created_at DESC 
+        `SELECT s.id, s.uuid, s.title, s.media_url, s.media_type, s.thumbnail_url, s.store_name, s.store_logo, s.duration_seconds, s.views_count
+         FROM streams s
+         LEFT JOIN streamer_users u ON s.user_id = u.id
+         WHERE s.id != $1 
+           AND s.is_active = TRUE
+           AND (s.user_id IS NULL OR u.status = 'active')
+         ORDER BY s.created_at DESC 
          LIMIT 6`,
         [stream.id]
       );

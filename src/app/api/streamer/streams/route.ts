@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
            END as completion_rate
          FROM streams s
          LEFT JOIN categories c ON s.category_id = c.id
+         LEFT JOIN streamer_users u ON s.user_id = u.id
          LEFT JOIN (
            SELECT 
              stream_id,
@@ -43,7 +44,8 @@ export async function GET(req: NextRequest) {
            FROM stream_analytics
            GROUP BY stream_id
          ) stats ON s.id = stats.stream_id
-         WHERE s.is_active = true
+         WHERE s.is_active = true 
+           AND (s.user_id IS NULL OR u.status = 'active')
          ORDER BY s.created_at DESC`
       );
 

@@ -31,7 +31,24 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Check if already authenticated & load brand logo
+  // Captcha state for spam protection
+  const [captchaQuestion, setCaptchaQuestion] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaInput, setCaptchaInput] = useState("");
+
+  const fetchCaptcha = async () => {
+    try {
+      const res = await fetch("/api/admin/captcha");
+      const data = await res.json();
+      if (data.question && data.token) {
+        setCaptchaQuestion(data.question);
+        setCaptchaToken(data.token);
+        setCaptchaInput("");
+      }
+    } catch (e) {}
+  };
+
+  // Check if already authenticated & load brand logo & captcha
   useEffect(() => {
     async function checkSession() {
       try {
@@ -59,6 +76,7 @@ export default function AuthPage() {
 
     checkSession();
     loadLogo();
+    fetchCaptcha();
   }, [router]);
 
   const handleNextStep = (e: React.FormEvent) => {
@@ -107,10 +125,24 @@ export default function AuthPage() {
           setError(data.error || "Invalid email or password.");
         }
       } else {
+        if (!captchaInput.trim()) {
+          setError("Please answer the security captcha math question.");
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch("/api/streamer/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password, storeName, phone }),
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            storeName,
+            phone,
+            captchaAnswer: captchaInput,
+            captchaToken,
+          }),
         });
         const data = await res.json();
         if (res.ok && data.success) {
@@ -119,8 +151,11 @@ export default function AuthPage() {
           setRegisterStep(1);
           setPassword("");
           setConfirmPassword("");
+          setCaptchaInput("");
+          fetchCaptcha();
         } else {
           setError(data.error || "Registration failed.");
+          fetchCaptcha();
         }
       }
     } catch (err: any) {
@@ -533,6 +568,38 @@ export default function AuthPage() {
                     {confirmPassword && confirmPassword !== password && (
                       <p className="text-[11px] text-rose-500 font-medium mt-1">Passwords do not match</p>
                     )}
+                  </div>
+
+                  {/* Security Captcha Anti-Spam Challenge */}
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <ShieldCheck size={14} className="text-[#0052cc]" />
+                        <span>Security Captcha</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={fetchCaptcha}
+                        className="text-[11px] font-semibold text-[#0052cc] hover:underline flex items-center gap-1 cursor-pointer"
+                        title="Refresh question"
+                      >
+                        <RefreshCw size={11} />
+                        <span>Refresh</span>
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-black text-slate-800 tracking-wider shadow-xs select-none min-w-[110px] text-center">
+                        {captchaQuestion || "Loading..."}
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Answer"
+                        value={captchaInput}
+                        onChange={(e) => setCaptchaInput(e.target.value)}
+                        className="flex-1 bg-white border border-slate-200 focus:border-[#0052cc] rounded-xl px-3 py-2 text-xs text-slate-900 font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex gap-2.5 pt-1">
