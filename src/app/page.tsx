@@ -15,6 +15,9 @@ import Image from "next/image";
 import gsap from "gsap";
 import { getOrCreateVisitorId, getTrafficSource, getStoredLocationName } from "@/utils/analytics";
 import { getAdSlug } from "@/utils/adSlug";
+import { PublicPreloader, OfferGridSkeleton } from "@/components/PublicPreloader";
+
+
 
 // Category Visual Metadata inspired by the reference design with 3D cutouts & sub-tags
 const CATEGORY_CUTOUT_CARDS: Record<string, { 
@@ -469,26 +472,18 @@ export default function PublicDiscoveryPage() {
 
   if (showPreloader) {
     return (
-      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center animate-in fade-in duration-300">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-24 h-24 rounded-3xl bg-white border border-slate-100 p-3 shadow-xl flex items-center justify-center animate-pulse">
-            <img
-              src={siteLogo}
-              alt="Offerzonline Logo"
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Offerzonline</h2>
-          <div className="w-28 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-600 rounded-full animate-[pulse_1s_infinite] w-full" />
-          </div>
-        </div>
-      </div>
+      <PublicPreloader
+        label="Offerzonline"
+        sublabel="Finding verified local offers near you..."
+        fullScreen={true}
+        theme="light"
+        logo={siteLogo}
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-800 pb-32 pt-2 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-white text-slate-800 pb-4 pt-2 selection:bg-indigo-100 selection:text-indigo-900">
       
       {/* Background Soft Glows */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full h-96 bg-gradient-to-b from-indigo-50/60 via-purple-50/30 to-transparent blur-3xl pointer-events-none -z-10" />
@@ -545,6 +540,15 @@ export default function PublicDiscoveryPage() {
               <span className="max-w-[120px] truncate text-slate-900 font-extrabold">{locationName}</span>
               <ChevronDown size={12} className="text-slate-400 group-hover:text-slate-655 transition" />
             </button>
+
+            <Link
+              href="/auth"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              title="Sign In / Register"
+            >
+              <User size={13} />
+              <span>Sign In</span>
+            </Link>
 
             <button
               onClick={() => {
@@ -676,7 +680,7 @@ export default function PublicDiscoveryPage() {
                     <div
                       key={cat.id}
                       onClick={() => setSelectedCategory(isSelected ? "all" : cat.id.toString())}
-                      className={`group relative ${visual.bg} rounded-[2.2rem] p-5 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-visible min-h-[175px] sm:min-h-[190px] flex flex-col justify-between border ${
+                      className={`group relative ${visual.bg} rounded-2xl p-5 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-visible min-h-[175px] sm:min-h-[190px] flex flex-col justify-between border ${
                         isSelected ? "border-indigo-600 ring-4 ring-indigo-400/50 scale-[1.02]" : "border-white/60"
                       }`}
                     >
@@ -749,7 +753,7 @@ export default function PublicDiscoveryPage() {
 
             <div 
               onClick={() => setSelectedAd(featuredAd)}
-              className="group relative bg-white border border-slate-200/80 rounded-[2rem] sm:rounded-[2.2rem] p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col items-center justify-center w-fit max-w-full mx-auto"
+              className="group relative bg-white border border-slate-200/80 rounded-2xl sm:rounded-2xl p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col items-center justify-center w-fit max-w-full mx-auto"
             >
               {/* Media Container - Shrink-wrapping around image width for perfect symmetry */}
               <div className="relative inline-flex items-center justify-center max-w-full rounded-2xl overflow-hidden mb-4 bg-transparent border border-slate-100/80 shadow-inner">
@@ -820,11 +824,7 @@ export default function PublicDiscoveryPage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <div key={n} className="bg-slate-100 rounded-3xl h-64 animate-pulse border border-slate-200" />
-              ))}
-            </div>
+            <OfferGridSkeleton count={6} />
           ) : filteredAds.length > 0 ? (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-5 [column-fill:balance] overflow-visible">
               {filteredAds.map((ad, idx) => (
@@ -863,10 +863,13 @@ export default function PublicDiscoveryPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-slate-600">
+              <Link href="/auth" className="text-indigo-600 font-bold hover:text-indigo-800 transition flex items-center gap-1">
+                <User size={12} /> Sign In
+              </Link>
               <a href="#" className="hover:text-indigo-600 transition">About Us</a>
               <a href="#" className="hover:text-indigo-600 transition">Verified Deals</a>
               <a href="#" className="hover:text-indigo-600 transition">Privacy Policy</a>
-              <a href="#" className="hover:text-indigo-600 transition">Terms of Service</a>
+              <Link href="/terms" className="hover:text-indigo-600 transition">Terms of Service</Link>
             </div>
 
             <p className="text-[11px] text-slate-400">
@@ -882,7 +885,7 @@ export default function PublicDiscoveryPage() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-20 sm:bottom-24 right-5 sm:right-8 z-40 bg-white/95 hover:bg-white text-indigo-600 border border-slate-200/90 shadow-xl p-3 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 animate-in fade-in zoom-in"
+          className="fixed bottom-6 sm:bottom-8 right-5 sm:right-8 z-40 bg-white/95 hover:bg-white text-indigo-600 border border-slate-200/90 shadow-xl p-3 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 animate-in fade-in zoom-in cursor-pointer"
           title="Scroll to Top"
         >
           <ArrowUp size={20} />

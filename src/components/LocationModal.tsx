@@ -75,7 +75,7 @@ export function LocationModal({
     >
       <div
         ref={modalRef}
-        className="bg-white border border-slate-200 rounded-[2.2rem] max-w-md w-full p-6 shadow-2xl relative scrollbar-none animate-in zoom-in-95 duration-200 my-auto space-y-5"
+        className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl relative scrollbar-none animate-in zoom-in-95 duration-200 my-auto space-y-5"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between">

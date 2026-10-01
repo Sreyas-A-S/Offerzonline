@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAdminToken, COOKIE_NAME } from "@/lib/auth";
 import { extractClientIp } from "@/utils/analytics";
+import { verifyCaptchaToken } from "@/lib/captcha";
 
 export const dynamic = "force-dynamic";
 
@@ -52,12 +53,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { username, password } = await req.json();
+    const { username, password, captchaAnswer, captchaToken } = await req.json();
+
+    // 2. Validate Security Captcha Token
+    const captchaCheck = verifyCaptchaToken(captchaAnswer, captchaToken);
+    if (!captchaCheck.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: captchaCheck.reason || "Captcha verification failed. Please try again.",
+          requireCaptchaRefresh: true,
+        },
+        { status: 400 }
+      );
+    }
 
     const expectedUsername = process.env.ADMIN_USERNAME || "admin";
     const expectedPassword = process.env.ADMIN_PASSWORD || "offerz2026";
 
-    // 2. Validate Credentials
+    // 3. Validate Credentials
     if (username === expectedUsername && password === expectedPassword) {
       // Clear failed attempts upon successful login
       loginAttempts.delete(clientIp);

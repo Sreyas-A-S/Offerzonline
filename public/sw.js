@@ -1,4 +1,4 @@
-                                                                                                                                      const CACHE_NAME = 'offerzonline-cache-v1';
+const CACHE_NAME = 'offerzonline-cache-v1';
 const OFFLINE_URL = '/~offline';
 
 const ASSETS_TO_CACHE = [
@@ -10,7 +10,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch(() => {});
     })
   );
   self.skipWaiting();
@@ -37,12 +37,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Bypass service worker for admin routes and authentication APIs
   const url = new URL(event.request.url);
+
+  // Bypass service worker for admin routes, API calls, streams & media files
   if (
     url.pathname.startsWith('/admin') ||
-    url.pathname.startsWith('/api/admin') ||
-    url.pathname.startsWith('/api/auth')
+    url.pathname.startsWith('/api') ||
+    url.pathname.startsWith('/streams') ||
+    url.pathname.startsWith('/uploads')
   ) {
     return;
   }
@@ -56,14 +58,10 @@ self.addEventListener('fetch', (event) => {
   } else {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        return cachedResponse || fetch(event.request).catch((err) => {
-          console.warn("Service worker fetch failed (likely offline):", err);
-          return new Response("Offline / Network Error", {
-            status: 503,
-            statusText: "Service Unavailable",
-            headers: new Headers({ "Content-Type": "text/plain" }),
-          });
-        });
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(event.request);
       })
     );
   }

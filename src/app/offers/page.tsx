@@ -9,6 +9,8 @@ import {
   ArrowLeft, Search, MapPin, ChevronDown, Compass
 } from "lucide-react";
 import Link from "next/link";
+import { OfferGridSkeleton } from "@/components/PublicPreloader";
+
 
 const CATEGORIES = [
   { id: "all", name: "All Categories" },
@@ -270,11 +272,7 @@ export default function OffersListingPage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                <div key={n} className="bg-slate-100 rounded-3xl h-64 animate-pulse border border-slate-200" />
-              ))}
-            </div>
+            <OfferGridSkeleton count={8} />
           ) : filteredAds.length > 0 ? (
             <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-5 [column-fill:balance] overflow-visible">
               {filteredAds.map((ad, idx) => (
@@ -290,7 +288,7 @@ export default function OffersListingPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-white border border-slate-200 rounded-[2rem] shadow-sm flex flex-col items-center justify-center">
+            <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col items-center justify-center">
               <LottieAnimation type="radar" className="w-24 h-24 mb-3" />
               <h3 className="text-lg font-bold text-slate-800 mb-1">No Offers Found</h3>
               <p className="text-slate-500 text-xs sm:text-sm max-w-xs mx-auto px-4">

@@ -147,13 +147,14 @@ export function cleanReferrer(rawReferrer?: string): string {
  */
 export function parseUserAgentDetails(ua: string): { 
   device: string; 
+  deviceType: string;
   browser: string; 
   os: string;
   isMobile: boolean;
   rawDevice: string;
 } {
   if (!ua) {
-    return { device: "Desktop", browser: "Unknown Browser", os: "Unknown OS", isMobile: false, rawDevice: "Generic Device" };
+    return { device: "Desktop", deviceType: "desktop", browser: "Unknown Browser", os: "Unknown OS", isMobile: false, rawDevice: "Generic Device" };
   }
 
   const isTablet = /ipad|tablet|(android(?!.*mobile))/i.test(ua);
@@ -210,8 +211,11 @@ export function parseUserAgentDetails(ua: string): {
   else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
   else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = "Safari";
 
+  const deviceType = isTablet ? "tablet" : isMobile ? "mobile" : "desktop";
+
   return {
     device: deviceName,
+    deviceType,
     browser,
     os,
     isMobile: isMobile || isTablet,

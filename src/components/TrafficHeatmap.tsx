@@ -300,7 +300,7 @@ export function TrafficHeatmap({ points = [], topLocations = [] }: TrafficHeatma
   const totalHits = points.reduce((acc, curr) => acc + (curr.count || 0), 0);
 
   return (
-    <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-6">
+    <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1e293b] pb-4">
         <div className="flex items-center gap-2.5">

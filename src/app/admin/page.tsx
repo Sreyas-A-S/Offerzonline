@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Plus, Trash2, Eye, EyeOff, MousePointerClick, TrendingUp, Upload, 
   MapPin, CheckCircle, RefreshCw, Store, Lock, LogOut, ShieldCheck,
   Menu, X, Layers, BarChart2, Code, Copy, Check, Globe, Filter, Calendar,
   RotateCcw, SlidersHorizontal, Search, ChevronDown, Clock, Flame,
-  Info, ExternalLink, Smartphone, Laptop
+  Info, ExternalLink, Smartphone, Laptop, Tv, AlertCircle, Users
 } from "lucide-react";
+import { StreamsTab } from "@/components/admin/StreamsTab";
 import { MapPicker } from "@/components/MapPicker";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
 import Cropper from "react-easy-crop";
@@ -224,21 +226,58 @@ const formatDateIST = (date: any) => {
   }
 };
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab") as "overview" | "ads" | "streams" | "streamers" | "categories" | "settings" | null;
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
+  const [captchaQuestion, setCaptchaQuestion] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [loadingCaptcha, setLoadingCaptcha] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [ads, setAds] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [streamers, setStreamers] = useState<any[]>([]);
+  const [loadingStreamers, setLoadingStreamers] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "ads" | "categories" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "ads" | "streams" | "streamers" | "categories" | "settings">(
+    tabFromUrl && ["overview", "ads", "streams", "streamers", "categories", "settings"].includes(tabFromUrl)
+      ? tabFromUrl
+      : "overview"
+  );
+
+  // Sync state if URL changes externally
+  useEffect(() => {
+    if (tabFromUrl && ["overview", "ads", "streams", "streamers", "categories", "settings"].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
+  // Method to switch tab and update browser URL
+  const switchTab = (tab: "overview" | "ads" | "streams" | "streamers" | "categories" | "settings") => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "overview") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const query = params.toString();
+    router.replace(query ? `/admin?${query}` : `/admin`, { scroll: false });
+  };
+
   const [siteLogo, setSiteLogo] = useState<string>("/api/logo");
   const [logoUploading, setLogoUploading] = useState(false);
   const [adsPage, setAdsPage] = useState(1);
   const [categoriesPage, setCategoriesPage] = useState(1);
+  const [streamersPage, setStreamersPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
   const [logsPage, setLogsPage] = useState(1);
   const [showOnlyActiveAds, setShowOnlyActiveAds] = useState(false);
@@ -314,20 +353,46 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Check authentication on mount
+  const fetchCaptcha = async () => {
+    setLoadingCaptcha(true);
+    try {
+      const res = await fetch("/api/admin/captcha");
+      const data = await res.json();
+      if (data.question && data.token) {
+        setCaptchaQuestion(data.question);
+        setCaptchaToken(data.token);
+        setCaptchaAnswer("");
+      }
+    } catch (err) {
+      console.error("Failed to load captcha:", err);
+    } finally {
+      setLoadingCaptcha(false);
+    }
+  };
+
+  // Check authentication on mount & fetch captcha if needed
   useEffect(() => {
     const isAuth = sessionStorage.getItem("admin_authenticated") === "true";
     setIsAuthenticated(isAuth);
+    if (!isAuth) {
+      fetchCaptcha();
+    }
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+    setIsLoggingIn(true);
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+        body: JSON.stringify({ 
+          username: loginUsername, 
+          password: loginPassword,
+          captchaAnswer,
+          captchaToken
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -335,9 +400,13 @@ export default function AdminDashboard() {
         setIsAuthenticated(true);
       } else {
         setAuthError(data.error || "Invalid Admin Username or Password");
+        fetchCaptcha();
       }
     } catch (err: any) {
       setAuthError(err.message || "Authentication error");
+      fetchCaptcha();
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -463,10 +532,63 @@ export default function AdminDashboard() {
         analyticsAd,
         analyticsReferrer
       );
+
+      fetchStreamers();
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStreamers = async () => {
+    try {
+      setLoadingStreamers(true);
+      const res = await fetch("/api/admin/streamers");
+      if (res.ok) {
+        const data = await res.json();
+        setStreamers(data.streamers || []);
+      }
+    } catch (e) {
+      console.error("Fetch streamers error:", e);
+    } finally {
+      setLoadingStreamers(false);
+    }
+  };
+
+  const handleStreamerStatusChange = async (id: number, newStatus: "active" | "suspended") => {
+    try {
+      const res = await fetch("/api/admin/streamers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage({ type: "success", text: `Streamer status updated to ${newStatus}.` });
+        fetchStreamers();
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to update status." });
+      }
+    } catch (e: any) {
+      setMessage({ type: "error", text: e.message });
+    }
+  };
+
+  const handleDeleteStreamer = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to permanently delete streamer "${name}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/streamers?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage({ type: "success", text: `Streamer "${name}" deleted.` });
+        fetchStreamers();
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to delete streamer." });
+      }
+    } catch (e: any) {
+      setMessage({ type: "error", text: e.message });
     }
   };
 
@@ -890,62 +1012,127 @@ export default function AdminDashboard() {
   // Login Screen if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white/95 backdrop-blur-2xl border border-white/20 p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl space-y-6 animate-in zoom-in-95">
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto text-indigo-600 border border-indigo-100 shadow-sm">
-              <Lock size={28} />
+      <div className="min-h-screen bg-[#070b14] relative overflow-hidden flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/15 rounded-full blur-3xl pointer-events-none translate-x-1/2 translate-y-1/2" />
+        <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
+
+        <div className="relative z-10 bg-[#0f172a]/90 backdrop-blur-xl border border-[#1e293b] p-8 sm:p-10 rounded-3xl max-w-md w-full shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
+          {/* Header Brand */}
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-2xl flex items-center justify-center mx-auto text-white shadow-xl shadow-indigo-600/30 border border-white/20">
+              <ShieldCheck size={32} />
             </div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Admin Authentication</h2>
-            <p className="text-xs text-slate-500">Sign in with master credentials to access management hub</p>
+            <div>
+              <h2 className="text-2xl font-black text-white tracking-tight">Admin Gateway</h2>
+              <p className="text-xs text-slate-400 mt-1 font-medium">
+                Sign in with master credentials to access Offerzonline hub
+              </p>
+            </div>
           </div>
 
           {authError && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold p-3.5 rounded-2xl text-center">
-              {authError}
+            <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold p-3.5 rounded-2xl text-center flex items-center justify-center gap-2">
+              <AlertCircle size={15} className="shrink-0 text-rose-400" />
+              <span>{authError}</span>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
                 Admin Username
               </label>
-              <input
-                type="text"
-                value={loginUsername}
-                onChange={(e) => setLoginUsername(e.target.value)}
-                placeholder="admin"
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white font-medium"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  placeholder="Enter admin username"
+                  className="w-full bg-[#0b0f19] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-medium transition shadow-inner"
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
                 Master Password
               </label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white font-medium"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-[#0b0f19] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-medium transition shadow-inner font-mono"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Security Captcha Defense */}
+            <div className="bg-[#0b0f19] border border-[#1e293b] p-3.5 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Lock size={12} className="text-indigo-400" /> Security Captcha Challenge
+                </label>
+                <button
+                  type="button"
+                  onClick={fetchCaptcha}
+                  disabled={loadingCaptcha}
+                  className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
+                  title="Generate new captcha challenge"
+                >
+                  <RefreshCw size={12} className={loadingCaptcha ? "animate-spin" : ""} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="px-3 py-2 bg-gradient-to-r from-indigo-950/80 to-slate-900 border border-indigo-500/30 rounded-xl text-center shrink-0 min-w-[110px]">
+                  <span className="font-mono font-black text-sm tracking-wider text-indigo-300 select-none">
+                    {loadingCaptcha ? "..." : captchaQuestion || "Loading..."}
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  value={captchaAnswer}
+                  onChange={(e) => setCaptchaAnswer(e.target.value)}
+                  placeholder="Answer"
+                  required
+                  className="w-full bg-[#131b2e] border border-[#1e293b] rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black py-3.5 rounded-2xl text-xs shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              disabled={isLoggingIn || loadingCaptcha}
+              className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-3.5 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50 mt-2"
             >
-              <ShieldCheck size={16} /> Unlock Admin Dashboard
+              {isLoggingIn ? (
+                <>
+                  <RefreshCw size={15} className="animate-spin" />
+                  <span>Verifying Credentials...</span>
+                </>
+              ) : (
+                <>
+                  <Lock size={15} />
+                  <span>Unlock Admin Dashboard</span>
+                </>
+              )}
             </button>
           </form>
 
-          <p className="text-[11px] text-center text-slate-400">
-            {/* Default credentials: <span className="font-mono text-slate-600 font-bold">admin</span> / <span className="font-mono text-slate-600 font-bold">offerz2026</span> */}
-          </p>
+          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-[#1e293b]">
+            <span className="flex items-center gap-1">
+              <ShieldCheck size={13} className="text-emerald-400" />
+              <span>Rate Limit Protected</span>
+            </span>
+            <span className="font-mono text-[10px] text-slate-500">v2.4 LTS</span>
+          </div>
         </div>
       </div>
     );
@@ -1003,7 +1190,7 @@ export default function AdminDashboard() {
           <nav className="p-4 space-y-1.5 flex-1">
             <button
               onClick={() => {
-                setActiveTab("overview");
+                switchTab("overview");
                 setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
@@ -1018,7 +1205,7 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => {
-                setActiveTab("ads");
+                switchTab("ads");
                 setShowCreateForm(false);
                 setIsSidebarOpen(false);
               }}
@@ -1034,7 +1221,32 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => {
-                setActiveTab("categories");
+                switchTab("streams");
+                setShowCreateForm(false);
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${activeTab === "streams" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10" : "text-slate-400 hover:text-white hover:bg-slate-900/60"}`}
+            >
+              <Tv size={16} />
+              <span>Streams</span>
+            </button>
+
+            <button
+              onClick={() => {
+                switchTab("streamers");
+                setShowCreateForm(false);
+                setIsSidebarOpen(false);
+                fetchStreamers();
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${activeTab === "streamers" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10" : "text-slate-400 hover:text-white hover:bg-slate-900/60"}`}
+            >
+              <Users size={16} />
+              <span>Users ({streamers.length})</span>
+            </button>
+
+            <button
+              onClick={() => {
+                switchTab("categories");
                 setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
@@ -1049,7 +1261,7 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => {
-                setActiveTab("settings");
+                switchTab("settings");
                 setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
@@ -1105,6 +1317,12 @@ export default function AdminDashboard() {
                 ? "Analytics Overview" 
                 : activeTab === "categories" 
                 ? "Categories" 
+                : activeTab === "streams"
+                ? "Streams"
+                : activeTab === "streamers"
+                ? "Users"
+                : activeTab === "settings"
+                ? "Site Settings"
                 : showCreateForm 
                 ? "Create Ad" 
                 : "Ads"}
@@ -1131,7 +1349,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === "settings" && (
-          <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] p-8 max-w-2xl mx-auto shadow-sm space-y-6">
+          <div className="bg-[#131b2e] border border-[#1e293b] rounded-2xl p-8 max-w-2xl mx-auto shadow-sm space-y-6">
             <div>
               <h3 className="font-bold text-xl text-white tracking-tight">Site Logo & Preloader Branding</h3>
               <p className="text-xs text-slate-400 mt-1">Upload a custom logo to dynamically update the preloader, navbar, and PWA brand iconography across all public pages.</p>
@@ -1169,7 +1387,7 @@ export default function AdminDashboard() {
         {activeTab === "overview" && (
           <div className="space-y-8">
             {/* Interactive Multi-Filter Control Toolbar */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-5 sm:p-6 rounded-[2.5rem] shadow-sm space-y-4">
+            <div className="bg-[#131b2e] border border-[#1e293b] p-4 sm:p-6 rounded-2xl sm:rounded-2xl shadow-sm space-y-3 sm:space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#1e293b] pb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
@@ -1195,9 +1413,9 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 items-start">
                 {/* 1. Timeframe Filter with Custom Date Range */}
-                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl space-y-2">
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl space-y-1.5 sm:space-y-2">
                   <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                     <Calendar size={11} className="text-indigo-400" /> Timeframe
                   </label>
@@ -1252,7 +1470,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* 2. Category Filter */}
-                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl space-y-2">
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl space-y-1.5 sm:space-y-2">
                   <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                     <Layers size={11} className="text-indigo-400" /> Category
                   </label>
@@ -1273,7 +1491,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* 3. Searchable Campaign Select */}
-                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl">
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl">
                   <SearchableSelect
                     label="Campaign"
                     icon={<Store size={11} className="text-indigo-400" />}
@@ -1293,7 +1511,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* 4. Searchable Traffic Source / Referrer Select */}
-                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-3 rounded-2xl">
+                <div className="bg-[#0b0f19]/60 border border-[#1e293b] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl">
                   <SearchableSelect
                     label="Traffic Source"
                     icon={<Globe size={11} className="text-indigo-400" />}
@@ -1316,48 +1534,53 @@ export default function AdminDashboard() {
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#38bdf8]/5 rounded-full blur-2xl" />
-                <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>Public Page Hits</span>
-                  <BarChart2 size={18} className="text-sky-400" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              <div className="bg-[#131b2e] border border-[#1e293b] p-3.5 sm:p-6 rounded-2xl sm:rounded-2xl shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-[#38bdf8]/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3">
+                  <span className="truncate pr-1">Public Hits</span>
+                  <BarChart2 size={15} className="text-sky-400 shrink-0 sm:w-[18px] sm:h-[18px]" />
                 </div>
-                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalPageViews}</h3>
+                <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">{analyticsSummary.totalPageViews}</h3>
               </div>
 
-              <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#a855f7]/5 rounded-full blur-2xl" />
-                <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>Unique Visitors</span>
-                  <ShieldCheck size={18} className="text-purple-400" />
+              <div className="bg-[#131b2e] border border-[#1e293b] p-3.5 sm:p-6 rounded-2xl sm:rounded-2xl shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-[#a855f7]/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3">
+                  <span className="truncate pr-1">Unique Users</span>
+                  <ShieldCheck size={15} className="text-purple-400 shrink-0 sm:w-[18px] sm:h-[18px]" />
                 </div>
-                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalUniqueVisitors}</h3>
+                <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">{analyticsSummary.totalUniqueVisitors}</h3>
               </div>
 
-              <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl" />
-                <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>Ad Impressions</span>
-                  <Eye size={18} className="text-indigo-400" />
+              <div className="bg-[#131b2e] border border-[#1e293b] p-3.5 sm:p-6 rounded-2xl sm:rounded-2xl shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3">
+                  <span className="truncate pr-1">Impressions</span>
+                  <Eye size={15} className="text-indigo-400 shrink-0 sm:w-[18px] sm:h-[18px]" />
                 </div>
-                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalAdImpressions}</h3>
+                <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">{analyticsSummary.totalAdImpressions}</h3>
               </div>
 
-              <div className="bg-[#131b2e] border border-[#1e293b] p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl" />
-                <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  <span>
-                    Ad Clicks (CTR {analyticsSummary.totalAdImpressions > 0 ? ((analyticsSummary.totalAdClicks / analyticsSummary.totalAdImpressions) * 100).toFixed(2) : "0.00"}%)
+              <div className="bg-[#131b2e] border border-[#1e293b] p-3.5 sm:p-6 rounded-2xl sm:rounded-2xl shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3">
+                  <span className="truncate pr-1">
+                    Clicks <span className="hidden sm:inline">({analyticsSummary.totalAdImpressions > 0 ? ((analyticsSummary.totalAdClicks / analyticsSummary.totalAdImpressions) * 100).toFixed(1) : "0"}%)</span>
                   </span>
-                  <MousePointerClick size={18} className="text-emerald-400" />
+                  <MousePointerClick size={15} className="text-emerald-400 shrink-0 sm:w-[18px] sm:h-[18px]" />
                 </div>
-                <h3 className="text-4xl font-extrabold text-white">{analyticsSummary.totalAdClicks}</h3>
+                <div className="flex items-baseline justify-between gap-1">
+                  <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">{analyticsSummary.totalAdClicks}</h3>
+                  <span className="text-[10px] text-emerald-400 font-bold sm:hidden">
+                    {analyticsSummary.totalAdImpressions > 0 ? ((analyticsSummary.totalAdClicks / analyticsSummary.totalAdImpressions) * 100).toFixed(1) + "%" : "0%"}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Hourly Traffic Breakdown / Peak Activity Hours Chart */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1e293b] pb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -1445,7 +1668,7 @@ export default function AdminDashboard() {
 
             {/* Performance Chart & Traffic Sources Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm">
+              <div className="lg:col-span-2 bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm">
                 <h3 className="font-bold text-lg text-white mb-6 tracking-tight">Ad Performance Comparison</h3>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -1465,7 +1688,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Traffic Sources / Referrers */}
-              <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm flex flex-col justify-between">
+              <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -1511,7 +1734,7 @@ export default function AdminDashboard() {
             </div>
 
                 {/* Campaign / Ad-Level Performance Report Table */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-lg text-white tracking-tight">Ad-Level Performance Report</h3>
@@ -1639,7 +1862,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Detailed Visitors Audit Log */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-bold text-lg text-white tracking-tight">Real-Time Traffic Audit Log</h3>
@@ -1859,7 +2082,7 @@ export default function AdminDashboard() {
           const totalPages = Math.ceil(filteredAdsList.length / adsPerPage);
 
           return showCreateForm ? (
-            <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] p-8 max-w-5xl mx-auto shadow-sm">
+            <div className="bg-[#131b2e] border border-[#1e293b] rounded-2xl p-8 max-w-5xl mx-auto shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-bold text-xl text-white tracking-tight">
                   {editingAd ? "Edit Ad Campaign" : "Create Ad"}
@@ -1968,7 +2191,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Geolocation Pin Selector (Optional) */}
-                  <div className="bg-[#0b0f19] p-6 border border-[#1e293b] rounded-[2rem] space-y-4">
+                  <div className="bg-[#0b0f19] p-6 border border-[#1e293b] rounded-2xl space-y-4">
                     <div className="flex justify-between items-center">
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -2246,7 +2469,7 @@ export default function AdminDashboard() {
               </form>
             </div>
           ) : (
-            <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] overflow-hidden shadow-sm">
+            <div className="bg-[#131b2e] border border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
               <div className="p-6 border-b border-[#1e293b] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <h3 className="font-bold text-lg text-white tracking-tight">All Ads</h3>
                 <div className="flex items-center gap-4">
@@ -2540,10 +2763,12 @@ export default function AdminDashboard() {
         })()}
 
         {/* Categories Tab */}
+        {activeTab === "streams" && <StreamsTab categories={categories} />}
+
         {activeTab === "categories" && (
           <div className="space-y-8">
             {/* Create Category Card */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm max-w-2xl">
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm max-w-2xl">
               <h3 className="font-bold text-lg text-white mb-4 tracking-tight">Add New Backend Category</h3>
               
               <form onSubmit={async (e) => {
@@ -2643,7 +2868,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Existing Categories Table */}
-            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-[2.5rem] shadow-sm space-y-4">
+            <div className="bg-[#131b2e] border border-[#1e293b] p-6 sm:p-8 rounded-2xl shadow-sm space-y-4">
               <h3 className="font-bold text-lg text-white mb-6 tracking-tight">All Active Backend Categories</h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -2752,6 +2977,155 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {activeTab === "streamers" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#131b2e] border border-[#1e293b] p-6 rounded-2xl">
+              <div>
+                <h3 className="font-bold text-lg text-white tracking-tight flex items-center gap-2">
+                  <Users size={20} className="text-indigo-400" />
+                  <span>Users Directory</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Manage registered streaming users, view broadcast counts, aggregate plays, and suspend or activate user accounts.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={fetchStreamers}
+                  disabled={loadingStreamers}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0b0f19] border border-[#1e293b] text-slate-300 hover:text-white flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <RefreshCw size={13} className={loadingStreamers ? "animate-spin" : ""} />
+                  <span>Refresh</span>
+                </button>
+                <a
+                  href="/auth"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 transition shadow-sm"
+                >
+                  <span>Registration / Sign In Page</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+
+            <div className="bg-[#131b2e] border border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#0f172a] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#1e293b]">
+                    <tr>
+                      <th className="p-4">User / Merchant</th>
+                      <th className="p-4">Email</th>
+                      <th className="p-4">Phone</th>
+                      <th className="p-4 text-center">Streams</th>
+                      <th className="p-4 text-center">Total Plays</th>
+                      <th className="p-4 text-center">Total Clicks</th>
+                      <th className="p-4">Joined Date</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b] text-slate-300 font-medium">
+                    {loadingStreamers ? (
+                      <tr>
+                        <td colSpan={9} className="p-8 text-center text-slate-400">
+                          <div className="flex items-center justify-center gap-2">
+                            <RefreshCw size={14} className="animate-spin text-indigo-400" />
+                            <span>Loading registered users...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : streamers.length > 0 ? (
+                      streamers.map((st) => (
+                        <tr key={st.id} className="hover:bg-slate-900/40 transition">
+                          <td className="p-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                                {st.name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white block">{st.name}</span>
+                                {st.store_name && (
+                                  <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                    <Store size={10} /> {st.store_name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4 font-mono text-xs text-slate-300">{st.email}</td>
+                          <td className="p-4 text-slate-400">{st.phone || "—"}</td>
+                          <td className="p-4 text-center">
+                            <span className="font-extrabold text-white bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800">
+                              {st.total_streams || 0}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center font-extrabold text-emerald-400">
+                            {st.total_plays || 0}
+                          </td>
+                          <td className="p-4 text-center font-extrabold text-amber-400">
+                            {st.total_clicks || 0}
+                          </td>
+                          <td className="p-4 text-slate-400 text-[11px] whitespace-nowrap">
+                            {formatDateIST(st.created_at)}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                st.status === "active"
+                                  ? "bg-emerald-950 border border-emerald-800 text-emerald-300"
+                                  : "bg-rose-950 border border-rose-800 text-rose-300"
+                              }`}
+                            >
+                              {st.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {st.status === "active" ? (
+                                <button
+                                  onClick={() => handleStreamerStatusChange(st.id, "suspended")}
+                                  className="px-2.5 py-1 rounded-lg bg-amber-950/40 hover:bg-amber-900 border border-amber-800/40 text-amber-300 text-[10px] font-bold transition cursor-pointer"
+                                  title="Suspend User Account"
+                                >
+                                  Suspend
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleStreamerStatusChange(st.id, "active")}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-950/40 hover:bg-emerald-900 border border-emerald-800/40 text-emerald-300 text-[10px] font-bold transition cursor-pointer"
+                                  title="Activate User Account"
+                                >
+                                  Activate
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDeleteStreamer(st.id, st.name)}
+                                className="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                                title="Delete User Account"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={9} className="p-8 text-center text-slate-500 font-semibold">
+                          No registered users found. Users can register at /streams/auth.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
         </main>
 
         {/* Footer */}
@@ -2778,7 +3152,7 @@ export default function AdminDashboard() {
           onClick={() => setPreviewMedia(null)}
         >
           <div 
-            className="relative max-w-4xl w-full bg-[#131b2e] border border-[#1e293b] rounded-[2rem] overflow-hidden shadow-2xl p-2 max-h-[85vh] flex flex-col"
+            className="relative max-w-4xl w-full bg-[#131b2e] border border-[#1e293b] rounded-2xl overflow-hidden shadow-2xl p-2 max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
@@ -2826,7 +3200,7 @@ export default function AdminDashboard() {
           }}
         >
           <div 
-            className="relative max-w-2xl w-full bg-[#131b2e] border border-[#1e293b] rounded-[2rem] shadow-2xl p-6 flex flex-col max-h-[90vh] overflow-y-auto scrollbar-none"
+            className="relative max-w-2xl w-full bg-[#131b2e] border border-[#1e293b] rounded-2xl shadow-2xl p-6 flex flex-col max-h-[90vh] overflow-y-auto scrollbar-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -2955,7 +3329,7 @@ export default function AdminDashboard() {
 
         return (
           <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-[#131b2e] border border-[#1e293b] rounded-[2.5rem] max-w-xl w-full p-6 sm:p-8 space-y-6 relative shadow-2xl">
+            <div className="bg-[#131b2e] border border-[#1e293b] rounded-2xl max-w-xl w-full p-6 sm:p-8 space-y-6 relative shadow-2xl">
               <button
                 onClick={() => setEmbedAd(null)}
                 className="absolute top-6 right-6 text-slate-400 hover:text-white p-2 hover:bg-slate-900 rounded-full transition cursor-pointer"
@@ -3042,7 +3416,7 @@ export default function AdminDashboard() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#131b2e] border border-[#1e293b] w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] p-6 sm:p-8 overflow-y-auto space-y-6 shadow-2xl relative animate-in zoom-in-95"
+            className="bg-[#131b2e] border border-[#1e293b] w-full max-w-4xl max-h-[85vh] rounded-2xl p-6 sm:p-8 overflow-y-auto space-y-6 shadow-2xl relative animate-in zoom-in-95"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -3155,7 +3529,7 @@ export default function AdminDashboard() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#131b2e] border border-[#1e293b] w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] p-6 sm:p-8 overflow-y-auto space-y-6 shadow-2xl relative animate-in zoom-in-95"
+            className="bg-[#131b2e] border border-[#1e293b] w-full max-w-2xl max-h-[90vh] rounded-2xl p-6 sm:p-8 overflow-y-auto space-y-6 shadow-2xl relative animate-in zoom-in-95"
           >
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-[#1e293b] pb-4">
@@ -3412,3 +3786,12 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#090d16]" />}>
+      <AdminDashboardContent />
+    </Suspense>
+  );
+}
+
